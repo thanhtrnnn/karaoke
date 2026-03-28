@@ -1,0 +1,130 @@
+@startuml
+skinparam linetype ortho
+skinparam entityFontSize 11
+
+entity "tbl_branch" as branch {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  address : VARCHAR
+  phone : VARCHAR
+  active : BOOLEAN
+}
+
+entity "tbl_room" as room {
+  * id : BIGINT <<PK>>
+  --
+  branch_id : BIGINT <<FK>>
+  name : VARCHAR
+  type : VARCHAR
+  capacity : INT
+  hourly_price : DECIMAL
+  status : VARCHAR
+  active : BOOLEAN
+}
+
+entity "tbl_member" as member {
+  * id : BIGINT <<PK>>
+  --
+  salutation : VARCHAR
+  first_name : VARCHAR
+  last_name : VARCHAR
+  full_name : VARCHAR
+  phone : VARCHAR
+  tier : VARCHAR
+  points : INT
+}
+
+entity "tbl_user" as user {
+  * id : BIGINT <<PK>>
+  --
+  username : VARCHAR
+  email : VARCHAR
+  password_hash : VARCHAR
+  role : VARCHAR
+  active : BOOLEAN
+}
+
+entity "tbl_employee" as employee {
+  * id : BIGINT <<PK>>
+  --
+  branch_id : BIGINT <<FK>>
+  full_name : VARCHAR
+  phone : VARCHAR
+  role : VARCHAR
+  active : BOOLEAN
+}
+
+entity "tbl_booking" as booking {
+  * id : BIGINT <<PK>>
+  --
+  customer_id : BIGINT <<FK>>
+  room_id : BIGINT <<FK>>
+  start_time : TIMESTAMP
+  end_time : TIMESTAMP
+  guest_count : INT
+  status : VARCHAR
+}
+
+entity "tbl_order" as orders {
+  * id : BIGINT <<PK>>
+  --
+  room_id : BIGINT <<FK>>
+  ordered_at : TIMESTAMP
+  status : VARCHAR
+}
+
+entity "tbl_order_item" as order_item {
+  * id : BIGINT <<PK>> <<AUTO>>
+  --
+  order_id : BIGINT <<FK>>
+  product_id : BIGINT <<FK>>
+  quantity : INT
+  unit_price : DECIMAL
+}
+
+entity "tbl_product" as product {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  category : VARCHAR
+  price : DECIMAL
+  stock : INT
+  image : VARCHAR
+  active : BOOLEAN
+}
+
+entity "tbl_invoice" as invoice {
+  * id : BIGINT <<PK>>
+  --
+  booking_id : BIGINT <<FK>>
+  room_total : DECIMAL
+  service_total : DECIMAL
+  discount : DECIMAL
+  grand_total : DECIMAL
+  paid_at : TIMESTAMP
+  status : VARCHAR
+}
+
+entity "tbl_membership_tier_config" as tier_config {
+  * tier_name : VARCHAR <<PK>>
+  --
+  min_points : INT
+  discount : DECIMAL
+}
+
+entity "tbl_system_config" as sys_config {
+  * config_key : VARCHAR <<PK>>
+  --
+  config_value : VARCHAR
+}
+
+branch ||--|{ room
+branch ||--|{ employee
+member ||--|{ booking
+room ||--|{ booking
+booking ||--o| invoice
+room ||--|{ orders
+orders ||--|{ order_item
+product ||--|{ order_item
+@enduml
