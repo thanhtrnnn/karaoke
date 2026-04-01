@@ -1,0 +1,26 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "NV Lễ tân" as Receptionist
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "Quản lý đặt phòng" as UC07
+usecase "Đăng nhập" as UC01
+usecase "Tìm kiếm booking" as UC_search
+usecase "Tìm kiếm theo tên" as UC_byname
+usecase "Tìm kiếm theo phòng" as UC_byroom
+usecase "Xác nhận Check-in
+(booking online)" as UC_checkin
+usecase "Xếp phòng Walk-in" as UC_walkin
+
+UC07 .> UC01 : <<include>>
+UC07 .> UC_search : <<include>>
+UC_search .> UC_byname : <<include>>
+UC_search .> UC_byroom : <<include>>
+UC_checkin .> UC07 : <<include>>
+UC_walkin .> UC07 : <<include>>
+}
+
+Receptionist --> UC07
+@enduml

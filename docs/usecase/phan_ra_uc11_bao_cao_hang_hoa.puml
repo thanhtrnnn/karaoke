@@ -1,0 +1,23 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "NV Phục vụ" as Staff
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "BC tình trạng hàng hóa" as UC11
+usecase "Kiểm tra cơ sở vật chất" as UC_check
+usecase "Cập nhật trạng thái phòng" as UC_status
+usecase "Dọn dẹp phòng" as UC_clean
+usecase "Báo hỏng hóc thiết bị" as UC_damage
+usecase "Yêu cầu bổ sung minibar" as UC_minibar
+
+UC11 .> UC_check : <<include>>
+UC11 .> UC_status : <<include>>
+UC11 .> UC_clean : <<include>>
+UC_damage .> UC11 : <<extend>>
+UC_minibar .> UC11 : <<extend>>
+}
+
+Staff --> UC11
+@enduml

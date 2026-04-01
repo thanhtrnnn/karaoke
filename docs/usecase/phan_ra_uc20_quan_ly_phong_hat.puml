@@ -1,0 +1,24 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "Chủ DN (Admin)" as Admin
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "QL Phòng hát" as UC20
+usecase "Đăng nhập" as UC01
+usecase "Xem DS phòng hát" as UC_view
+usecase "Thêm phòng mới" as UC_add
+usecase "Cập nhật thông tin phòng
+(loại, sức chứa, giá, TT)" as UC_update
+usecase "Xóa phòng hát" as UC_delete
+
+UC20 .> UC01 : <<include>>
+UC20 .> UC_view : <<include>>
+UC_add .> UC20 : <<extend>>
+UC_update .> UC20 : <<extend>>
+UC_delete .> UC20 : <<extend>>
+}
+
+Admin --> UC20
+@enduml

@@ -1,0 +1,34 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "Khách hàng" as Client
+actor "NV Phục vụ" as Staff
+actor "NV Lễ tân" as Receptionist
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "Gọi món (UC06)" as UC06
+usecase "Quản lý Order (UC10)" as UC10
+usecase "Đặt món qua app" as UC_byapp
+usecase "Đặt món qua điện thoại" as UC_byphone
+usecase "Gửi / chuyển đến bếp" as UC_send
+usecase "Nhận order" as UC_receive
+usecase "Cập nhật trạng thái" as UC_status
+usecase "Cập nhật hóa đơn" as UC_invoice
+usecase "Hủy / thay đổi order" as UC_cancel
+usecase "Ghi chú đặc biệt" as UC_note
+
+UC06 .> UC_byapp : <<include>>
+UC06 .> UC_byphone : <<include>>
+UC10 .> UC_receive : <<include>>
+UC10 .> UC_send : <<include>>
+UC10 .> UC_status : <<include>>
+UC10 .> UC_invoice : <<include>>
+UC_cancel .> UC10 : <<extend>>
+UC_note .> UC10 : <<extend>>
+}
+
+Client --> UC06
+Staff --> UC10
+Receptionist --> UC10
+@enduml
