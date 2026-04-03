@@ -1,0 +1,19 @@
+@startuml
+' BCE Diagram - Module 1: Tai Khoan va Thanh Vien
+' Nen dien day chi tiet
+
+package "BCE - Module 1" {
+  ' Boundary
+  rectangle "Boundary" as B {
+  }
+
+  ' Control
+  rectangle "Control" as C {
+  }
+
+  ' Entity
+  rectangle "Entity" as E {
+  }
+}
+
+@enduml

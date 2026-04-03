@@ -1,0 +1,12 @@
+@startuml
+' Use Case Diagram - Module 1: Tai Khoan va Thanh Vien
+' Nen dien day chi tiet
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Thanh vien" as Member
+actor "Khach hang" as Client
+
+@enduml
