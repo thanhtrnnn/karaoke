@@ -1,0 +1,8 @@
+@startuml
+' Sequence Diagram - Module 1: Tai Khoan va Thanh Vien
+' Nen dien day chi tiet
+
+actor "Nguoi dung" as User
+participant "He thong" as System
+
+@enduml
