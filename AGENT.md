@@ -1,6 +1,7 @@
 # HỆ THỐNG QUẢN LÝ CHUỖI NHÀ HÀNG KARAOKE
 
-> Xem thêm: [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) để biết cấu trúc thư mục chi tiết.
+> Xem thêm: [docsFOLDER_STRUCTURE.md](docs/FOLDER_STRUCTURE.md) để biết cấu trúc thư mục chi tiết.
+> Xem thêm: [docs/UI_SCREEN_SPEC.md](docs/UI_SCREEN_SPEC.md) để biết prompt thiết kế giao diện chi tiết 19 màn hình.
 
 ## 1. TỔNG QUAN DỰ ÁN (PROJECT OVERVIEW)
 Dự án "Hệ thống Quản lý Chuỗi Nhà hàng Karaoke" là một phần mềm quản lý tập trung đa chi nhánh. Mục tiêu cốt lõi:
