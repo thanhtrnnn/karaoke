@@ -12,7 +12,7 @@ docker compose up -d --build
 
 echo "==================================="
 echo "System is running!"
-echo "Frontend: http://localhost:5173"
+echo "Frontend: http://localhost:6969"
 echo "Backend API: http://localhost:8080"
 echo "To view logs, run: docker compose logs -f"
 echo "To stop, run: docker compose down"
