@@ -1,12 +1,35 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Simulate successful login
-    navigate('/');
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username');
+    const password = formData.get('password');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernameOrEmail: username, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data));
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
   return (
     <>
@@ -25,11 +48,16 @@ export default function LoginPage() {
           <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-primary-container/5 rounded-full blur-[120px]"></div>
         </div>
         <div className="w-full max-w-[420px] relative z-10">
-          <div className="mb-12">
-            <h1 className="font-h1 text-h1 text-text-primary mb-3 tracking-tight">Chào mừng trở lại</h1>
-            <p className="font-body-md text-body-md text-text-secondary">Đăng nhập bằng tài khoản nội bộ để tiếp tục quản lý hệ thống.</p>
-          </div>
-          <form className="space-y-6" onSubmit={handleLogin}>
+            <div className="mb-12">
+              <h1 className="font-h1 text-h1 text-text-primary mb-3 tracking-tight">Chào mừng trở lại</h1>
+              <p className="font-body-md text-body-md text-text-secondary">Đăng nhập bằng tài khoản nội bộ để tiếp tục quản lý hệ thống.</p>
+            </div>
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 font-body-md">
+                {error}
+              </div>
+            )}
+            <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-5">
               <div className="relative">
                 <label className="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase tracking-wider" htmlFor="username">Tên đăng nhập</label>

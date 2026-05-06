@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { mockCustomers } from '../data/mockData';
 
 export default function ReceptionDashboard() {
@@ -6,29 +6,62 @@ export default function ReceptionDashboard() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Generate 24 mock rooms: 12 available, 8 occupied, 4 cleaning
-  const rooms = useMemo(() => {
-    const list = [];
-    let occupiedCount = 0;
-    let cleaningCount = 0;
-    
-    for (let i = 1; i <= 24; i++) {
-      let status = 'available';
-      if (occupiedCount < 8) { status = 'occupied'; occupiedCount++; }
-      else if (cleaningCount < 4) { status = 'cleaning'; cleaningCount++; }
-      
-      const isVip = i % 5 === 0;
-      list.push({
-        id: `R${i.toString().padStart(3, '0')}`,
-        name: isVip ? `VIP ${i}` : `Phòng 1${i.toString().padStart(2, '0')}`,
-        type: isVip ? 'VIP' : 'Standard',
-        status: status,
-        time: status === 'occupied' ? `0${(i % 3) + 1}:${(i * 7) % 60}:${(i * 13) % 60}` : '',
-        customer: status === 'occupied' ? mockCustomers[i % mockCustomers.length] : null,
-        guests: (i % 8) + 2
-      });
-    }
-    return list;
+  const [rooms, setRooms] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/rooms', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mappedRooms = data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            type: r.type,
+            status: r.status === 'AVAILABLE' ? 'available' : r.status === 'OCCUPIED' ? 'occupied' : 'cleaning',
+            time: r.status === 'OCCUPIED' ? '01:23:45' : '',
+            customer: null,
+            guests: r.capacity || 2
+          }));
+          setRooms(mappedRooms);
+        } else if (res.status === 403 || res.status === 401) {
+          // Fallback to mock data if not authenticated for demo purposes
+          generateMockRooms();
+        }
+      } catch (e) {
+        generateMockRooms();
+      }
+    };
+
+    const generateMockRooms = () => {
+      const list = [];
+      let occupiedCount = 0;
+      let cleaningCount = 0;
+      for (let i = 1; i <= 24; i++) {
+        let status = 'available';
+        if (occupiedCount < 8) { status = 'occupied'; occupiedCount++; }
+        else if (cleaningCount < 4) { status = 'cleaning'; cleaningCount++; }
+        
+        const isVip = i % 5 === 0;
+        list.push({
+          id: `R${i.toString().padStart(3, '0')}`,
+          name: isVip ? `VIP ${i}` : `Phòng 1${i.toString().padStart(2, '0')}`,
+          type: isVip ? 'VIP' : 'Standard',
+          status: status,
+          time: status === 'occupied' ? `0${(i % 3) + 1}:${(i * 7) % 60}:${(i * 13) % 60}` : '',
+          customer: status === 'occupied' ? mockCustomers[i % mockCustomers.length] : null,
+          guests: (i % 8) + 2
+        });
+      }
+      setRooms(list);
+    };
+
+    fetchRooms();
   }, []);
 
   const counts = {
