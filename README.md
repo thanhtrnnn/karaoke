@@ -1,6 +1,22 @@
-# Hệ thống Quản lý Quán Karaoke - Midnight Elegance
+# Hệ thống Quản lý Quán Karaoke - Famtaoke
 
 Quản lý chuỗi nhà hàng karaoke: đặt phòng, gọi món, thanh toán, báo cáo doanh thu.
+
+---
+
+## Bắt đầu nhanh
+
+```bash
+git clone https://github.com/thanhtrnnn/karaoke.git
+cd karaoke
+docker compose up -d --build
+```
+
+- Frontend: http://localhost:6969
+- Backend: http://localhost:8080
+- Đăng nhập: `admin` / `admin123`
+
+Xem hướng dẫn chi tiết: **[DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ---
 
@@ -8,66 +24,10 @@ Quản lý chuỗi nhà hàng karaoke: đặt phòng, gọi món, thanh toán, b
 
 | Tầng | Công nghệ | Port |
 |------|-----------|------|
-| Frontend | React + TypeScript + Vite + Tailwind CSS | 6969 |
+| Frontend | React + TypeScript + Vite + Tailwind CSS + Nginx | 6969 |
 | Backend | Spring Boot + Spring Data JPA + Spring Security | 8080 |
-| Database | H2 (dev) / PostgreSQL (prod) | - |
-| Auth | Token-based (`dev-token-{userId}`) | - |
-
----
-
-## Cài đặt
-
-### Yêu cầu
-
-| Phần mềm | Phiên bản | Kiểm tra |
-|----------|-----------|----------|
-| Node.js | 18+ | `node --version` |
-| Java (JDK) | 17+ | `java --version` |
-| Docker (tùy chọn) | 24+ | `docker --version` |
-
-### Chạy bằng Docker
-
-```bash
-git clone https://github.com/thanhtrnnn/karaoke.git
-cd karaoke
-docker-compose up --build
-```
-
-### Chạy tách riêng
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### Script tự động
-
-```bash
-./start.sh
-```
-
----
-
-## Kiểm tra
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:6969 |
-| Backend API | http://localhost:8080/api/health |
-| Swagger UI | http://localhost:8080/swagger-ui.html |
-| H2 Console | http://localhost:8080/h2-console |
-
-**Đăng nhập:** `admin` / `admin123`
-
-**H2 Console:** JDBC URL `jdbc:h2:mem:karaoke`, User `sa`, Password trống
+| Database | H2 (dev) / PostgreSQL 16 (Docker) | 5432 |
+| Cache | Redis 7 | 6379 |
 
 ---
 
@@ -105,11 +65,12 @@ karaoke/
 │   ├── repository/             # JPA Repository
 │   └── config/                 # SecurityConfig, DataSeeder
 │
-├── docs/                       # Tài liệu dự án
+├── docs/                       # Tài liệu
 │   └── baocao/                 # Bài tập thực hành
 │
-├── docker-compose.yml
-├── start.sh
+├── docker-compose.yml          # Cấu hình Docker
+├── DEPLOYMENT.md               # Hướng dẫn cài đặt chi tiết
+├── start.sh                    # Script chạy nhanh
 └── AGENT.md                    # Tài liệu tổng quan dự án
 ```
 
@@ -134,5 +95,7 @@ Xem đầy đủ tại Swagger UI: http://localhost:8080/swagger-ui.html
 ## Tài liệu
 
 - [Tổng quan dự án (AGENT.md)](AGENT.md)
+- [Hướng dẫn cài đặt (DEPLOYMENT.md)](DEPLOYMENT.md)
 - [Cấu trúc thư mục](docs/FOLDER_STRUCTURE.md)
 - [Bài tập thực hành](docs/baocao/BaiTap_4Learners.md)
+- [Hướng dẫn cho Learner](docs/baocao/HuongDanLearner.md)
