@@ -37,7 +37,7 @@
 |---------|---------|---------------------|-------------------|---------------------|-------------------|
 | **Trung** | LoginPage.tsx, RegisterPage.tsx | AuthController.java | UserAccount.java, UserRole.java | UserAccountRepository.java | SecurityConfig.java, TokenAuthenticationFilter.java |
 | **Tuấn** | ReceptionDashboard.tsx, BookingPage.tsx, BookingManagement.tsx | CrudControllers.java (RoomController), BookingController.java | Room.java, RoomStatus.java, Booking.java, BookingStatus.java, Branch.java | RoomRepository.java, BookingRepository.java | SecurityConfig.java |
-| **Khánh** | OrderPage.tsx, OrderManagement.tsx, mockData.ts | OrderController.java | ServiceOrder.java, ServiceOrderItem.java, MenuItem.java, OrderStatus.java | ServiceOrderRepository.java, MenuItemRepository.java | DataSeeder.java |
+| **Khánh** | OrderPage.tsx, OrderManagement.tsx | OrderController.java | ServiceOrder.java, ServiceOrderItem.java, MenuItem.java, OrderStatus.java | ServiceOrderRepository.java, MenuItemRepository.java | DataSeeder.java |
 | **Hành** | CheckoutPage.tsx, ReportsPage.tsx | CrudControllers.java (InvoiceController), ReportController.java | Invoice.java, InvoiceStatus.java | InvoiceRepository.java | DataSeeder.java |
 
 ---
@@ -47,14 +47,21 @@
 | Trang FE | Có gọi API? | Ghi chú |
 |----------|-------------|---------|
 | LoginPage | **CÓ** | `POST /api/auth/login` |
-| ReceptionDashboard | **CÓ** | `GET /api/rooms` + fallback mock |
-| BookingPage | KHÔNG | Dữ liệu hardcode trong component |
-| BookingManagement | KHÔNG | Dữ liệu hardcode trong component |
-| OrderPage | KHÔNG | Dùng `mockMenu` từ mockData.ts |
-| OrderManagement | KHÔNG | Dùng `mockOrders` từ mockData.ts |
-| RoomManagement | KHÔNG | Dùng `mockRooms` từ mockData.ts |
-| CheckoutPage | KHÔNG | Toàn bộ hardcode, nút không có onClick |
-| ReportsPage | KHÔNG | Dữ liệu biểu đồ hardcode |
+| ReceptionDashboard | **CÓ** | `GET /api/rooms` |
+| BookingPage | **CÓ** | `GET /api/rooms` |
+| BookingManagement | **CÓ** | `GET /api/bookings` |
+| OrderPage | **CÓ** | `GET /api/menu-items` |
+| OrderManagement | **CÓ** | `GET /api/orders`, `PUT /api/orders/{id}/status` |
+| RoomManagement | **CÓ** | `GET/POST/PUT/DELETE /api/rooms` |
+| MenuManagement | **CÓ** | `GET/POST/PUT/DELETE /api/menu-items` |
+| InventoryPage | **CÓ** | `GET /api/menu-items` |
+| CustomerPage | **CÓ** | `GET/POST /api/customers` |
+| EmployeeManagement | **CÓ** | `GET/POST/PUT/DELETE /api/employees` |
+| ManagerDashboard | **CÓ** | `GET /api/reports/summary` |
+| ReportsPage | **CÓ** | `GET /api/reports/summary` (metrics), biểu đồ vẫn hardcode |
+| SettingsPage | **CÓ** | `GET/POST/PUT/DELETE /api/branches` |
+| CheckoutPage | KHÔNG | Toàn bộ hardcode (chưa có endpoint hóa đơn chi tiết) |
+| MembershipPage | KHÔNG | Hardcode hạng hội viên (chưa có endpoint) |
 
 ---
 
@@ -113,13 +120,13 @@ UserAccount (USR001)  [đứng riêng, không FK với entity khác]
 Employee (NV001) ──N:1── Branch
 ```
 
-**Câu 5:** Tại sao một số trang đã kết nối API (LoginPage, ReceptionDashboard) nhưng nhiều trang khác vẫn dùng mock data? Khi nào cần hoàn thành việc kết nối?
+**Câu 5:** Trước đây nhiều trang dùng mock data, bây giờ đã kết nối API hết chưa? Còn trang nào chưa kết nối?
 
 **Đáp án:**
-- LoginPage kết nối vì là flow cơ bản nhất, cần thiết cho mọi thao tác
-- ReceptionDashboard kết nối vì là trang chính cần dữ liệu realtime
-- Các trang khác (OrderPage, CheckoutPage, ReportsPage...) đang trong quá trình phát triển
-- Cần kết nối khi: muốn dữ liệu đồng bộ với database, muốn thao tác CRUD thật, muốn demo hoàn chỉnh
+- Hầu hết các trang đã kết nối API: LoginPage, ReceptionDashboard, BookingPage, BookingManagement, OrderPage, OrderManagement, RoomManagement, MenuManagement, InventoryPage, CustomerPage, EmployeeManagement, ManagerDashboard, ReportsPage, SettingsPage
+- Chỉ còn 2 trang chưa kết nối: **CheckoutPage** (chưa có endpoint hóa đơn chi tiết) và **MembershipPage** (chưa có endpoint hạng hội viên)
+- `mockData.ts` đã bị xóa hoàn toàn khỏi dự án
+- ReportsPage kết nối `/api/reports/summary` cho metrics, nhưng biểu đồ doanh thu theo thời gian vẫn dùng data hardcode (chưa có endpoint)
 
 ### Về database và ORM
 

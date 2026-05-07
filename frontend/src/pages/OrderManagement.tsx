@@ -1,30 +1,98 @@
-import { useState } from 'react';
-import { mockOrders, mockRooms } from '../data/mockData';
+import { useState, useEffect } from 'react';
+
+interface OrderItem {
+  id: string;
+  room: string;
+  items: string;
+  time: string;
+  status: string;
+  color: string;
+}
+
+const statusMap: Record<string, { label: string; color: string }> = {
+  PENDING: { label: '⏳ Chờ xử lý', color: 'status-cleaning' },
+  PREPARING: { label: '🔄 Đang làm', color: 'tertiary' },
+  SERVED: { label: '✅ Đã phục vụ', color: 'status-available' },
+  CANCELLED: { label: '❌ Đã hủy', color: 'status-occupied' },
+};
 
 export default function OrderManagement() {
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState('2026-05-05');
   const [roomFilter, setRoomFilter] = useState('Tất cả');
   const [statusFilter, setStatusFilter] = useState('Tất cả');
+  const [availableRooms, setAvailableRooms] = useState<string[]>([]);
 
-  const availableRooms = mockRooms.map(r => r.id);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/orders', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((o: any) => {
+            const st = statusMap[o.status] || { label: o.status, color: 'slate-400' };
+            const itemNames = (o.items || []).map((i: any) => `${i.menuItem?.name || 'N/A'} x${i.quantity}`).join(', ');
+            const time = o.orderedAt ? new Date(o.orderedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+            return {
+              id: o.id,
+              room: o.room?.id || 'N/A',
+              items: itemNames,
+              time,
+              status: st.label,
+              color: st.color,
+            };
+          });
+          setOrders(mapped);
+          const rooms = [...new Set(data.map((o: any) => o.room?.id).filter(Boolean))] as string[];
+          setAvailableRooms(rooms);
+        }
+      } catch (e) {
+        console.error('Failed to fetch orders:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-  const [orders, setOrders] = useState(mockOrders);
-
-  const filteredOrders = orders.filter(o => 
+  const filteredOrders = orders.filter(o =>
     (roomFilter === 'Tất cả' || o.room === roomFilter) &&
     (statusFilter === 'Tất cả' || o.status.includes(statusFilter))
   );
 
-  const handleComplete = (id: string) => {
-    setOrders(orders.map(o => o.id === id ? { ...o, status: '✅ Đã phục vụ', color: 'status-available' } : o));
+  const handleComplete = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/orders/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'SERVED' }),
+      });
+      if (res.ok) {
+        setOrders(orders.map(o => o.id === id ? { ...o, status: '✅ Đã phục vụ', color: 'status-available' } : o));
+      }
+    } catch (e) {
+      console.error('Failed to update order status:', e);
+    }
   };
+
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải danh sách order...</div>;
+  }
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <h1 className="font-h1 text-white">Quản lý order</h1>
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-5 border border-slate-700/50">
         <div className="relative min-w-[200px]">
-          <select 
+          <select
             value={roomFilter}
             onChange={(e) => setRoomFilter(e.target.value)}
             className="w-full appearance-none bg-none bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all cursor-pointer"
@@ -38,7 +106,7 @@ export default function OrderManagement() {
         </div>
 
         <div className="relative min-w-[200px]">
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full appearance-none bg-none bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all cursor-pointer"
@@ -52,7 +120,7 @@ export default function OrderManagement() {
         </div>
 
         <div className="relative min-w-[200px]">
-          <input 
+          <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
@@ -88,7 +156,7 @@ export default function OrderManagement() {
                 </td>
                 <td className="py-4 px-6">
                   {!o.status.includes('Đã') && (
-                    <button 
+                    <button
                       onClick={() => handleComplete(o.id)}
                       className="px-3 py-1.5 bg-status-available/10 text-status-available border border-status-available/20 rounded-lg font-label-caps hover:bg-status-available hover:text-white transition-colors"
                     >

@@ -62,10 +62,10 @@ const mappedRooms = data.map((r: any) => ({
 setRooms(mappedRooms);
 ```
 
-- **Dòng 32-36:** Fallback nếu API fail hoặc 403 → dùng mock data
+- **Dòng 32-36:** Nếu API fail → log lỗi, hiển thị danh sách rỗng
 ```typescript
-} else if (res.status === 403 || res.status === 401) {
-    generateMockRooms();
+} catch (e) {
+    console.error('Failed to fetch rooms:', e);
 }
 ```
 
@@ -236,14 +236,10 @@ Room create(Room room) {
 **Câu 1:** Trang `ReceptionDashboard` và `RoomManagement` đều hiển thị danh sách phòng, nhưng cách lấy dữ liệu khác nhau như thế nào? Tại sao lại có sự khác biệt này?
 
 **Đáp án chi tiết:**
-- `ReceptionDashboard.tsx` **dòng 15-19:** dùng `fetch('/api/rooms')` gọi API thật, có header Authorization
-- `RoomManagement.tsx` **dòng 2-5:**
-```tsx
-import { mockRooms } from '../data/mockData';
-const [roomList, setRoomList] = useState(mockRooms);
-```
-- Dữ liệu mock nằm tại `frontend/src/data/mockData.ts` **dòng 19-25**
-- Lý do: `ReceptionDashboard` là trang chính cần dữ liệu realtime, `RoomManagement` là trang quản lý đang trong quá trình phát triển, chưa kết nối API
+- `ReceptionDashboard.tsx` dùng `fetch('/api/rooms')` gọi API thật, có header Authorization
+- `RoomManagement.tsx` cũng dùng `fetch('/api/rooms')` để lấy danh sách phòng, và `POST/PUT/DELETE` cho các thao tác CRUD
+- Cả hai trang đều đã kết nối API, không còn dùng mock data
+- `mockData.ts` đã bị xóa khỏi dự án
 
 ---
 
