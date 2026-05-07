@@ -1,196 +1,109 @@
-# HƯỚNG DẪN TRUY CẬP REPO CHO LEARNER
-## Hệ thống Quản lý Quán Karaoke - Midnight Elegance
+# HƯỚNG DẪN HỌC CHO LEARNER
+## Hệ thống Quản lý Quán Karaoke - 8 ngày
 
 ---
 
-## 1. Clone dự án
+## Bạn là ai?
 
-```bash
-git clone https://github.com/thanhtrnnn/karaoke.git
-cd karaoke
-```
+| Họ tên | Module phụ trách | File bài tập |
+|--------|-----------------|-------------|
+| **Trung** | Xác thực (Authentication) | [Trung_XacThuc.md](Trung_XacThuc.md) |
+| **Tuấn** | Quản lý phòng & Đặt phòng | [Tuan_QuanLyPhong.md](Tuan_QuanLyPhong.md) |
+| **Khánh** | Gọi món (Order Service) | [Khanh_GoiMon.md](Khanh_GoiMon.md) |
+| **Hành** | Thanh toán & Báo cáo | [Hanh_ThanhToanBaoCao.md](Hanh_ThanhToanBaoCao.md) |
 
----
-
-## 2. Cấu hình máy tính
-
-### Yêu cầu cài đặt
-
-| Phần mềm | Phiên bản | Kiểm tra |
-|----------|-----------|----------|
-| Node.js | 18+ | `node --version` |
-| Java (JDK) | 17+ | `java --version` |
-| Maven | 3.9+ | `mvn --version` |
-| Docker (tùy chọn) | 24+ | `docker --version` |
-| IDE | VS Code + IntelliJ hoặc VS Code + Java Extension | - |
-
-### Nếu chưa có Java/Maven
-
-```bash
-# macOS (Homebrew)
-brew install openjdk@17
-brew install maven
-
-# Hoặc dùng Maven wrapper có sẵn trong dự án
-./backend/mvnw --version
-```
+**Xem tổng quan phân chia:** [BaiTap_4Learners.md](BaiTap_4Learners.md)
 
 ---
 
-## 3. Chạy dự án
+## Bạn cần làm gì?
 
-### Cách 1: Docker (đơn giản nhất)
+Mỗi file bài tập có **3 bài**, đánh số rõ ràng:
 
-```bash
-docker-compose up --build
-```
+### Bài 1 - Trace luồng dữ liệu
+> Hiểu code chạy từ đâu đến đâu
 
-- Frontend: `http://localhost:6969`
-- Backend: `http://localhost:8080`
+- Đọc danh sách file + dòng code được chỉ ra
+- Mở từng file trên IDE, tìm đúng dòng đó
+- Đọc và hiểu tại sao code lại viết như vậy
+- **Mục tiêu:** Trả lời được "Khi user nhấn nút X, code chạy qua những đâu?"
 
-### Cách 2: Chạy tách riêng (để debug)
+### Bài 2 - Sửa lỗi có chủ đích
+> QA đã giấu 1 lỗi trong code, bạn phải tìm và sửa
 
-**Terminal 1 - Backend:**
-```bash
-cd backend
-./mvnw spring-boot:run
-# Hoặc: mvn spring-boot:run
-```
+- QA sẽ tạo lỗi trước khi bạn bắt đầu
+- Chạy thử chức năng → thấy lỗi
+- Dùng DevTools / Debugger tìm nguyên nhân
+- Sửa code → chạy lại → hết lỗi
+- **Mục tiêu:** Tìm và sửa lỗi trong < 45 phút
 
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Bài 3 - Tinh chỉnh UI + Vấn đáp
+> Sửa giao diện nhỏ + trả lời câu hỏi chất vấn
 
-### Cách 3: Script tự động
-
-```bash
-./start.sh
-```
+- Sửa text/màu như hướng dẫn (chỉ 1-2 dòng code)
+- Trả lời 5 câu hỏi bằng cách CHỈ RA file + dòng code cụ thể
+- **Mục tiêu:** Trả lời đúng >= 3/5 câu
 
 ---
 
-## 4. Kiểm tra hoạt động
+## Lịch học 8 ngày
 
-| Service | URL | Mong đợi |
-|---------|-----|----------|
-| Frontend | http://localhost:6969 | Hiển thị trang đăng nhập |
-| Backend API | http://localhost:8080/api/health | `{"status":"UP"}` |
-| Swagger UI | http://localhost:8080/swagger-ui.html | Trang docs API |
-| H2 Console | http://localhost:8080/h2-console | Đăng nhập DB (JDBC: `jdbc:h2:mem:karaoke`, User: `sa`, Pass: trống) |
-
-### Đăng nhập thử
-
-- Username: `admin`
-- Password: `admin123`
-
----
-
-## 5. Cấu trúc thư mục quan trọng
-
-```
-karaoke/
-├── frontend/                    # React + TypeScript
-│   └── src/
-│       ├── pages/               # ← CÁC TRANG CHÍNH
-│       │   ├── LoginPage.tsx         # Trang đăng nhập
-│       │   ├── ReceptionDashboard.tsx # Dashboard chính
-│       │   ├── BookingPage.tsx       # Đặt phòng
-│       │   ├── OrderPage.tsx         # Gọi món
-│       │   ├── CheckoutPage.tsx      # Thanh toán
-│       │   ├── ReportsPage.tsx       # Báo cáo
-│       │   └── ...
-│       ├── components/          # Component tái sử dụng
-│       ├── layouts/             # Layout (AuthLayout, MainLayout)
-│       ├── data/mockData.ts     # Dữ liệu giả
-│       └── store/uiStore.ts     # Zustand state
-│
-├── backend/                     # Spring Boot
-│   └── src/main/java/com/karaoke/backend/
-│       ├── web/                 # ← CONTROLLER (nhận request)
-│       │   ├── AuthController.java
-│       │   ├── BookingController.java
-│       │   ├── OrderController.java
-│       │   ├── ReportController.java
-│       │   └── CrudControllers.java
-│       ├── domain/              # ← ENTITY (ánh xạ bảng DB)
-│       │   ├── UserAccount.java     → tblUser
-│       │   ├── Room.java            → tblRoom
-│       │   ├── Booking.java         → tblBooking
-│       │   ├── ServiceOrder.java    → tblOrder
-│       │   ├── MenuItem.java        → tblProduct
-│       │   ├── Invoice.java         → tblInvoice
-│       │   └── ...
-│       ├── repository/          # ← REPOSITORY (truy vấn DB)
-│       └── config/              # Cấu hình Security, CORS, DataSeeder
-│
-└── docs/                        # Tài liệu
-    └── baocao/                  # ← BÀI TẬP CỦA BẠN
-        ├── Trung_XacThuc.md
-        ├── Tuan_QuanLyPhong.md
-        ├── Khanh_GoiMon.md
-        ├── Hanh_ThanhToanBaoCao.md
-        └── BaiTap_4Learners.md
-```
+| Ngày | Nội dung | Bạn cần làm |
+|------|----------|-------------|
+| **1** | Đọc hiểu code | Đọc **Bài 1** trong file của bạn. Mở IDE, tìm từng file, từng dòng code được chỉ ra. Ghi chú những gì chưa hiểu. |
+| **2** | Đọc hiểu code (tiếp) | Trace lại flow bằng lời nói (không nhìn code). Hỏi QA những phần chưa hiểu. |
+| **3** | Sửa lỗi | QA tạo lỗi. Bạn mở chức năng → thấy lỗi → debug → sửa. Ghi lại quá trình debug. |
+| **4** | Sửa lỗi (tiếp) | Nếu chưa sửa xong → tiếp tục. Nếu xong → giải thích cho QA tại sao lỗi đó xảy ra. |
+| **5** | Sửa UI | Đọc **Bài 3**, sửa text/màu như hướng dẫn. Chạy thử xem giao diện thay đổi đúng chưa. |
+| **6** | Vấn đáp module | QA hỏi 5 câu trong **Bài 3**. Bạn trả lời bằng cách chỉ ra file + dòng code. Ôn lại câu sai. |
+| **7** | Vấn đáp liên module | QA hỏi câu hỏi chung (trong [BaiTap_4Learners.md](BaiTap_4Learners.md)). Ôn toàn bộ. |
+| **8** | Tổng duyệt | Thuyết trình 5 phút về module của bạn. Trả lời câu hỏi chất vấn ngẫu nhiên. |
 
 ---
 
-## 6. Tìm file bài tập của bạn
+## Khi gặp vấn đề
 
-| Bạn tên | File bài tập | Module |
-|---------|-------------|--------|
-| **Trung** | `docs/baocao/Trung_XacThuc.md` | Xác thực (Login, Register) |
-| **Tuấn** | `docs/baocao/Tuan_QuanLyPhong.md` | Quản lý phòng & Đặt phòng |
-| **Khánh** | `docs/baocao/Khanh_GoiMon.md` | Gọi món (Order) |
-| **Hành** | `docs/baocao/Hanh_ThanhToanBaoCao.md` | Thanh toán & Báo cáo |
-
-Đọc file `BaiTap_4Learners.md` để xem tổng quan phân chia.
-
----
-
-## 7. Workflow học mỗi ngày
-
-```
-Sáng:    QA giảng bài + hướng dẫn đọc code
-Trưa:    Learner tự đọc hiểu file trong bài tập
-Chiều:   Learner thực hành bài tập (trace / sửa lỗi / sửa UI)
-Cuối:    QA vấn đáp + feedback
-```
+| Tình huống | Giải quyết |
+|-----------|-----------|
+| Không chạy được dự án | Xem hướng dẫn setup trong [README.md](../../README.md) |
+| Không tìm thấy file | Xem bảng "File cần đọc" trong file bài tập của bạn |
+| Không hiểu code | Đọc comment trong code → hỏi QA → ghi chú lại |
+| Không biết debug | Xem phần "Công cụ hỗ trợ" bên dưới |
+| Lỗi không giống bài tập mô tả | Chụp screenshot Console/Network → hỏi QA |
 
 ---
 
-## 8. Công cụ hỗ trợ
+## Công cụ hỗ trợ
 
-### Swagger UI (test API trực tiếp)
-- Mở: `http://localhost:8080/swagger-ui.html`
+### Swagger UI - Test API trực tiếp
+- Mở: http://localhost:8080/swagger-ui.html
 - Chọn endpoint → "Try it out" → nhập body → "Execute"
-- Không cần token cho `/api/auth/**`
-- Cần token cho các endpoint khác: thêm header `Authorization: Bearer dev-token-USR001`
+- API auth (`/api/auth/**`) không cần token
+- API khác cần header: `Authorization: Bearer dev-token-USR001`
 
-### H2 Console (xem database trực tiếp)
-- Mở: `http://localhost:8080/h2-console`
+### H2 Console - Xem database
+- Mở: http://localhost:8080/h2-console
 - JDBC URL: `jdbc:h2:mem:karaoke`
-- User Name: `sa`
-- Password: (để trống)
-- Nhấn "Connect" → xem tất cả bảng
+- User: `sa`, Password: (trống)
+- Nhập SQL trực tiếp để query, ví dụ: `SELECT * FROM tblUser`
 
-### DevTools (debug frontend)
-- Chrome: F12 → tab Network (xem API call), tab Console (xem lỗi)
-- Đặt breakpoint trong Sources → tìm file `.tsx` → click dòng số
+### DevTools - Debug frontend
+- Chrome: **F12**
+- **tab Network:** Xem request/response API
+- **tab Console:** Xem lỗi JavaScript
+- **tab Sources:** Đặt breakpoint trong file `.tsx`
 
-### IntelliJ / VS Code (debug backend)
-- Đặt breakpoint trong file `.java` (click dòng số bên trái)
-- Run → Debug (Shift+F9 trong IntelliJ)
-- Khi breakpoint dừng: xem giá trị biến, step qua từng dòng
+### IDE - Debug backend
+- IntelliJ: Click dòng số bên trái → tạo breakpoint → Run > Debug
+- VS Code + Java Extension: Tương tự
+- Khi breakpoint dừng: hover chuột vào biến để xem giá trị
 
 ---
 
-## 9. Lưu ý quan trọng
+## Quy tắc
 
-- **KHÔNG** commit code khi chưa được QA đồng ý
-- **KHÔNG** sửa file ngoài module của mình
-- **NÊN** đọc kỹ file bài tập trước khi hỏi
-- **NÊN** ghi chú những gì chưa hiểu để hỏi QA
-- Khi gặp lỗi → chụp screenshot Console/Network trước khi hỏi
+- **Đọc kỹ** file bài tập trước khi hỏi QA
+- **Không sửa** file ngoài module của mình
+- **Không commit** khi chưa được QA đồng ý
+- **Ghi chú** những gì chưa hiểu để hỏi
+- Khi gặp lỗi → **chụp screenshot** trước khi hỏi
