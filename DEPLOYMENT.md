@@ -2,233 +2,288 @@
 
 ---
 
-## Yêu cầu hệ thống
+## Bước 1: Cài Docker Desktop (Windows)
 
-| Phần mềm | Phiên bản tối thiểu | Kiểm tra |
-|----------|---------------------|----------|
-| Docker | 24.0 | `docker --version` |
-| Docker Compose | 2.20 | `docker compose version` |
-| Git | 2.30 | `git --version` |
+### 1.1 Tải Docker Desktop
 
-> Nếu không dùng Docker, cần thêm: Node.js 18+, Java 17+, Maven 3.9+
+1. Truy cập: https://www.docker.com/products/docker-desktop/
+2. Click **"Download for Windows"** → chọn bản phù hợp:
+   - **Chip Intel/AMD:** tải bản `x86_64`
+   - **Chip ARM (Surface Pro X...):** tải bản `ARM64`
+3. Chạy file `.exe` vừa tải → làm theo wizard cài đặt
+4. **Quan trọng:** Khi hỏi "Use WSL 2 instead of Hyper-V" → **chọn WSL 2** (nhanh hơn)
+5. Restart máy sau khi cài xong
+
+### 1.2 Kích hoạt WSL 2 (nếu chưa có)
+
+Mở **PowerShell với quyền Administrator** (chuột phải → Run as Administrator):
+
+```powershell
+wsl --install
+```
+
+Restart máy. Sau đó mở Docker Desktop lên, đợi icon trên taskbar chuyển sang màu xanh lá.
+
+### 1.3 Kiểm tra Docker hoạt động
+
+Mở **PowerShell** (hoặc **Command Prompt**), gõ:
+
+```powershell
+docker --version
+# Mong đợi: Docker version 24.x.x hoặc cao hơn
+
+docker compose version
+# Mong đợi: Docker Compose version v2.x.x hoặc cao hơn
+```
+
+Nếu cả 2 lệnh đều chạy được → Docker đã sẵn sàng.
+
+### 1.4 Cài Git (nếu chưa có)
+
+1. Tải: https://git-scm.com/download/win
+2. Chạy installer → giữ nguyên mặc định → Next cho đến khi xong
+3. Kiểm tra:
+
+```powershell
+git --version
+# Mong đợi: git version 2.x.x
+```
 
 ---
 
-## Cách 1: Docker Compose (Khuyến nghị)
+## Bước 2: Clone dự án
 
-### Bước 1: Clone dự án
+Mở **PowerShell** hoặc **Command Prompt**:
 
-```bash
+```powershell
+# Chọn nơi muốn lưu dự án (ví dụ Desktop)
+cd Desktop
+
+# Clone
 git clone https://github.com/thanhtrnnn/karaoke.git
+
+# Vào thư mục dự án
 cd karaoke
 ```
 
-### Bước 2: Tạo file .env (tùy chọn)
+---
 
-```bash
-cp .env.example .env
+## Bước 3: Checkout nhánh bài tập
+
+```powershell
+# Trung - Xác thực:
+git checkout bai-tap/trung-xac-thuc
+
+# Tuấn - Quản lý phòng:
+git checkout bai-tap/tuan-quan-ly-phong
+
+# Khánh - Gọi món:
+git checkout bai-tap/khanh-goi-mon
+
+# Hành - Thanh toán & Báo cáo:
+git checkout bai-tap/hanh-thanh-toan-bao-cao
 ```
 
-Nội dung `.env` (giá trị mặc định hoạt động được):
+Kiểm tra đã ở đúng nhánh chưa:
 
-```
-POSTGRES_DB=karaoke
-POSTGRES_USER=karaoke_admin
-POSTGRES_PASSWORD=Secur3Passw0rd!
-```
-
-### Bước 3: Chạy
-
-```bash
-# Cách nhanh
-./start.sh
-
-# Hoặc chạy trực tiếp
-docker compose up -d --build
-```
-
-Lần đầu build mất 3-5 phút (tải dependency). Các lần sau chỉ mất 30 giây.
-
-### Bước 4: Kiểm tra
-
-| Service | URL | Mong đợi |
-|---------|-----|----------|
-| Frontend | http://localhost:6969 | Trang đăng nhập |
-| Backend API | http://localhost:8080/api/health | `{"status":"UP"}` |
-| Swagger UI | http://localhost:8080/swagger-ui.html | Docs API |
-
-Đăng nhập: `admin` / `admin123`
-
-### Bước 5: Dừng
-
-```bash
-docker compose down           # Dừng container, giữ data
-docker compose down -v        # Dừng container, XÓA data (reset)
+```powershell
+git branch
+# Dòng có * là nhánh hiện tại
 ```
 
 ---
 
-## Cách 2: Chạy tách riêng (để debug)
+## Bước 4: Chạy dự án
 
-### Backend
-
-```bash
-cd backend
-
-# Lần đầu: build
-./mvnw clean package -DskipTests
-
-# Chạy với profile H2 (không cần PostgreSQL)
-java -jar target/*.jar
-
-# Hoặc dùng Maven trực tiếp
-./mvnw spring-boot:run
+```powershell
+docker compose up -d --build
 ```
 
-Backend chạy tại http://localhost:8080, dùng database H2 in-memory.
+Lần đầu build mất **3-5 phút** (tải Docker images và dependency). Các lần sau chỉ mất 30 giây.
 
-### Frontend
+Đợi build xong, kiểm tra 5 container đều chạy:
 
-```bash
-cd frontend
-npm install
-npm run dev
+```powershell
+docker compose ps
 ```
 
-Frontend chạy tại http://localhost:6969, tự proxy `/api` sang backend qua Vite config.
+Phải thấy 5 service đều `Up` hoặc `healthy`:
+
+| SERVICE | STATUS |
+|---------|--------|
+| karaoke-postgres | Up (healthy) |
+| karaoke-redis | Up (healthy) |
+| karaoke-backend | Up |
+| karaoke-frontend | Up |
+| karaoke-pgadmin | Up |
+
+---
+
+## Bước 5: Kiểm tra hoạt động
+
+| Service | URL | Mong đợi |
+|---------|-----|----------|
+| Frontend | http://localhost:6969 | Trang đăng nhập Famtaoke |
+| Backend API | http://localhost:8080/api/health | `{"status":"UP"}` |
+| Swagger UI | http://localhost:8080/swagger-ui.html | Danh sách API |
+| **pgAdmin** | http://localhost:5050 | Trang đăng nhập pgAdmin |
+
+### Đăng nhập hệ thống
+
+- Username: `admin`
+- Password: `admin123`
+
+### Đăng nhập pgAdmin
+
+1. Mở http://localhost:5050
+2. Email: `admin@karaoke.local`
+3. Password: `admin123`
+4. Click **"Add New Server"** (hoặc Object → Register → Server)
+5. Tab **General**: Name = `Karaoke DB`
+6. Tab **Connection**:
+   - Host: `postgres` (tên container, KHÔNG phải localhost)
+   - Port: `5432`
+   - Database: `karaoke`
+   - Username: `karaoke_admin`
+   - Password: `Secur3Passw0rd!`
+7. Click **Save** → bên trái hiện server → expand để xem bảng
+
+### Xem dữ liệu trong pgAdmin
+
+1. Expand **Servers** → **Karaoke DB** → **Databases** → **karaoke** → **Schemas** → **public** → **Tables**
+2. Chuột phải vào bảng (ví dụ `tbl_user`) → **View/Edit Data** → **All Rows**
+3. Thấy dữ liệu mẫu do DataSeeder tạo
+
+---
+
+## Bước 6: Dừng và khởi động lại
+
+```powershell
+# Dừng (giữ data)
+docker compose down
+
+# Dừng + xóa data (reset về ban đầu)
+docker compose down -v
+
+# Khởi động lại
+docker compose up -d
+
+# Xem log realtime
+docker compose logs -f
+
+# Xem log riêng backend
+docker compose logs -f backend
+```
 
 ---
 
 ## Kiến trúc Docker
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  docker-compose                  │
-│                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
-│  │ frontend │  │ backend  │  │   postgres    │  │
-│  │ nginx    │→ │ spring   │→ │   16          │  │
-│  │ :6969    │  │ boot     │  │   :5432       │  │
-│  │          │  │ :8080    │  │               │  │
-│  └──────────┘  └──────────┘  └───────────────┘  │
-│                       │                          │
-│                ┌──────────┐                      │
-│                │  redis   │                      │
-│                │  :6379   │                      │
-│                └──────────┘                      │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│                    Docker Compose                    │
+│                                                      │
+│  ┌───────────┐  ┌───────────┐  ┌─────────────────┐  │
+│  │ frontend  │  │  backend  │  │    postgres     │  │
+│  │ nginx     │→ │ spring    │→ │    16           │  │
+│  │ :6969     │  │ boot      │  │    :5432        │  │
+│  │           │  │ :8080     │  │                 │  │
+│  └───────────┘  └───────────┘  └─────────────────┘  │
+│                       │              ↑               │
+│                ┌───────────┐  ┌─────────────────┐    │
+│                │   redis   │  │    pgadmin      │    │
+│                │   :6379   │  │    :5050        │    │
+│                └───────────┘  └─────────────────┘    │
+└─────────────────────────────────────────────────────┘
 ```
 
-### Mô tả từng service
-
-| Service | Image | Port | Vai trò |
-|---------|-------|------|---------|
-| `frontend` | nginx:alpine | 6969→80 | Serve SPA React, proxy API sang backend |
-| `backend` | eclipse-temurin:17 | 8080 | Spring Boot REST API |
-| `postgres` | postgres:16 | 5432 | Database chính |
-| `redis` | redis:7 | 6379 | Cache (chưa dùng nhiều) |
-
-### Volume
-
-| Volume | Mô tả |
-|--------|-------|
-| `karaoke-postgres-data` | Data PostgreSQL, persist giữa các lần restart |
-
-### Network
-
-Tất cả service chung 1 Docker network. Frontend gọi backend qua hostname `karaoke-backend` (xem `frontend/nginx.conf` dòng 13).
+| Service | Image | Port ngoài → trong | Vai trò |
+|---------|-------|-------------------|---------|
+| frontend | nginx:alpine | 6969 → 80 | Serve React SPA, proxy API |
+| backend | eclipse-temurin:17 | 8080 → 8080 | Spring Boot REST API |
+| postgres | postgres:16 | 5432 → 5432 | Database |
+| redis | redis:7 | 6379 → 6379 | Cache |
+| pgadmin | dpage/pgadmin4 | 5050 → 80 | Giao diện quản lý database |
 
 ---
 
-## Xem logs
+## Xử lý lỗi thường gặp (Windows)
 
-```bash
-# Tất cả service
-docker compose logs -f
+### "docker: command not found"
 
-# Chỉ backend
-docker compose logs -f backend
+→ Docker Desktop chưa cài hoặc chưa khởi động. Mở Docker Desktop lên, đợi icon taskbar chuyển xanh.
 
-# Chỉ frontend
-docker compose logs -f frontend
+### "error during connect: open //./pipe/dockerDesktopLinuxEngine"
 
-# Chỉ database
-docker compose logs -f postgres
+→ Docker Desktop chưa chạy hoàn toàn. Đợi 30 giây, thử lại.
+
+### "port is already allocated"
+
+```powershell
+# Tìm process đang chiếm port
+netstat -ano | findstr :8080
+
+# Kill process (thay PID bằng số tìm được)
+taskkill /PID <PID> /F
 ```
+
+Hoặc đổi port trong `docker-compose.yml`.
+
+### Build bị stuck ở "Downloading..."
+
+→ Mạng chậm. Thử đổi DNS sang Google DNS:
+1. Settings → Network → Ethernet → Edit DNS
+2. Đặt: `8.8.8.8` và `8.8.4.4`
+3. Restart Docker Desktop
+
+### "no space left on device"
+
+→ Docker hết dung lượng. Mở Docker Desktop → Settings → Resources → tăng Disk image size lên 60GB+. Hoặc:
+
+```powershell
+docker system prune -a --volumes
+```
+
+### Frontend trắng / không load
+
+```powershell
+# Kiểm tra frontend container có chạy không
+docker compose ps frontend
+
+# Xem log frontend
+docker compose logs frontend
+
+# Nếu lỗi nginx, kiểm tra backend có sẵn sàng không
+curl http://localhost:8080/api/health
+```
+
+### pgAdmin không kết nối được database
+
+→ Đảm bảo nhập Host là `postgres` (tên container), KHÔNG phải `localhost`. Vì pgAdmin chạy trong Docker network, nó gọi tên container.
 
 ---
 
-## Truy cập database trực tiếp
+## Chạy không dùng Docker (dev mode)
 
-### Qua H2 Console (chế độ dev, không dùng Docker)
+Nếu muốn chạy từng phần riêng để debug:
 
-- Mở: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:karaoke`
-- User: `sa`
-- Password: (trống)
+### Backend
 
-### Qua psql (Docker)
-
-```bash
-docker compose exec postgres psql -U karaoke_admin -d karaoke
-
-# Ví dụ query
-SELECT * FROM tbl_user;
-SELECT * FROM tbl_room;
-SELECT * FROM tbl_order;
-\q  # thoát
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
 ```
 
----
+Backend chạy tại http://localhost:8080 với H2 in-memory database.
 
-## Reset hoàn toàn
+### Frontend
 
-```bash
-# Dừng và xóa tất cả (container, volume, image)
-docker compose down -v --rmi all
-
-# Build lại từ đầu
-docker compose up -d --build
+```powershell
+cd frontend
+npm install
+npm run dev
 ```
 
----
+Frontend chạy tại http://localhost:6969, Vite tự proxy `/api` sang backend.
 
-## Xử lý lỗi thường gặp
-
-### Port đã bị chiếm
-
-```
-Error: Bind for 0.0.0.0:8080 failed: port is already allocated
-```
-
-Giải pháp: Tắt process đang dùng port, hoặc đổi port trong `docker-compose.yml`:
-```yaml
-ports:
-  - "8081:8080"  # đổi 8080 thành 8081
-```
-
-### Build chậm
-
-Lần đầu build tải nhiều dependency. Các lần sau dùng Docker cache nên nhanh hơn. Nếu muốn nhanh hơn nữa:
-
-```bash
-docker compose build --parallel
-```
-
-### Database không khởi động được
-
-```bash
-# Kiểm tra status
-docker compose ps
-
-# Nếu postgres unhealthy, xóa volume và restart
-docker compose down -v
-docker compose up -d --build
-```
-
-### Frontend không kết nối được backend
-
-Kiểm tra:
-1. Backend có chạy không? `curl http://localhost:8080/api/health`
-2. Nếu dùng Docker: nginx proxy qua `karaoke-backend:8080` (xem `frontend/nginx.conf`)
-3. Nếu dùng dev mode: Vite proxy qua `localhost:8080` (xem `frontend/vite.config.ts`)
+> Lưu ý: dev mode dùng H2 database, không có data từ PostgreSQL. DataSeeder sẽ tự tạo dữ liệu mẫu.
