@@ -267,7 +267,7 @@ export default function TopAppBar() {
                   Cài đặt
                 </button>
                 <div className="h-px bg-slate-700/50 my-2"></div>
-                <button onClick={() => window.location.href = '/login'} className="w-full text-left px-4 py-2 text-status-occupied hover:bg-status-occupied/10 transition-colors flex items-center gap-3 focus:outline-none focus:bg-status-occupied/10">
+                <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href = '/login'; }} className="w-full text-left px-4 py-2 text-status-occupied hover:bg-status-occupied/10 transition-colors flex items-center gap-3 focus:outline-none focus:bg-status-occupied/10">
                   <span className="material-symbols-outlined text-[18px]">logout</span>
                   Đăng xuất
                 </button>

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ReceptionDashboard from './pages/ReceptionDashboard';
@@ -54,6 +55,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
+        {/* Protected routes — require login */}
+        <Route element={<ProtectedRoute />}>
         {/* Main app routes (with sidebar) */}
         <Route element={<MainLayout />}>
           {/* Dashboard */}
@@ -95,6 +98,7 @@ function App() {
 
           {/* Fallback 404 Route */}
           <Route path="*" element={<NotFound />} />
+        </Route>
         </Route>
       </Routes>
     </Router>
