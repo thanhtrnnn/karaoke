@@ -1,45 +1,115 @@
-import { useState } from 'react';
-import { mockCustomers, type Customer } from '../data/mockData';
+import { useState, useEffect } from 'react';
+
+interface Customer {
+  id: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  phone: string;
+  tier: string;
+  points: number;
+}
 
 export default function CustomerPage() {
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(mockCustomers[0] || null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ fullName: '', phone: '', salutation: 'Anh' });
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/customers', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((c: any) => ({
+            id: c.id,
+            salutation: c.salutation || '',
+            firstName: c.firstName || '',
+            lastName: c.lastName || '',
+            fullName: c.fullName || `${c.firstName} ${c.lastName}`,
+            phone: c.phone,
+            tier: c.tier || 'Đồng',
+            points: c.points || 0,
+          }));
+          setCustomers(mapped);
+          if (mapped.length > 0) setSelectedCustomer(mapped[0]);
+        }
+      } catch (e) {
+        console.error('Failed to fetch customers:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   const filteredCustomers = customers.filter(c => {
     const q = searchQuery.toLowerCase();
     return c.fullName.toLowerCase().includes(q) || c.phone.includes(q);
   });
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     if (!formData.fullName || !formData.phone) {
       alert("Vui lòng nhập đầy đủ Họ tên và SĐT!");
       return;
     }
-    const newCustomer: Customer = {
-      id: `KH${(customers.length + 1).toString().padStart(3, '0')}`,
-      salutation: formData.salutation,
-      firstName: formData.fullName.split(' ').pop() || '',
-      lastName: formData.fullName.split(' ').slice(0, -1).join(' '),
-      fullName: formData.fullName,
-      phone: formData.phone,
-      tier: 'Đồng',
-      points: 0
-    };
-    setCustomers([...customers, newCustomer]);
-    setIsModalOpen(false);
-    setFormData({ fullName: '', phone: '', salutation: 'Anh' });
+
+    const nameParts = formData.fullName.trim().split(' ');
+    const firstName = nameParts.pop() || '';
+    const lastName = nameParts.join(' ');
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          salutation: formData.salutation,
+          firstName,
+          lastName,
+          fullName: formData.fullName,
+          phone: formData.phone,
+          tier: 'Đồng',
+          points: 0,
+        }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        const newCustomer: Customer = {
+          id: created.id,
+          salutation: created.salutation || formData.salutation,
+          firstName: created.firstName || firstName,
+          lastName: created.lastName || lastName,
+          fullName: created.fullName || formData.fullName,
+          phone: created.phone,
+          tier: created.tier || 'Đồng',
+          points: created.points || 0,
+        };
+        setCustomers([...customers, newCustomer]);
+        setIsModalOpen(false);
+        setFormData({ fullName: '', phone: '', salutation: 'Anh' });
+      }
+    } catch (e) {
+      console.error('Failed to add customer:', e);
+    }
   };
 
-
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải danh sách khách hàng...</div>;
+  }
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="font-h1 text-white">Quản lý khách hàng</h1>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-6 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
         >
@@ -49,14 +119,14 @@ export default function CustomerPage() {
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-5 border border-slate-700/50">
         <div className="relative flex-1 min-w-[250px] max-w-[30rem]">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
-          <input 
-            className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-11 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all placeholder:text-slate-500" 
-            placeholder="Tìm kiếm SĐT / Tên khách hàng..." 
+          <input
+            className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-11 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all placeholder:text-slate-500"
+            placeholder="Tìm kiếm SĐT / Tên khách hàng..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
             >
@@ -95,11 +165,11 @@ export default function CustomerPage() {
                 </td>
                 <td className="py-4 px-6 text-primary-container">{c.points.toLocaleString()}</td>
                 <td className="py-4 px-6">
-                  <button 
+                  <button
                     onClick={() => setSelectedCustomer(c)}
                     className={`px-3 py-1.5 border rounded-lg transition-colors font-label-caps ${selectedCustomer?.id === c.id ? 'bg-primary-container/20 border-primary-container text-primary-container' : 'bg-surface-secondary border-border-subtle text-slate-300 hover:border-primary-container hover:text-primary-container'}`}
                   >
-                    👁 Xem
+                    Xem
                   </button>
                 </td>
               </tr>
@@ -107,7 +177,6 @@ export default function CustomerPage() {
           </tbody>
         </table>
       </div>
-      {/* Customer Detail */}
       {selectedCustomer && (
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
           <h2 className="font-h2 text-white mb-4">Chi tiết khách hàng {selectedCustomer.id}</h2>
@@ -121,35 +190,13 @@ export default function CustomerPage() {
               <p className="text-white font-body-md">{selectedCustomer.phone}</p>
             </div>
             <div>
-              <p className="font-label-caps text-slate-400 uppercase mb-1">Email</p>
-              <p className="text-white font-body-md">chưa cập nhật</p>
-            </div>
-            <div>
               <p className="font-label-caps text-slate-400 uppercase mb-1">Hạng</p>
               <p className="text-primary-container font-body-md font-semibold">{selectedCustomer.tier} ({selectedCustomer.points.toLocaleString()} điểm)</p>
             </div>
           </div>
-          <h3 className="font-label-caps text-slate-400 uppercase mb-3">Lịch sử sử dụng (Gần đây)</h3>
-          <table className="w-full text-left whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-slate-700/50 text-slate-400 font-label-caps">
-                <th className="py-3 px-4">Ngày</th>
-                <th className="py-3 px-4">Phòng</th>
-                <th className="py-3 px-4">Thời gian</th>
-                <th className="py-3 px-4">Tổng tiền</th>
-              </tr>
-            </thead>
-            <tbody className="font-body-md divide-y divide-slate-800/50">
-              <tr><td className="py-3 px-4">04/05/2026</td><td className="py-3 px-4">P01</td><td className="py-3 px-4">3h 23p</td><td className="py-3 px-4 text-primary-container">947,500đ</td></tr>
-              {selectedCustomer.points > 500 && (
-                <tr><td className="py-3 px-4">28/04/2026</td><td className="py-3 px-4">P05</td><td className="py-3 px-4">2h 00p</td><td className="py-3 px-4 text-primary-container">350,000đ</td></tr>
-              )}
-            </tbody>
-          </table>
         </div>
       )}
 
-      {/* Add Customer Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface-container border border-slate-700/50 rounded-2xl w-full max-w-md p-6 shadow-2xl">
@@ -162,7 +209,7 @@ export default function CustomerPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Danh xưng</label>
-                <select 
+                <select
                   value={formData.salutation}
                   onChange={e => setFormData({...formData, salutation: e.target.value})}
                   className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
@@ -175,31 +222,31 @@ export default function CustomerPage() {
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Họ & Tên</label>
-                <input 
+                <input
                   value={formData.fullName}
                   onChange={e => setFormData({...formData, fullName: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: Nguyễn Văn A"
                 />
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Số điện thoại</label>
-                <input 
+                <input
                   value={formData.phone}
                   onChange={e => setFormData({...formData, phone: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: 0901234567"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="px-6 py-2.5 border border-slate-700/50 text-slate-300 rounded-lg font-body-md hover:bg-surface-secondary transition-colors"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={handleAddCustomer}
                 className="px-6 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
               >

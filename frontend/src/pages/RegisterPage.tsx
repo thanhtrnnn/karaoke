@@ -6,9 +6,9 @@ export default function RegisterPage() {
       {/* Left Side: Image / Branding */}
       <div className="hidden md:flex md:w-1/2 relative bg-surface-primary overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-bg-base via-bg-base/50 to-transparent z-10"></div>
-        <img alt="Midnight Elegance Lounge" className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-luminosity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzkDgumNEBJkgViLuKxs_3vwoiG2fciD6NaXLgbB5WlcywiXCOUJMld58tmxN9je7RQ7v71GwNu0TL2HAXgWLytVOyrBjtwTu_F-dETDKMoEvyKencqUepaUMYxMG2PPDAP7OY_EVEp1rqojJAReAmVGLra9UATghv3L92qb5ntGpk6-8_5yUXgApHnNnhG1VVPEjOEg0a4GNxxEl_N38kWTAJlZVMA1elYe7NCJLtZe0Xl0pZExW3td4zKXk-yXggcUGqwlcszA" />
+        <img alt="Famtaoke Lounge" className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-luminosity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzkDgumNEBJkgViLuKxs_3vwoiG2fciD6NaXLgbB5WlcywiXCOUJMld58tmxN9je7RQ7v71GwNu0TL2HAXgWLytVOyrBjtwTu_F-dETDKMoEvyKencqUepaUMYxMG2PPDAP7OY_EVEp1rqojJAReAmVGLra9UATghv3L92qb5ntGpk6-8_5yUXgApHnNnhG1VVPEjOEg0a4GNxxEl_N38kWTAJlZVMA1elYe7NCJLtZe0Xl0pZExW3td4zKXk-yXggcUGqwlcszA" />
         <div className="absolute bottom-16 left-16 z-20 max-w-md">
-          <h1 className="font-h1 text-h1 text-primary mb-4 tracking-tight">Midnight Elegance</h1>
+          <h1 className="font-h1 text-h1 text-primary mb-4 tracking-tight">Famtaoke</h1>
           <p className="font-body-lg text-body-lg text-text-secondary">Trải nghiệm dịch vụ giải trí đẳng cấp với hệ thống quản lý chuyên nghiệp, tinh tế đến từng chi tiết.</p>
         </div>
       </div>

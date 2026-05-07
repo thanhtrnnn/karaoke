@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { mockCustomers } from '../data/mockData';
 
 export default function ReceptionDashboard() {
   const [filter, setFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [rooms, setRooms] = useState<any[]>([]);
 
@@ -29,36 +29,12 @@ export default function ReceptionDashboard() {
             guests: r.capacity || 2
           }));
           setRooms(mappedRooms);
-        } else if (res.status === 403 || res.status === 401) {
-          // Fallback to mock data if not authenticated for demo purposes
-          generateMockRooms();
         }
       } catch (e) {
-        generateMockRooms();
+        console.error('Failed to fetch rooms:', e);
+      } finally {
+        setLoading(false);
       }
-    };
-
-    const generateMockRooms = () => {
-      const list = [];
-      let occupiedCount = 0;
-      let cleaningCount = 0;
-      for (let i = 1; i <= 24; i++) {
-        let status = 'available';
-        if (occupiedCount < 8) { status = 'occupied'; occupiedCount++; }
-        else if (cleaningCount < 4) { status = 'cleaning'; cleaningCount++; }
-        
-        const isVip = i % 5 === 0;
-        list.push({
-          id: `R${i.toString().padStart(3, '0')}`,
-          name: isVip ? `VIP ${i}` : `Phòng 1${i.toString().padStart(2, '0')}`,
-          type: isVip ? 'VIP' : 'Standard',
-          status: status,
-          time: status === 'occupied' ? `0${(i % 3) + 1}:${(i * 7) % 60}:${(i * 13) % 60}` : '',
-          customer: status === 'occupied' ? mockCustomers[i % mockCustomers.length] : null,
-          guests: (i % 8) + 2
-        });
-      }
-      setRooms(list);
     };
 
     fetchRooms();
@@ -72,8 +48,8 @@ export default function ReceptionDashboard() {
   };
 
   const getBtnClass = (val: string, baseClass: string, activeClass: string, hoverClass: string) => {
-    return filter === val 
-      ? `${baseClass} ${activeClass}` 
+    return filter === val
+      ? `${baseClass} ${activeClass}`
       : `${baseClass} border-slate-700/50 ${hoverClass}`;
   };
 
@@ -84,32 +60,36 @@ export default function ReceptionDashboard() {
       return b.name.localeCompare(a.name);
     });
 
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải danh sách phòng...</div>;
+  }
+
   return (
     <div className="p-8 flex-1 max-w-[1600px] mx-auto w-full space-y-6">
       {/* Filters & Actions Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
         <div className="flex flex-wrap items-center gap-3">
-          <button 
+          <button
             onClick={() => setFilter('all')}
             className={getBtnClass('all', 'px-4 py-2 rounded-lg font-body-md transition-colors border', 'bg-primary-container/10 border-primary-container text-primary-container font-medium', 'hover:border-slate-500 text-slate-400')}
           >
             Tất cả ({counts.all})
           </button>
-          <button 
+          <button
             onClick={() => setFilter('available')}
             className={getBtnClass('available', 'px-4 py-2 rounded-lg font-body-md transition-colors border flex items-center gap-2', 'bg-status-available/10 border-status-available text-status-available font-medium', 'hover:border-status-available hover:text-status-available text-slate-400')}
           >
             <span className="w-2 h-2 rounded-full bg-status-available"></span>
             Trống ({counts.available})
           </button>
-          <button 
+          <button
             onClick={() => setFilter('occupied')}
             className={getBtnClass('occupied', 'px-4 py-2 rounded-lg font-body-md transition-colors border flex items-center gap-2', 'bg-status-occupied/10 border-status-occupied text-status-occupied font-medium', 'hover:border-status-occupied hover:text-status-occupied text-slate-400')}
           >
             <span className="w-2 h-2 rounded-full bg-status-occupied animate-pulse"></span>
             Đang hát ({counts.occupied})
           </button>
-          <button 
+          <button
             onClick={() => setFilter('cleaning')}
             className={getBtnClass('cleaning', 'px-4 py-2 rounded-lg font-body-md transition-colors border flex items-center gap-2', 'bg-status-cleaning/10 border-status-cleaning text-status-cleaning font-medium', 'hover:border-status-cleaning hover:text-status-cleaning text-slate-400')}
           >
@@ -118,7 +98,7 @@ export default function ReceptionDashboard() {
           </button>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <button 
+          <button
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-slate-700/50 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors"
           >
@@ -127,7 +107,7 @@ export default function ReceptionDashboard() {
             </span>
             <span className="font-body-md">Sắp xếp {sortOrder === 'asc' ? '(Tăng)' : '(Giảm)'}</span>
           </button>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary-fixed-dim transition-colors shadow-sm"
           >
@@ -166,7 +146,7 @@ export default function ReceptionDashboard() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex-1 flex flex-col justify-center items-center py-2">
                 {room.status === 'occupied' && room.customer ? (
                   <>
@@ -183,16 +163,16 @@ export default function ReceptionDashboard() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 opacity-50">
                     <span className="material-symbols-outlined text-[40px] text-slate-400">cleaning_services</span>
-                    <span className="font-body-md text-slate-400">NV: Hoàng Anh</span>
+                    <span className="font-body-md text-slate-400">Đang dọn dẹp</span>
                   </div>
                 )}
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             {room.status === 'occupied' && (
               <div className="w-full h-1 bg-slate-800 relative z-10">
-                <div className="h-full bg-status-occupied" style={{ width: `${Math.random() * 50 + 20}%` }}></div>
+                <div className="h-full bg-status-occupied" style={{ width: '65%' }}></div>
               </div>
             )}
             {room.status === 'cleaning' && (
@@ -247,13 +227,13 @@ export default function ReceptionDashboard() {
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-6">
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={() => { setIsModalOpen(false); alert('Đã thêm khách mới!'); }}
                 className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-semibold hover:bg-primary-fixed-dim transition-colors"
               >
