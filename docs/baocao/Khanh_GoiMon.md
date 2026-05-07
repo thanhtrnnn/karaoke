@@ -10,18 +10,30 @@
 
 ## Bài 1 - Trace luồng dữ liệu: Tạo order gọi món qua API
 
-**Yêu cầu:** Trace từ lúc người dùng chọn món và nhấn "Gửi order" đến khi dữ liệu được lưu vào CSDL. Lưu ý: trang `OrderPage` hiện tại dùng mock data, nhưng backend đã có API hoàn chỉnh.
+**Yêu cầu:** Trace từ lúc người dùng chọn món và nhấn "Gửi order" đến khi dữ liệu được lưu vào CSDL. Trang `OrderPage` đã kết nối API `/api/menu-items` để lấy danh sách món.
 
 ### Bước 1: File UI React - giao diện gọi món
 
 **File:** `frontend/src/pages/OrderPage.tsx`
 
-- **Dòng 2:** Import dữ liệu mock
+- **Dòng 13-27:** Fetch menu items từ API khi component mount
 ```tsx
-import { mockMenu } from '../data/mockData';
+useEffect(() => {
+    const fetchMenu = async () => {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/menu-items', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            setMenuItems(data.map((item: any) => ({...})));
+        }
+    };
+    fetchMenu();
+}, []);
 ```
 
-- **Dòng 16-25:** State giỏ hàng và hàm thêm vào cart
+- **Dòng 47-56:** State giỏ hàng và hàm thêm vào cart
 ```tsx
 const [cart, setCart] = useState<any[]>([]);
 
@@ -350,20 +362,14 @@ if (menuItem.getStock() > itemRequest.quantity()) {
 
 ---
 
-**Câu 1:** Trang `OrderPage` hiện tại lấy dữ liệu menu từ đâu? Dữ liệu mock nằm ở file nào? Khi nào cần kết nối API backend?
+**Câu 1:** Trang `OrderPage` hiện tại lấy dữ liệu menu từ đâu?
 
 **Đáp án chi tiết:**
-- `OrderPage.tsx` **dòng 2:** `import { mockMenu } from '../data/mockData'`
-- `mockData.ts` **dòng 27-38:** Mảng `mockMenu` gồm 10 sản phẩm:
-```typescript
-export const mockMenu = [
-    { id: 'SP001', name: 'Bia Tiger', cat: 'Đồ uống', price: 30000, stock: 45, ... },
-    { id: 'SP002', name: 'Bia Heineken', cat: 'Đồ uống', price: 35000, stock: 32, ... },
-    // ... tổng cộng 10 món
-];
-```
-- Backend đã có `GET /api/menu-items` (`MenuItemController.java` dòng 260-278) trả dữ liệu thật
-- Cần kết nối API khi muốn dữ liệu đồng bộ với database (tồn kho thay đổi realtime sau mỗi order)
+- `OrderPage.tsx` dùng `useEffect` để gọi `GET /api/menu-items` khi component mount
+- Response từ backend được map từ `category` → `cat`, `price` → number, `stock` → number
+- Token được lấy từ `localStorage.getItem('token')` và gửi qua header `Authorization: Bearer`
+- Nếu API fail, trang hiển thị danh sách rỗng (không còn fallback mock data)
+- `mockData.ts` đã bị xóa khỏi dự án
 
 ---
 
@@ -411,16 +417,16 @@ private ServiceOrder order;
 
 **Đáp án chi tiết:**
 - **`OrderPage.tsx`** (trang GỌI MÓN cho khách/nhân viên):
-  - Hiển thị danh sách sản phẩm từ `mockMenu` (dòng 10)
-  - Cho phép tìm kiếm (dòng 5), lọc theo category (dòng 64-73)
-  - Có giỏ hàng (dòng 102-138), nút thêm/xóa/sửa số lượng
+  - Hiển thị danh sách sản phẩm từ API `GET /api/menu-items`
+  - Cho phép tìm kiếm, lọc theo category
+  - Có giỏ hàng, nút thêm/xóa/sửa số lượng
   - Nút "Gửi order" tạo order mới
 
 - **`OrderManagement.tsx`** (trang QUẢN LÝ cho bếp/bar):
-  - Hiển thị danh sách order đã tạo từ `mockOrders` (dòng 11)
-  - Lọc theo phòng (dòng 9), trạng thái (dòng 40-50), ngày (dòng 54-60)
-  - Có nút "Xong" (dòng 92-97) để đánh dấu hoàn thành: `handleComplete` đổi status thành "Đã phục vụ"
-  - Hiển thị luồng: Chờ xử lý → Đang làm → Đã phục vụ (dòng 104)
+  - Hiển thị danh sách order từ API `GET /api/orders`
+  - Lọc theo phòng, trạng thái, ngày
+  - Có nút "Xong" để đánh dấu hoàn thành: gọi `PUT /api/orders/{id}/status` với status `SERVED`
+  - Hiển thị luồng: Chờ xử lý → Đang làm → Đã phục vụ
 
 ---
 

@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
-import { mockCustomers } from '../data/mockData';
+
+interface Customer {
+  id: string;
+  salutation: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  phone: string;
+  tier: string;
+}
 
 export default function TopAppBar() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
@@ -13,15 +22,41 @@ export default function TopAppBar() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [customers, setCustomers] = useState<Customer[]>([]);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Update time every minute to check if shift changed
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/customers', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCustomers(data.map((c: any) => ({
+            id: c.id,
+            salutation: c.salutation || '',
+            firstName: c.firstName || '',
+            lastName: c.lastName || '',
+            fullName: c.fullName || `${c.firstName} ${c.lastName}`,
+            phone: c.phone,
+            tier: c.tier || 'Đồng',
+          })));
+        }
+      } catch (e) {
+        // Silently fail - search will just show no results
+      }
+    };
+    fetchCustomers();
   }, []);
 
   const getShiftInfo = () => {
@@ -32,7 +67,6 @@ export default function TopAppBar() {
     return 'Khuya (00:00 - 06:00)';
   };
 
-  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -51,7 +85,7 @@ export default function TopAppBar() {
 
   let searchPlaceholder = "Tìm kiếm nhanh...";
   let searchType = "generic";
-  
+
   if (location.pathname.includes('customer')) {
     searchPlaceholder = "Tìm khách (Tên, SĐT)...";
     searchType = "customer";
@@ -62,12 +96,11 @@ export default function TopAppBar() {
   }
 
   const searchResults = (searchQuery.trim() === '' || searchType !== "customer")
-    ? [] 
-    : mockCustomers.filter(c => 
-        c.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    ? []
+    : customers.filter(c =>
+        c.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.phone.includes(searchQuery)
       );
-
 
   useEffect(() => {
     if (isDark) {
@@ -87,8 +120,8 @@ export default function TopAppBar() {
         </button>
         <div className="relative w-full max-w-[200px] md:max-w-none md:w-96" ref={searchRef}>
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-          <input 
-            className="w-full bg-surface-container border border-slate-700/50 rounded-full py-2 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all placeholder:text-slate-500" 
+          <input
+            className="w-full bg-surface-container border border-slate-700/50 rounded-full py-2 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all placeholder:text-slate-500"
             placeholder={searchPlaceholder}
             type="text"
             value={searchQuery}
@@ -96,7 +129,7 @@ export default function TopAppBar() {
             onFocus={() => setIsSearchFocused(true)}
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
             >
@@ -104,7 +137,6 @@ export default function TopAppBar() {
             </button>
           )}
 
-          {/* Search Results Dropdown */}
           {isSearchFocused && searchQuery && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container border border-slate-700/50 rounded-xl shadow-xl overflow-hidden z-50">
               {searchResults.length > 0 ? (
@@ -141,11 +173,11 @@ export default function TopAppBar() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          
+
           <div className="relative" ref={notifRef}>
-            <button 
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
-              className="text-slate-400 hover:text-primary-container transition-colors relative group p-1" 
+            <button
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              className="text-slate-400 hover:text-primary-container transition-colors relative group p-1"
               title="Thông báo"
             >
               <span className="material-symbols-outlined">notifications</span>
@@ -163,8 +195,8 @@ export default function TopAppBar() {
                     { id: 2, title: 'Hóa đơn HD045 đã thanh toán', time: '15 phút trước', type: 'success' },
                     { id: 3, title: 'Kho bia sắp hết (dưới 10 thùng)', time: '1 giờ trước', type: 'error' },
                   ].map(n => (
-                    <button 
-                      key={n.id} 
+                    <button
+                      key={n.id}
                       onClick={() => alert(`Mở thông báo: ${n.title}`)}
                       className="w-full text-left p-4 hover:bg-slate-800/50 cursor-pointer transition-colors flex gap-3 focus:outline-none focus:bg-slate-800"
                     >
@@ -186,15 +218,15 @@ export default function TopAppBar() {
           <button onClick={toggleTheme} className="text-slate-400 hover:text-primary-container transition-colors p-1" title="Đổi giao diện">
             <span className="material-symbols-outlined">{isDark ? 'light_mode' : 'dark_mode'}</span>
           </button>
-          
+
           <div className="relative" ref={profileRef}>
-            <button 
-              onClick={() => setIsProfileOpen(!isProfileOpen)} 
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity p-1"
             >
-              <img 
-                alt="Staff Avatar" 
-                className="w-8 h-8 rounded-full border border-slate-700/50 object-cover" 
+              <img
+                alt="Staff Avatar"
+                className="w-8 h-8 rounded-full border border-slate-700/50 object-cover"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_UVm-2-g00eqWMhaFzGc1VRy3DuTBMgkVY6LkDDjewYGv5ecWSYp_lYlhn8pG0l-DXbmRTpd654nbx3dq5vaJ4ReX1eMPni87GDLWdTWUMqfMrWsxGUSm66_9_GVVit8i9nnLzTe4o29bTTC4449MFdrmOgKuFDiOb90HIbbMYhow5dpQ9bzmBwpLl-DUcYEOpvpMGc5Cwt2TbKPcn20MCjm9zDv1TsMz9mwoLogKk92vFBu_dlvkjoBXA4KiWwLwZGbTxY2XdA"
               />
               <span className="hidden md:block material-symbols-outlined text-slate-400 text-sm">expand_more</span>
