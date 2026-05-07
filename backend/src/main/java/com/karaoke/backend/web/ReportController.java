@@ -64,7 +64,7 @@ public class ReportController {
     )
     Map<String, Object> summary() {
         BigDecimal revenue = invoices.findAll().stream()
-                .filter(invoice -> invoice.getStatus() == InvoiceStatus.PAID)
+                .filter(invoice -> invoice.getStatus() == InvoiceStatus.UNPAID)
                 .map(invoice -> invoice.getGrandTotal() == null ? BigDecimal.ZERO : invoice.getGrandTotal())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
