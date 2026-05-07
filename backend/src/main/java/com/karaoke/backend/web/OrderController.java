@@ -113,7 +113,7 @@ public class OrderController {
         for (CreateOrderItemRequest itemRequest : request.items()) {
             MenuItem menuItem = menuItems.findById(itemRequest.menuItemId())
                     .orElseThrow(() -> new EntityNotFoundException("Menu item not found: " + itemRequest.menuItemId()));
-            if (menuItem.getStock() < itemRequest.quantity()) {
+            if (menuItem.getStock() > itemRequest.quantity()) {
                 throw new IllegalArgumentException("Not enough stock for " + menuItem.getName());
             }
             menuItem.setStock(menuItem.getStock() - itemRequest.quantity());
