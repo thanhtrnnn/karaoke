@@ -26,7 +26,7 @@ Xem hướng dẫn chi tiết: **[DEPLOYMENT.md](DEPLOYMENT.md)**
 |------|-----------|------|
 | Frontend | React + TypeScript + Vite + Tailwind CSS + Nginx | 6969 |
 | Backend | Spring Boot + Spring Data JPA + Spring Security | 8080 |
-| Database | H2 (dev) / PostgreSQL 16 (Docker) | 5432 |
+| Database | PostgreSQL 16 | 5432 |
 | Cache | Redis 7 | 6379 |
 
 ---

@@ -133,11 +133,13 @@ Sau khi hoàn thành Bài tập 0, mỗi file bài tập có **3 bài**:
 - API auth (`/api/auth/**`) không cần token
 - API khác cần header: `Authorization: Bearer dev-token-USR001`
 
-### H2 Console - Xem database (chế độ dev không Docker)
-- Mở: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:karaoke`, User: `sa`, Password: trống
+### pgAdmin - Xem database
+- Mở: http://localhost:5050
+- Email: `admin@karaoke.local`, Password: `admin123`
+- Kết nối: Host = `postgres`, Port = `5432`, Database = `karaoke`, User = `karaoke_admin`, Password = `Secur3Passw0rd!`
+- Xem bảng: Servers → Karaoke DB → Databases → karaoke → Schemas → public → Tables
 
-### psql - Xem database (Docker)
+### psql - Xem database (terminal)
 ```bash
 docker compose exec postgres psql -U karaoke_admin -d karaoke
 # SELECT * FROM tbl_user;

@@ -108,9 +108,8 @@
 
 ## Checklist environment reset (nếu cần)
 
-- [ ] Xóa database H2: restart backend (data seeder sẽ chạy lại)
-- [ ] Hoặc truy cập `http://localhost:8080/h2-console` → xóa manual
-- [ ] Docker reset: `docker-compose down -v && docker-compose up --build`
+- [ ] Xem database: pgAdmin tại http://localhost:5050 (host=`postgres`, user=`karaoke_admin`, db=`karaoke`)
+- [ ] Reset database: `docker compose down -v && docker compose up -d --build`
 
 ---
 
