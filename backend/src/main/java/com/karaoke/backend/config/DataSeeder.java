@@ -2,6 +2,7 @@ package com.karaoke.backend.config;
 
 import com.karaoke.backend.domain.Branch;
 import com.karaoke.backend.domain.Customer;
+import com.karaoke.backend.domain.MembershipTierConfig;
 import com.karaoke.backend.domain.Employee;
 import com.karaoke.backend.domain.MenuItem;
 import com.karaoke.backend.domain.OrderStatus;
@@ -13,6 +14,7 @@ import com.karaoke.backend.domain.UserAccount;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.BranchRepository;
 import com.karaoke.backend.repository.CustomerRepository;
+import com.karaoke.backend.repository.MembershipTierConfigRepository;
 import com.karaoke.backend.repository.EmployeeRepository;
 import com.karaoke.backend.repository.MenuItemRepository;
 import com.karaoke.backend.repository.RoomRepository;
@@ -39,6 +41,7 @@ public class DataSeeder {
             ServiceOrderRepository orders,
             EmployeeRepository employees,
             UserAccountRepository users,
+            MembershipTierConfigRepository tierConfigs,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
@@ -53,6 +56,13 @@ public class DataSeeder {
                     new Customer("KH002", "Chị", "Lan", "Trần Thị", "Trần Thị Lan", "0912345678", "Bạc", 450),
                     new Customer("KH003", "Anh", "Hoàng", "Lê", "Lê Hoàng", "0923456789", "Đồng", 120),
                     new Customer("KH004", "Chị", "Minh", "Phạm", "Phạm Minh", "0934567890", "Kim cương", 5200)
+            ));
+
+            tierConfigs.saveAll(List.of(
+                    new MembershipTierConfig("Đồng", 0, "Giảm 0%"),
+                    new MembershipTierConfig("Bạc", 300, "Giảm 5%"),
+                    new MembershipTierConfig("Vàng", 1000, "Giảm 10%"),
+                    new MembershipTierConfig("Kim cương", 5000, "Giảm 15% + Ưu tiên")
             ));
 
             rooms.saveAll(List.of(

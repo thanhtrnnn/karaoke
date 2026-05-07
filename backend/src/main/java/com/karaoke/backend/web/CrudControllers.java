@@ -4,6 +4,8 @@ import com.karaoke.backend.domain.Branch;
 import com.karaoke.backend.domain.Customer;
 import com.karaoke.backend.domain.Employee;
 import com.karaoke.backend.domain.Invoice;
+import com.karaoke.backend.domain.InvoiceStatus;
+import com.karaoke.backend.domain.MembershipTierConfig;
 import com.karaoke.backend.domain.MenuItem;
 import com.karaoke.backend.domain.Room;
 import com.karaoke.backend.domain.RoomStatus;
@@ -12,6 +14,7 @@ import com.karaoke.backend.repository.CustomerRepository;
 import com.karaoke.backend.repository.EmployeeRepository;
 import com.karaoke.backend.repository.InvoiceRepository;
 import com.karaoke.backend.repository.MenuItemRepository;
+import com.karaoke.backend.repository.MembershipTierConfigRepository;
 import com.karaoke.backend.repository.RoomRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -400,5 +403,70 @@ class InvoiceController {
     )
     Invoice create(@RequestBody Invoice invoice) {
         return repository.save(invoice);
+    }
+
+    @GetMapping("/{id}")
+    Invoice get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Invoice not found: " + id));
+    }
+
+    @PutMapping("/{id}/pay")
+    @Operation(summary = "Thanh toán hóa đơn")
+    Invoice pay(@PathVariable String id) {
+        Invoice invoice = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Invoice not found: " + id));
+        invoice.setStatus(InvoiceStatus.PAID);
+        invoice.setPaidAt(java.time.LocalDateTime.now());
+        return repository.save(invoice);
+    }
+
+    @PutMapping("/{id}")
+    Invoice update(@PathVariable String id, @RequestBody Invoice invoice) {
+        if (!repository.existsById(id)) {
+            throw new EntityNotFoundException("Invoice not found: " + id);
+        }
+        invoice.setId(id);
+        return repository.save(invoice);
+    }
+}
+
+@RestController
+@RequestMapping("/api/membership")
+@Tag(name = "Membership", description = "Quản lý hạng hội viên")
+class MembershipController {
+    private final MembershipTierConfigRepository tierRepository;
+    private final CustomerRepository customerRepository;
+
+    MembershipController(MembershipTierConfigRepository tierRepository, CustomerRepository customerRepository) {
+        this.tierRepository = tierRepository;
+        this.customerRepository = customerRepository;
+    }
+
+    @GetMapping("/tiers")
+    @Operation(summary = "Danh sách cấu hình hạng")
+    List<MembershipTierConfig> listTiers() {
+        return tierRepository.findAllByOrderByMinPointsAsc();
+    }
+
+    @PutMapping("/tiers/{tierName}")
+    @Operation(summary = "Cập nhật cấu hình hạng")
+    MembershipTierConfig updateTier(@PathVariable String tierName, @RequestBody MembershipTierConfig config) {
+        if (!tierRepository.existsById(tierName)) {
+            throw new EntityNotFoundException("Tier not found: " + tierName);
+        }
+        config.setTierName(tierName);
+        return tierRepository.save(config);
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Thống kê hội viên theo hạng")
+    java.util.Map<String, Object> stats() {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        long total = customerRepository.count();
+        result.put("total", total);
+        for (MembershipTierConfig tier : tierRepository.findAllByOrderByMinPointsAsc()) {
+            result.put(tier.getTierName(), customerRepository.countByTier(tier.getTierName()));
+        }
+        return result;
     }
 }
