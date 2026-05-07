@@ -9,7 +9,7 @@
 |-------|-----------|-------|
 | Frontend | React + TypeScript + Vite + Tailwind CSS + Zustand + Recharts | SPA, port 6969 |
 | Backend | Spring Boot + Spring Data JPA + Spring Security | REST API, port 8080 |
-| Database | H2 (dev) / PostgreSQL (prod) | JPA auto DDL |
+| Database | PostgreSQL 16 | JPA auto DDL |
 | Auth | Token giả `dev-token-{userId}` qua `TokenAuthenticationFilter` | Không phải JWT |
 
 ---
@@ -76,7 +76,7 @@
 **Câu 1:** Dự án này có mấy tầng (layer)? Mỗi tầng chịu trách nhiệm gì? Tại sao lại tách riêng như vậy?
 
 **Đáp án:**
-- 3 tầng: **Presentation** (React SPA) → **Application** (Spring Boot REST API) → **Data** (H2/PostgreSQL)
+- 3 tầng: **Presentation** (React SPA) → **Application** (Spring Boot REST API) → **Data** (PostgreSQL)
 - Tách riêng để: FE và BE phát triển độc lập, dễ thay đổi giao diện không ảnh hưởng logic, dễ scale riêng từng tầng
 - Giao tiếp qua HTTP REST API với JSON format
 
