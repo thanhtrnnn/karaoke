@@ -46,7 +46,7 @@ public class DataSeeder {
                 return;
             }
 
-            Branch mainBranch = branches.save(new Branch("CN001", "Midnight Elegance Quận 1", "12 Nguyễn Huệ, Quận 1, TP.HCM", "02812345678", true));
+            Branch mainBranch = branches.save(new Branch("CN001", "Famtaoke Quận 1", "12 Nguyễn Huệ, Quận 1, TP.HCM", "02812345678", true));
 
             customers.saveAll(List.of(
                     new Customer("KH001", "Anh", "Tuấn", "Nguyễn Văn", "Nguyễn Văn Tuấn", "0901234567", "Vàng", 1250),

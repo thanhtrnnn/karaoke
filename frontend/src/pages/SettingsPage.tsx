@@ -51,8 +51,8 @@ export default function SettingsPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-700/50 pb-0">
         {tabs.map((tab) => (
-          <button 
-            key={tab} 
+          <button
+            key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-3 font-body-md transition-colors border-b-2 ${activeTab === tab ? 'text-primary-container border-primary-container font-semibold' : 'text-slate-400 border-transparent hover:text-white'}`}
           >
@@ -66,7 +66,7 @@ export default function SettingsPage() {
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6 animate-fade-in">
           <h2 className="font-h2 text-white mb-4">Thông tin chung</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên chuỗi</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="Karaoke Midnight Elegance" /></div>
+            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên chuỗi</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="Karaoke Famtaoke" /></div>
             <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Hotline</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="1900 1234" /></div>
             <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="admin@karaoke.com" /></div>
             <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Logo</label><button onClick={() => alert('Mở cửa sổ chọn file ảnh...')} className="w-full bg-surface-secondary border border-border-subtle border-dashed rounded-lg px-4 py-3 text-slate-400 font-body-md hover:border-primary-container hover:text-primary-container transition-colors">Chọn file...</button></div>
@@ -140,19 +140,19 @@ export default function SettingsPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Tên Chi Nhánh</label>
-                <input 
+                <input
                   value={branchForm.name}
-                  onChange={e => setBranchForm({...branchForm, name: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  onChange={e => setBranchForm({ ...branchForm, name: e.target.value })}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: CN Quận 1"
                 />
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Địa Chỉ</label>
-                <input 
+                <input
                   value={branchForm.address}
-                  onChange={e => setBranchForm({...branchForm, address: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  onChange={e => setBranchForm({ ...branchForm, address: e.target.value })}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: 123 Lê Lợi..."
                 />
               </div>

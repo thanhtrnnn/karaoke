@@ -1,6 +1,6 @@
-# Midnight Elegance - Frontend Architecture
+# Famtaoke - Frontend Architecture
 
-Tài liệu này mô tả chi tiết kiến trúc tổng thể, cấu trúc thư mục và nguyên lý hoạt động của luồng Frontend trong dự án **Midnight Elegance - Hệ thống quản lý Karaoke**. 
+Tài liệu này mô tả chi tiết kiến trúc tổng thể, cấu trúc thư mục và nguyên lý hoạt động của luồng Frontend trong dự án **Famtaoke - Hệ thống quản lý Karaoke**. 
 
 Toàn bộ Source Code được xây dựng bằng **React 18**, **TypeScript**, **Vite** và **Tailwind CSS**, định hướng theo mô hình SPA (Single Page Application) với hiệu năng cao và khả năng mở rộng tốt.
 
