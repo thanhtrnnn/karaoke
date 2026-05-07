@@ -9,6 +9,7 @@ import com.karaoke.backend.domain.MembershipTierConfig;
 import com.karaoke.backend.domain.MenuItem;
 import com.karaoke.backend.domain.Room;
 import com.karaoke.backend.domain.RoomStatus;
+import com.karaoke.backend.domain.SystemConfig;
 import com.karaoke.backend.repository.BranchRepository;
 import com.karaoke.backend.repository.CustomerRepository;
 import com.karaoke.backend.repository.EmployeeRepository;
@@ -16,6 +17,7 @@ import com.karaoke.backend.repository.InvoiceRepository;
 import com.karaoke.backend.repository.MenuItemRepository;
 import com.karaoke.backend.repository.MembershipTierConfigRepository;
 import com.karaoke.backend.repository.RoomRepository;
+import com.karaoke.backend.repository.SystemConfigRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -468,5 +470,35 @@ class MembershipController {
             result.put(tier.getTierName(), customerRepository.countByTier(tier.getTierName()));
         }
         return result;
+    }
+}
+
+@RestController
+@RequestMapping("/api/system-config")
+@Tag(name = "System Config", description = "Cấu hình hệ thống")
+class SystemConfigController {
+    private final SystemConfigRepository repository;
+
+    SystemConfigController(SystemConfigRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    @Operation(summary = "Lấy tất cả cấu hình")
+    java.util.Map<String, String> getAll() {
+        java.util.Map<String, String> result = new java.util.HashMap<>();
+        repository.findAll().forEach(config -> result.put(config.getConfigKey(), config.getConfigValue()));
+        return result;
+    }
+
+    @PutMapping
+    @Operation(summary = "Cập nhật cấu hình")
+    java.util.Map<String, String> updateAll(@RequestBody java.util.Map<String, String> configs) {
+        configs.forEach((key, value) -> {
+            SystemConfig config = repository.findById(key).orElse(new SystemConfig(key, value));
+            config.setConfigValue(value);
+            repository.save(config);
+        });
+        return getAll();
     }
 }

@@ -3,6 +3,7 @@ package com.karaoke.backend.config;
 import com.karaoke.backend.domain.Branch;
 import com.karaoke.backend.domain.Customer;
 import com.karaoke.backend.domain.MembershipTierConfig;
+import com.karaoke.backend.domain.SystemConfig;
 import com.karaoke.backend.domain.Employee;
 import com.karaoke.backend.domain.MenuItem;
 import com.karaoke.backend.domain.OrderStatus;
@@ -15,6 +16,7 @@ import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.BranchRepository;
 import com.karaoke.backend.repository.CustomerRepository;
 import com.karaoke.backend.repository.MembershipTierConfigRepository;
+import com.karaoke.backend.repository.SystemConfigRepository;
 import com.karaoke.backend.repository.EmployeeRepository;
 import com.karaoke.backend.repository.MenuItemRepository;
 import com.karaoke.backend.repository.RoomRepository;
@@ -42,6 +44,7 @@ public class DataSeeder {
             EmployeeRepository employees,
             UserAccountRepository users,
             MembershipTierConfigRepository tierConfigs,
+            SystemConfigRepository systemConfigs,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
@@ -63,6 +66,12 @@ public class DataSeeder {
                     new MembershipTierConfig("Bạc", 300, "Giảm 5%"),
                     new MembershipTierConfig("Vàng", 1000, "Giảm 10%"),
                     new MembershipTierConfig("Kim cương", 5000, "Giảm 15% + Ưu tiên")
+            ));
+
+            systemConfigs.saveAll(List.of(
+                    new SystemConfig("app.name", "Karaoke Famtaoke"),
+                    new SystemConfig("app.hotline", "1900 1234"),
+                    new SystemConfig("app.email", "admin@karaoke.com")
             ));
 
             rooms.saveAll(List.of(

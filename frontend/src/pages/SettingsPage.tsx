@@ -12,34 +12,49 @@ export default function SettingsPage() {
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [configForm, setConfigForm] = useState({
+    'app.name': '',
+    'app.hotline': '',
+    'app.email': '',
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any>(null);
   const [branchForm, setBranchForm] = useState({ name: '', address: '' });
 
+  const token = localStorage.getItem('token');
+
   useEffect(() => {
-    const fetchBranches = async () => {
+    const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/branches', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
+        const [branchesRes, configRes] = await Promise.all([
+          fetch('/api/branches', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/system-config', { headers: { 'Authorization': `Bearer ${token}` } }),
+        ]);
+        if (branchesRes.ok) {
+          const data = await branchesRes.json();
           setBranches(data.map((b: any) => ({
             id: b.id,
             name: b.name,
             address: b.address || '',
           })));
         }
+        if (configRes.ok) {
+          const configData = await configRes.json();
+          setConfigForm({
+            'app.name': configData['app.name'] || 'Karaoke Famtaoke',
+            'app.hotline': configData['app.hotline'] || '1900 1234',
+            'app.email': configData['app.email'] || 'admin@karaoke.com',
+          });
+        }
       } catch (e) {
-        console.error('Failed to fetch branches:', e);
+        console.error('Failed to fetch data:', e);
       } finally {
         setLoading(false);
       }
     };
-    fetchBranches();
-  }, []);
+    fetchData();
+  }, [token]);
 
   const handleOpenModal = (branch?: any) => {
     if (branch) {
@@ -101,8 +116,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveConfig = () => {
-    alert('Lưu cấu hình hệ thống thành công!');
+  const handleSaveConfig = async () => {
+    try {
+      const res = await fetch('/api/system-config', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(configForm),
+      });
+      if (res.ok) {
+        alert('Lưu cấu hình hệ thống thành công!');
+      } else {
+        alert('Lưu cấu hình thất bại!');
+      }
+    } catch (e) {
+      console.error('Failed to save config:', e);
+      alert('Lỗi kết nối server.');
+    }
   };
 
   return (
@@ -125,10 +154,10 @@ export default function SettingsPage() {
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6 animate-fade-in">
           <h2 className="font-h2 text-white mb-4">Thông tin chung</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên chuỗi</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="Karaoke Famtaoke" /></div>
-            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Hotline</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="1900 1234" /></div>
-            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="admin@karaoke.com" /></div>
-            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Logo</label><button onClick={() => alert('Mở cửa sổ chọn file ảnh...')} className="w-full bg-surface-secondary border border-border-subtle border-dashed rounded-lg px-4 py-3 text-slate-400 font-body-md hover:border-primary-container hover:text-primary-container transition-colors">Chọn file...</button></div>
+            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên chuỗi</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" value={configForm['app.name']} onChange={e => setConfigForm({...configForm, 'app.name': e.target.value})} /></div>
+            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Hotline</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" value={configForm['app.hotline']} onChange={e => setConfigForm({...configForm, 'app.hotline': e.target.value})} /></div>
+            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" value={configForm['app.email']} onChange={e => setConfigForm({...configForm, 'app.email': e.target.value})} /></div>
+            <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Logo</label><button onClick={() => alert('Tính năng upload logo sẽ được cập nhật sau.')} className="w-full bg-surface-secondary border border-border-subtle border-dashed rounded-lg px-4 py-3 text-slate-400 font-body-md hover:border-primary-container hover:text-primary-container transition-colors">Chọn file...</button></div>
           </div>
         </div>
       )}

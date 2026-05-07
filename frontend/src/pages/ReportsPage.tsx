@@ -5,15 +5,18 @@ export default function ReportsPage() {
   const [chartType, setChartType] = useState('weekly');
   const [summary, setSummary] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const token = localStorage.getItem('token');
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
     Promise.all([
       fetch('/api/reports/summary', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
       fetch('/api/invoices', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+      fetch(`/api/reports/revenue?period=${chartType}`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
     ])
-      .then(([summaryData, invoicesData]) => {
+      .then(([summaryData, invoicesData, revenueData]) => {
         setSummary(summaryData);
         setTransactions(invoicesData.map((inv: any) => ({
           id: inv.id,
@@ -22,51 +25,13 @@ export default function ReportsPage() {
           amount: `${Number(inv.grandTotal).toLocaleString()}đ`,
           status: inv.status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán',
         })));
+        setChartData(revenueData);
       })
       .catch(e => {
         console.error('Failed to fetch reports:', e);
       })
       .finally(() => setLoading(false));
-  }, []);
-
-  // Chart data - TODO: fetch from backend when endpoint available
-  const chartData = {
-    hourly: [
-      { label: '12h', value: 4000000 },
-      { label: '14h', value: 7000000 },
-      { label: '16h', value: 8000000 },
-      { label: '18h', value: 12000000 },
-      { label: '20h', value: 19000000 },
-      { label: '22h', value: 20000000 },
-      { label: '00h', value: 17000000 },
-      { label: '02h', value: 9000000 }
-    ],
-    weekly: [
-      { label: 'Thứ 2', value: 15000000 },
-      { label: 'Thứ 3', value: 18000000 },
-      { label: 'Thứ 4', value: 16000000 },
-      { label: 'Thứ 5', value: 25000000 },
-      { label: 'Thứ 6', value: 45000000 },
-      { label: 'Thứ 7', value: 55000000 },
-      { label: 'Chủ nhật', value: 48000000 }
-    ],
-    monthly: [
-      { label: 'Th1', value: 300000000 },
-      { label: 'Th2', value: 350000000 },
-      { label: 'Th3', value: 280000000 },
-      { label: 'Th4', value: 320000000 },
-      { label: 'Th5', value: 380000000 },
-      { label: 'Th6', value: 420000000 },
-      { label: 'Th7', value: 390000000 },
-      { label: 'Th8', value: 410000000 },
-      { label: 'Th9', value: 450000000 },
-      { label: 'Th10', value: 480000000 },
-      { label: 'Th11', value: 520000000 },
-      { label: 'Th12', value: 650000000 }
-    ]
-  };
-
-  const currentData = chartData[chartType as keyof typeof chartData];
+  }, [token, chartType]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -109,7 +74,7 @@ export default function ReportsPage() {
           </div>
         ))}
       </div>
-      {/* Bar Chart - TODO: replace with real data when revenue-by-time endpoint available */}
+      {/* Bar Chart - using real data from /api/reports/revenue */}
       <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="font-h2 text-white">Biểu đồ doanh thu</h2>
@@ -125,7 +90,7 @@ export default function ReportsPage() {
         </div>
         <div className="h-[350px] w-full mt-6">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={currentData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.4}/>
@@ -148,7 +113,7 @@ export default function ReportsPage() {
           </ResponsiveContainer>
         </div>
       </div>
-      {/* Transactions Table - TODO: fetch from /api/invoices */}
+      {/* Transactions Table - using real data from /api/invoices */}
       <div className="bg-surface-container rounded-xl border border-slate-700/50 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-700/50"><h2 className="font-h2 text-white">Giao dịch gần nhất</h2></div>
         <table className="w-full text-left whitespace-nowrap"><thead><tr className="border-b border-slate-700/50 text-slate-400 font-label-caps bg-surface-container-low"><th className="py-4 px-6">Mã Bill</th><th className="py-4 px-6">Khách hàng</th><th className="py-4 px-6">Phòng</th><th className="py-4 px-6">Tổng tiền</th><th className="py-4 px-6">Trạng thái</th></tr></thead>

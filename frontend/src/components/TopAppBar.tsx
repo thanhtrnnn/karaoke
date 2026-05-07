@@ -23,6 +23,7 @@ export default function TopAppBar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -57,6 +58,24 @@ export default function TopAppBar() {
       }
     };
     fetchCustomers();
+  }, []);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/reports/notifications', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data);
+        }
+      } catch (e) {
+        // Silently fail
+      }
+    };
+    fetchNotifications();
   }, []);
 
   const getShiftInfo = () => {
@@ -190,23 +209,25 @@ export default function TopAppBar() {
                   <button onClick={() => alert('Đã đánh dấu tất cả là đã đọc!')} className="text-xs text-primary-container hover:underline focus:outline-none focus:ring-1 focus:ring-primary-container rounded">Đánh dấu đã đọc</button>
                 </div>
                 <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/50 custom-scrollbar">
-                  {[
-                    { id: 1, title: 'Bàn P03 gọi phục vụ', time: '2 phút trước', type: 'warning' },
-                    { id: 2, title: 'Hóa đơn HD045 đã thanh toán', time: '15 phút trước', type: 'success' },
-                    { id: 3, title: 'Kho bia sắp hết (dưới 10 thùng)', time: '1 giờ trước', type: 'error' },
-                  ].map(n => (
-                    <button
-                      key={n.id}
-                      onClick={() => alert(`Mở thông báo: ${n.title}`)}
-                      className="w-full text-left p-4 hover:bg-slate-800/50 cursor-pointer transition-colors flex gap-3 focus:outline-none focus:bg-slate-800"
-                    >
-                      <div className={`w-2 h-2 mt-1.5 rounded-full ${n.type === 'warning' ? 'bg-status-cleaning' : n.type === 'success' ? 'bg-status-available' : 'bg-status-occupied'}`}></div>
-                      <div>
-                        <p className="font-body-md text-white text-sm">{n.title}</p>
-                        <p className="font-label-caps text-slate-500 text-xs mt-1">{n.time}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {notifications.length > 0 ? (
+                    notifications.map(n => (
+                      <button
+                        key={n.id}
+                        onClick={() => alert(`Thông báo: ${n.title}`)}
+                        className="w-full text-left p-4 hover:bg-slate-800/50 cursor-pointer transition-colors flex gap-3 focus:outline-none focus:bg-slate-800"
+                      >
+                        <div className={`w-2 h-2 mt-1.5 rounded-full ${n.type === 'warning' ? 'bg-status-cleaning' : n.type === 'success' ? 'bg-status-available' : 'bg-status-occupied'}`}></div>
+                        <div>
+                          <p className="font-body-md text-white text-sm">{n.title}</p>
+                          <p className="font-label-caps text-slate-500 text-xs mt-1">{n.time}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-sm text-slate-400">
+                      Không có thông báo mới
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 text-center border-t border-slate-700/50">
                   <button onClick={() => alert('Chuyển đến trang Tất cả thông báo')} className="w-full text-xs text-slate-400 hover:text-white transition-colors p-2 focus:outline-none focus:bg-slate-800 rounded">Xem tất cả thông báo</button>
