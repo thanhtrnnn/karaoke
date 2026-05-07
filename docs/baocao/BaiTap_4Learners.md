@@ -40,6 +40,23 @@
 | **Khánh** | OrderPage.tsx, OrderManagement.tsx | OrderController.java | ServiceOrder.java, ServiceOrderItem.java, MenuItem.java, OrderStatus.java | ServiceOrderRepository.java, MenuItemRepository.java | DataSeeder.java |
 | **Hành** | CheckoutPage.tsx, ReportsPage.tsx | CrudControllers.java (InvoiceController), ReportController.java | Invoice.java, InvoiceStatus.java | InvoiceRepository.java | DataSeeder.java |
 
+### File TOÀN HỆ THỐNG (TẤT CẢ learner đều phải đọc)
+
+| File | Vai trò |
+|------|----------|
+| `docker-compose.yml` | Hiểu 5 services, ports, depends_on, healthcheck |
+| `backend/src/main/java/com/karaoke/backend/config/SecurityConfig.java` | Cấu hình Spring Security + CORS |
+| `backend/src/main/java/com/karaoke/backend/config/TokenAuthenticationFilter.java` | Filter xác thực token |
+| `backend/src/main/java/com/karaoke/backend/config/DataSeeder.java` | Khởi tạo dữ liệu mẫu |
+| `backend/src/main/java/com/karaoke/backend/web/CrudControllers.java` | 8 CRUD controllers (Branch, Customer, Room, Menu, Employee, Invoice, Membership, SystemConfig) |
+| `backend/src/main/java/com/karaoke/backend/common/ApiExceptionHandler.java` | Xử lý lỗi toàn cục |
+| `frontend/src/App.tsx` | Router + tất cả routes |
+| `frontend/src/components/ProtectedRoute.tsx` | Route guard kiểm tra token |
+| `frontend/src/components/Sidebar.tsx` | Menu điều hướng 13 trang |
+| `frontend/src/store/uiStore.ts` | Zustand global state |
+| `frontend/vite.config.ts` | Vite proxy `/api` → backend |
+| `frontend/nginx.conf` | Nginx proxy trong Docker |
+
 ---
 
 ## Tình trạng kết nối API Frontend → Backend
@@ -62,6 +79,81 @@
 | SettingsPage | **CÓ** | `GET/POST/PUT/DELETE /api/branches` |
 | CheckoutPage | KHÔNG | Toàn bộ hardcode (chưa có endpoint hóa đơn chi tiết) |
 | MembershipPage | KHÔNG | Hardcode hạng hội viên (chưa có endpoint) |
+
+---
+
+## Bài tập TOÀN HỆ THỐNG (TẤT CẢ learner PHẢI làm)
+
+> Những bài tập này áp dụng cho TẤT CẢ learner, không chỉ module riêng. Mục tiêu: hiểu toàn bộ hệ thống, không chỉ phần của mình.
+
+### Bài TH1 - Swagger CRUD đầy đủ (Ngày 3)
+
+**Yêu cầu:** Dùng Swagger UI thực hiện chu kỳ CRUD đầy đủ cho TẤT CẢ resources.
+
+1. **Rooms:** GET list → POST tạo phòng mới (name="P99", type="VIP", capacity=10, hourlyPrice=100000, branchId="CN001") → GET by id → PUT cập nhật → DELETE
+2. **Customers:** GET list → POST tạo khách hàng mới → GET by id → PUT → DELETE
+3. **Menu Items:** GET list → POST tạo món mới → GET by id → PUT → DELETE
+4. **Bookings:** POST tạo booking (customerId + roomId từ trên) → GET list → PUT status CHECKED_IN → GET lại (room status đã đổi?)
+5. **Orders:** POST tạo order → GET list → PUT status PREPARING → PUT status SERVED
+6. **Invoices:** POST tạo invoice → GET list → PUT pay
+
+**Ghi nhận:** Endpoint nào cần token? Endpoint nào không cần? Tại sao?
+
+### Bài TH2 - DevTools Debug (Ngày 3)
+
+**Yêu cầu:** Dùng Chrome DevTools kiểm tra frontend.
+
+1. **Network tab:**
+   - Load ReceptionDashboard → quan sát request GET /api/rooms → Status, Response, Headers
+   - Load OrderPage → quan sát request GET /api/menu-items
+   - Click vào 1 request → xem tab Headers (Authorization header), Response (JSON data), Timing
+
+2. **Console tab:**
+   - `localStorage.removeItem('token')` → reload → có bị redirect về /login không?
+   - `localStorage.setItem('token', 'wrong-token')` → reload → API trả 403?
+
+3. **Application tab:**
+   - Xem localStorage → có key 'token' và 'user'?
+   - Parse JSON của 'user' → thấy gì?
+
+### Bài TH3 - Trace luồng xuyên module (Ngày 5)
+
+**Yêu cầu:** EVERY learner phải trace luồng "Khách hàng đến quán karaoke, gọi món, và thanh toán". Vẽ sơ đồ trên giấy, mỗi bước là 1 hộp, mũi tên chỉ hướng.
+
+```
+Đăng nhập                    Đặt phòng                    Check-in
+LoginPage.tsx                BookingPage.tsx               BookingManagement.tsx
+  ↓ POST /api/auth/login       ↓ POST /api/bookings          ↓ PUT /api/bookings/{id}/status
+AuthController.java          BookingController.java        BookingController.java
+  ↓ BCrypt verify              ↓ RoomRepository.save()       ↓ RoomRepository.save()
+UserAccountRepository        Room status → RESERVED        Room status → OCCUPIED
+  ↓ trả dev-token              ↓ trả BookingResponse        ↓ trả BookingResponse
+
+Gọi món                     Thanh toán
+OrderPage.tsx                CheckoutPage.tsx
+  ↓ POST /api/orders           ↓ POST /api/invoices
+OrderController.java         InvoiceController.java
+  ↓ MenuItemRepository         ↓ InvoiceRepository.save()
+    (trừ tồn kho)             ↓ PUT /api/bookings/{id}/status COMPLETED
+  ↓ ServiceOrderRepository     ↓ RoomRepository.save()
+    .save()                      Room status → AVAILABLE
+```
+
+**Câu hỏi kiểm tra:**
+- Khi tạo order, code kiểm tra tồn kho ở đâu? (file nào, dòng nào?)
+- Khi check-in, room status thay đổi thế nào? (file nào, dòng nào?)
+- Khi thanh toán, room status thay đổi thế nào? (file nào, dòng nào?)
+
+### Bài TH4 - Sửa lỗi hệ thống (Ngày 5)
+
+**Yêu cầu:** QA tạo 1 lỗi CROSS-MODULE (không thuộc module riêng của ai). TẤT CẢ 4 learner cùng tìm và sửa.
+
+**Quy trình:**
+1. Phát hiện: Chức năng nào bị ảnh hưởng?
+2. Trace: Request đi qua những controller/repository nào?
+3. Tìm: Dòng code nào thiếu logic?
+4. Sửa: Thêm lại logic bị thiếu
+5. Test: Chạy lại toàn bộ luồng
 
 ---
 
@@ -98,9 +190,9 @@
 
 **Đáp án:**
 1. Request đến → Spring Security filter chain
-2. `TokenAuthenticationFilter.java` (dòng 29-47) chạy TRƯỚC `UsernamePasswordAuthenticationFilter`
-3. Lấy token từ header `Authorization: Bearer xxx` (dòng 50-55)
-4. Nếu token bắt đầu bằng `"dev-token-"` → cắt lấy userId → tìm user trong DB → set Authentication vào SecurityContext (dòng 33-41)
+2. `TokenAuthenticationFilter.java` chạy TRƯỚC `UsernamePasswordAuthenticationFilter`
+3. Lấy token từ header `Authorization: Bearer xxx`
+4. Nếu token bắt đầu bằng `"dev-token-"` → cắt lấy userId → tìm user trong DB → set Authentication vào SecurityContext
 5. `SecurityConfig.java` kiểm tra: nếu endpoint nằm trong `permitAll()` → cho qua; nếu không → cần Authentication
 6. Nếu không có Authentication → HTTP 403 Forbidden
 
@@ -133,7 +225,7 @@ Employee (NV001) ──N:1── Branch
 **Câu 6:** JPA tự động tạo bảng như thế nào? Giải thích `ddl-auto=update` trong `application.properties`.
 
 **Đáp án:**
-- `application.properties` dòng 9: `spring.jpa.hibernate.ddl-auto=update`
+- `application.properties`: `spring.jpa.hibernate.ddl-auto=update`
 - `update`: Hibernate tự động tạo/cập nhật bảng dựa trên Entity class. Nếu bảng chưa tồn tại → tạo mới. Nếu đã tồn tại → thêm cột mới (KHÔNG xóa cột cũ)
 - `@Table(name = "tblRoom")` trong `Room.java` đặt tên bảng
 - `@Id` đánh dấu khóa chính, `@ManyToOne` tạo khóa ngoại tự động
@@ -141,8 +233,8 @@ Employee (NV001) ──N:1── Branch
 **Câu 7:** Sự khác biệt giữa `@ManyToOne` và `@OneToMany` là gì? Cho ví dụ cụ thể trong code.
 
 **Đáp án:**
-- `@ManyToOne`: Nhiều đối tượng thuộc về 1 đối tượng. VD: `Room.java` dòng 31: nhiều Room thuộc 1 Branch
-- `@OneToMany`: 1 đối tượng chứa nhiều đối tượng con. VD: `ServiceOrder.java` dòng 30: 1 Order chứa nhiều OrderItem
+- `@ManyToOne`: Nhiều đối tượng thuộc về 1 đối tượng. VD: `Room.java`: nhiều Room thuộc 1 Branch
+- `@OneToMany`: 1 đối tượng chứa nhiều đối tượng con. VD: `ServiceOrder.java`: 1 Order chứa nhiều OrderItem
 - Thường dùng cặp: `@ManyToOne` ở phía con, `@OneToMany(mappedBy=...)` ở phía cha
 - `cascade = CascadeType.ALL`: thao tác trên cha sẽ cascade xuống con
 - `orphanRemoval = true`: xóa con khỏi list → xóa luôn trong DB
@@ -160,10 +252,10 @@ Employee (NV001) ──N:1── Branch
 **Câu 9:** Giải thích cách `Recharts` hoạt động trong `ReportsPage`. Khi user thay đổi dropdown, dữ liệu biểu đồ thay đổi ra sao?
 
 **Đáp án:**
-- State `chartType` (dòng 5) lưu lựa chọn: 'hourly', 'weekly', 'monthly'
-- `const currentData = chartData[chartType]` (dòng 44) - lấy mảng dữ liệu tương ứng
+- State `chartType` lưu lựa chọn: 'hourly', 'weekly', 'monthly'
+- `const currentData = chartData[chartType]` - lấy mảng dữ liệu tương ứng
 - `<AreaChart data={currentData}>` nhận prop data, re-render khi data thay đổi
-- Dropdown (dòng 111-119) gọi `setChartType` → state thay đổi → `currentData` thay đổi → AreaChart re-render
+- Dropdown gọi `setChartType` → state thay đổi → `currentData` thay đổi → AreaChart re-render
 - Dữ liệu vẫn hardcode trong `chartData` object
 
 **Câu 10:** Tailwind CSS được dùng như thế nào trong dự án? Giải thích class `bg-primary-container text-on-primary-container`.
@@ -174,3 +266,16 @@ Employee (NV001) ──N:1── Branch
 - Được định nghĩa trong `tailwind.config.js` hoặc CSS custom properties
 - `primary-container` = màu nền vàng gold (#D4AF37), `on-primary-container` = màu chữ trên nền đó (đen)
 - Kích thước responsive: `md:`, `lg:`, `xl:` breakpoint prefixes
+
+---
+
+## Tiêu chí đánh giá
+
+| Tiêu chí | Trọng số | Nội dung |
+|----------|----------|----------|
+| Module riêng | 40% | 5 câu vấn đáp module (8 điểm/câu) |
+| Toàn hệ thống | 30% | 10 câu liên module (3 điểm/câu) |
+| Công cụ | 15% | 2 bài thực hành Swagger + DevTools |
+| Debug | 15% | Sửa lỗi riêng + sửa lỗi hệ thống + giải thích |
+
+**Tổng: 100 điểm. Đậu: >= 60 điểm. Giỏi: >= 80 điểm.**

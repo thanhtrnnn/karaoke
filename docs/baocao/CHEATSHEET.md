@@ -26,7 +26,87 @@ Ví dụ cụ thể:
 
 ---
 
-## 3. Các file quan trọng cần nắm rõ
+## 3. Luồng xác thực (Auth Flow)
+
+### Đăng nhập
+```
+LoginPage.tsx → POST /api/auth/login {usernameOrEmail, password}
+    → AuthController.login() → BCrypt verify → trả AuthResponse {id, username, email, role, token}
+    → Frontend lưu token vào localStorage
+    → ProtectedRoute cho phép truy cập các trang
+```
+
+### Đăng ký
+```
+RegisterPage.tsx → POST /api/auth/register {username, email, password, role: "CLIENT"}
+    → AuthController.register() → tạo UserAccount mới (BCrypt encode password)
+    → Redirect về /login để đăng nhập
+```
+
+### Đăng xuất
+```
+TopAppBar nút "Đăng xuất"
+    → localStorage.removeItem('token') + removeItem('user')
+    → window.location.href = '/login'
+```
+
+### Route Guard
+```
+ProtectedRoute.tsx — component wrapper
+    → Kiểm tra localStorage.getItem('token')
+    → Nếu không có token → Navigate to /login
+    → Nếu có token → render Outlet (các routes con)
+```
+
+### Token format
+- Format: `dev-token-{userId}` (ví dụ: `dev-token-USR001`)
+- `TokenAuthenticationFilter` parse token, lookup UserAccount trong DB, set SecurityContext
+- **Không phải JWT thật** — chỉ dùng cho mục đích training
+
+### Tài khoản mẫu
+| Username | Password | Role |
+|----------|----------|------|
+| admin | admin123 | ADMIN |
+| reception | reception123 | RECEPTIONIST |
+
+---
+
+## 4. Luồng dữ liệu xuyên module
+
+### Luồng đầy đủ: Khách hàng đến quán karaoke
+
+```
+1. ĐĂNG NHẬP
+   LoginPage.tsx → POST /api/auth/login
+   → AuthController → UserAccountRepository → DB (tblUser)
+   ← trả dev-token, lưu localStorage
+
+2. ĐẶT PHÒNG
+   BookingPage.tsx → POST /api/bookings {customerId, roomId, startTime, endTime}
+   → BookingController → RoomRepository.save(room.status = RESERVED) → DB (tblBooking, tblRoom)
+   ← trả BookingResponse
+
+3. CHECK-IN
+   BookingManagement.tsx → PUT /api/bookings/{id}/status {status: "CHECKED_IN"}
+   → BookingController → RoomRepository.save(room.status = OCCUPIED) → DB
+   ← trả BookingResponse (room status = OCCUPIED)
+
+4. GỌI MÓN
+   OrderPage.tsx → POST /api/orders {roomId, items[{menuItemId, quantity}]}
+   → OrderController → MenuItemRepository (trừ tồn kho) → ServiceOrderRepository.save() → DB
+   ← trả OrderResponse
+
+5. THANH TOÁN
+   CheckoutPage.tsx → POST /api/invoices {bookingId, ...}
+   → InvoiceController → InvoiceRepository.save() → DB
+   → PUT /api/bookings/{id}/status {status: "COMPLETED"}
+   → RoomRepository.save(room.status = AVAILABLE) → DB
+   ← trả InvoiceResponse (status = PAID, paidAt = now)
+```
+
+---
+
+## 5. Các file quan trọng cần nắm rõ
 
 ### Backend
 
@@ -38,14 +118,19 @@ Ví dụ cụ thể:
 | `backend/src/main/java/com/karaoke/backend/web/ReportController.java` | API báo cáo (summary, revenue, notifications) |
 | `backend/src/main/java/com/karaoke/backend/web/OrderController.java` | API đặt dịch vụ |
 | `backend/src/main/java/com/karaoke/backend/web/BookingController.java` | API đặt phòng |
+| `backend/src/main/java/com/karaoke/backend/web/AuthController.java` | API đăng nhập, đăng ký, đổi mật khẩu |
 | `backend/src/main/java/com/karaoke/backend/config/SecurityConfig.java` | Cấu hình Spring Security + CORS |
 | `backend/src/main/java/com/karaoke/backend/config/TokenAuthenticationFilter.java` | Filter xác thực token (`dev-token-{userId}`) |
 | `backend/src/main/java/com/karaoke/backend/config/DataSeeder.java` | Khởi tạo dữ liệu mẫu khi DB trống |
+| `backend/src/main/java/com/karaoke/backend/common/ApiExceptionHandler.java` | Xử lý lỗi toàn cục (404, 400, validation) |
 
 ### Frontend
 
 | File | Vai trò |
 |------|----------|
+| `frontend/src/pages/LoginPage.tsx` | Trang đăng nhập — gọi POST /api/auth/login |
+| `frontend/src/pages/RegisterPage.tsx` | Trang đăng ký — gọi POST /api/auth/register |
+| `frontend/src/components/ProtectedRoute.tsx` | Route guard — kiểm token, redirect nếu chưa đăng nhập |
 | `frontend/src/pages/ReceptionDashboard.tsx` | Dashboard lễ tân — xem phòng, nhận khách, dọn phòng |
 | `frontend/src/pages/BookingPage.tsx` | Đặt phòng |
 | `frontend/src/pages/OrderPage.tsx` | Gọi dịch vụ (đồ uống, đồ ăn) |
@@ -56,9 +141,10 @@ Ví dụ cụ thể:
 | `frontend/src/pages/InventoryPage.tsx` | Quản lý kho |
 | `frontend/src/pages/OrderManagement.tsx` | Quản lý đơn hàng |
 | `frontend/src/pages/SettingsPage.tsx` | Cấu hình hệ thống + chi nhánh |
-| `frontend/src/components/TopAppBar.tsx` | Header — tìm kiếm, thông báo, profile |
+| `frontend/src/components/TopAppBar.tsx` | Header — tìm kiếm, thông báo, profile, logout |
 | `frontend/src/components/Sidebar.tsx` | Menu điều hướng bên trái |
 | `frontend/src/store/uiStore.ts` | Zustand store quản lý UI state |
+| `frontend/src/App.tsx` | Router + tất cả routes |
 
 ### Infrastructure
 
@@ -72,7 +158,7 @@ Ví dụ cụ thể:
 
 ---
 
-## 4. Patterns quan trọng cần hiểu
+## 6. Patterns quan trọng cần hiểu
 
 ### a) Xác thực (Auth)
 
@@ -99,32 +185,74 @@ const data = await res.json();
 - `Room` có `@ManyToOne Branch branch` — tự serialize thành `{"id":"CN001","name":"..."}`
 - `Booking` có `@ManyToOne Customer customer` + `@ManyToOne Room room`
 - `Invoice` có `@OneToOne Booking booking`
+- `ServiceOrder` có `@OneToMany ServiceOrderItem items` với `cascade = CascadeType.ALL, orphanRemoval = true`
+- `ServiceOrderItem` có `@JsonIgnore @ManyToOne ServiceOrder order` — tránh vòng lặp vô hạn
 
 ### d) Docker Compose networking
 
 - Các service gọi nhau qua tên service: `postgres`, `backend`, `frontend`
 - Backend kết nối DB: `jdbc:postgresql://postgres:5432/karaoke`
+- `depends_on` + `condition: service_healthy` → backend chỉ khởi động khi postgres sẵn sàng
+
+### e) Exception Handling
+
+- `ApiExceptionHandler.java` bắt exception toàn cục
+- `EntityNotFoundException` → HTTP 404
+- `IllegalArgumentException` → HTTP 400
+- Response body: `{timestamp, status, error, message}`
 
 ---
 
-## 5. Các câu hỏi vấn đáp có thể gặp
+## 7. Công cụ hỗ trợ
+
+### Swagger UI — Test API
+- Mở: http://localhost:8080/swagger-ui.html
+- API auth (`/api/auth/**`) không cần token
+- API khác cần header: `Authorization: Bearer dev-token-USR001`
+- Dùng nút "Authorize" ở góc phải trên cùng để nhập token 1 lần
+- Test được: GET, POST, PUT, DELETE cho tất cả endpoints
+
+### pgAdmin — Xem database
+- Mở: http://localhost:5050
+- Email: `admin@karaoke.local`, Password: `admin123`
+- Kết nối: Host = `postgres`, Port = `5432`, Database = `karaoke`, User = `karaoke_admin`, Password = `Secur3Passw0rd!`
+- Xem bảng: Servers → Karaoke DB → Databases → karaoke → Schemas → public → Tables
+- Dùng Query Tool để chạy SQL trực tiếp
+
+### DevTools — Debug frontend
+- Chrome: **F12**
+- **tab Network:** Xem request/response API (endpoint, status, headers, body, timing)
+- **tab Console:** Xem lỗi JavaScript, thử `localStorage.removeItem('token')` rồi reload
+- **tab Application:** Xem localStorage (token, user), cookies
+
+---
+
+## 8. Các câu hỏi vấn đáp có thể gặp
+
+### Module riêng (5 câu/module — xem file bài tập từng learner)
+
+### Liên module (10 câu — TẤT CẢ learner phải trả lời)
 
 1. **Mô tả kiến trúc hệ thống?** — React SPA + Spring Boot REST API + PostgreSQL, containerized bằng Docker Compose
-2. **Luồng dữ liệu khi lễ tân nhận khách?** — UI gọi PUT /api/rooms/{id} với status OCCUPIED → Controller → Repository → DB
-3. **Auth hoạt động thế nào?** — Token filter intercept request, parse `dev-token-{userId}`, lookup UserAccount, set auth context
-4. **Frontend gọi API bằng cách nào?** — fetch() với Bearer token, Vite proxy `/api` đến backend
-5. **JPA hoạt động thế nào?** — Entity class ánh xạ bảng, Repository extends JpaRepository tự tạo query, Controller gọi repository
-6. **Docker Compose gồm những gì?** — 5 services: frontend (Vite/Nginx), backend (Spring Boot), postgres (DB), redis (cache), pgAdmin (DB admin tool)
-7. **Cách seed dữ liệu mẫu?** — DataSeeder implements CommandLineRunner, chạy khi app start, guard `if (count > 0) return` để không duplicate
-8. **Frontend state management?** — useState cho local state, Zustand (uiStore) cho global UI state (sidebar toggle)
+2. **Tại sao không có Service layer?** — Controller gọi trực tiếp Repository, đơn giản nhưng khó test unit
+3. **Spring Security hoạt động thế nào?** — TokenAuthenticationFilter intercept request, parse `dev-token-{userId}`, lookup UserAccount, set SecurityContext
+4. **Các entity có quan hệ gì?** — Branch→Room→Booking→Invoice, Room→ServiceOrder→ServiceOrderItem→MenuItem, Customer→Booking
+5. **Frontend gọi API bằng cách nào?** — fetch() với Bearer token, Vite proxy `/api` đến backend
+6. **Docker Compose gồm những gì?** — 5 services: frontend, backend, postgres, redis, pgAdmin
+7. **DataSeeder hoạt động thế nào?** — implements CommandLineRunner, guard `if (count > 0) return`
+8. **Zustand được dùng thế nào?** — uiStore quản lý sidebar state, global state không cần Context Provider
+9. **Route guard hoạt động thế nào?** — ProtectedRoute kiểm tra localStorage có token không
+10. **Còn trang nào chưa kết nối API?** — CheckoutPage, MembershipPage (hardcode), ReportsPage (biểu đồ hardcode)
 
 ---
 
-## 6. Thứ tự ôn tập đề xuất
+## 9. Thứ tự ôn tập đề xuất
 
 1. Đọc `docker-compose.yml` — hiểu infra
 2. Đọc 2-3 entity trong `domain/` — hiểu data model
 3. Đọc `CrudControllers.java` — hiểu API pattern
-4. Đọc `TokenAuthenticationFilter.java` — hiểu auth
-5. Đọc `ReceptionDashboard.tsx` — hiểu FE-BE connection
-6. Đọc `vite.config.ts` + `nginx.conf` — hiểu proxy routing
+4. Đọc `AuthController.java` + `TokenAuthenticationFilter.java` — hiểu auth
+5. Đọc `LoginPage.tsx` + `ProtectedRoute.tsx` — hiểu login flow
+6. Đọc `ReceptionDashboard.tsx` — hiểu FE-BE connection
+7. Dùng Swagger test 1 flow đầy đủ (đặt phòng → gọi món → thanh toán)
+8. Dùng DevTools trace 1 request từ frontend đến backend
