@@ -57,7 +57,7 @@ class BranchController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
                     {
                       "id": "CN002",
-                      "name": "Midnight Elegance Quận 3",
+                      "name": "Famtaoke Quận 3",
                       "address": "20 Võ Văn Tần, Quận 3, TP.HCM",
                       "phone": "02887654321",
                       "active": true
@@ -66,7 +66,7 @@ class BranchController {
             responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
                     {
                       "id": "CN002",
-                      "name": "Midnight Elegance Quận 3",
+                      "name": "Famtaoke Quận 3",
                       "address": "20 Võ Văn Tần, Quận 3, TP.HCM",
                       "phone": "02887654321",
                       "active": true
@@ -228,7 +228,7 @@ class RoomController {
                     }
                     """)))
     )
-    Room create(@RequestBody Room room) {
+    Room create(Room room) {
         return repository.save(room);
     }
 
