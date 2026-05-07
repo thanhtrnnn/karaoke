@@ -103,7 +103,7 @@ public class AuthController {
         UserAccount user = users.findByUsername(request.usernameOrEmail())
                 .or(() -> users.findByEmail(request.usernameOrEmail()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(user.getPasswordHash(), request.password())) {
             throw new IllegalArgumentException("Invalid username or password");
         }
         return AuthResponse.from(user);
