@@ -1,16 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface Booking {
+  id: string;
+  customer: string;
+  phone: string;
+  room: string;
+  date: string;
+  time: string;
+  status: string;
+  color: string;
+}
+
+const statusMap: Record<string, { label: string; color: string }> = {
+  PENDING: { label: 'Chờ xác nhận', color: 'status-cleaning' },
+  CONFIRMED: { label: 'Đã xác nhận', color: 'status-available' },
+  CHECKED_IN: { label: 'Đã check-in', color: 'tertiary' },
+  COMPLETED: { label: 'Hoàn tất', color: 'status-available' },
+  CANCELLED: { label: 'Đã hủy', color: 'status-occupied' },
+};
 
 export default function BookingManagement() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Tất cả');
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const bookings = [
-    { id: 'BK001', customer: 'Nguyễn Văn A', phone: '0901234567', room: 'P01 - VIP', date: '04/05/2026', time: '18:00 - 21:00', status: 'Đã xác nhận', color: 'status-available' },
-    { id: 'BK002', customer: 'Trần Thị B', phone: '0912345678', room: 'P03 - VIP', date: '04/05/2026', time: '19:00 - 22:00', status: 'Chờ xác nhận', color: 'status-cleaning' },
-    { id: 'BK003', customer: 'Lê Hoàng C', phone: '0923456789', room: 'P02 - Thường', date: '05/05/2026', time: '20:00 - 23:00', status: 'Đã hủy', color: 'status-occupied' },
-  ];
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/bookings', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setBookings(data.map((b: any) => {
+            const st = statusMap[b.status] || { label: b.status, color: 'slate-400' };
+            const start = b.startTime ? new Date(b.startTime) : null;
+            const end = b.endTime ? new Date(b.endTime) : null;
+            const dateStr = start ? start.toLocaleDateString('vi-VN') : '';
+            const timeStr = start && end ? `${start.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : '';
+            return {
+              id: b.id,
+              customer: b.customer?.fullName || 'N/A',
+              phone: b.customer?.phone || '',
+              room: `${b.room?.id || ''} - ${b.room?.name || ''}`,
+              date: dateStr,
+              time: timeStr,
+              status: st.label,
+              color: st.color,
+            };
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to fetch bookings:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
 
   const filteredBookings = bookings.filter(b => statusFilter === 'Tất cả' || b.status === statusFilter);
+
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải danh sách đặt phòng...</div>;
+  }
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6 flex-1">
@@ -18,14 +73,14 @@ export default function BookingManagement() {
         <span className="material-symbols-outlined text-[32px] text-primary-container mr-3">edit_calendar</span>
         <h1 className="font-h1 text-white">Quản lý đặt phòng</h1>
       </div>
-      
+
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
-        <input 
-          type="date" 
-          className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container" 
-          defaultValue="2026-05-04" 
+        <input
+          type="date"
+          className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+          defaultValue="2026-05-04"
         />
-        <select 
+        <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-surface-secondary border border-border-subtle rounded-lg pl-4 pr-10 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container min-w-[180px] appearance-none"
@@ -77,7 +132,7 @@ export default function BookingManagement() {
                       <span className="material-symbols-outlined text-[16px]">check</span> Duyệt
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => setSelectedBooking(b)}
                     className="px-3 py-1.5 bg-surface-secondary border border-border-subtle rounded-lg text-slate-300 hover:text-primary-container hover:border-primary-container transition-colors font-label-caps flex items-center gap-1"
                   >
@@ -93,27 +148,25 @@ export default function BookingManagement() {
       {/* Booking Details Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setSelectedBooking(null)}
           ></div>
-          
+
           <div className="bg-surface-container border border-slate-700/50 rounded-2xl w-full max-w-lg relative z-10 overflow-hidden shadow-2xl animate-fade-in">
-            {/* Modal Header */}
             <div className="bg-surface-container-low px-6 py-4 border-b border-slate-700/50 flex justify-between items-center">
               <div>
                 <h2 className="font-h2 text-white">Chi tiết Đặt phòng</h2>
                 <p className="text-primary-container font-body-md mt-0.5">{selectedBooking.id}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedBooking(null)}
                 className="text-slate-400 hover:text-white transition-colors p-1"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            
-            {/* Modal Body */}
+
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -139,33 +192,16 @@ export default function BookingManagement() {
                   <p className="text-white">{selectedBooking.date}</p>
                   <p className="text-slate-400 text-sm">{selectedBooking.time}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400 font-label-caps uppercase mb-1">Ghi chú</p>
-                  <p className="text-slate-400 italic">Không có ghi chú thêm.</p>
-                </div>
               </div>
             </div>
-            
-            {/* Modal Footer */}
+
             <div className="px-6 py-4 border-t border-slate-700/50 bg-surface-container-low flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setSelectedBooking(null)}
                 className="px-6 py-2.5 rounded-lg font-body-md font-semibold text-slate-300 hover:text-white transition-colors"
               >
                 Đóng
               </button>
-              {selectedBooking.status === 'Chờ xác nhận' && (
-                <button 
-                  onClick={() => {
-                    alert(`Đã xác nhận đơn đặt phòng ${selectedBooking.id}`);
-                    setSelectedBooking(null);
-                  }}
-                  className="px-6 py-2.5 rounded-lg font-body-md font-semibold bg-primary-container text-on-primary-container hover:bg-primary transition-colors flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-[18px]">check</span>
-                  Duyệt yêu cầu
-                </button>
-              )}
             </div>
           </div>
         </div>

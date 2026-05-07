@@ -1,17 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface Branch {
+  id: string;
+  name: string;
+  address: string;
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('Thông tin chung');
   const tabs = ['Thông tin chung', 'Chi nhánh', 'Bảng giá', 'Khác'];
 
-  const [branches, setBranches] = useState([
-    { id: 'CN01', name: 'CN Quận 1', address: '123 Lê Lợi, Q1' },
-    { id: 'CN02', name: 'CN Quận 3', address: '456 Võ Văn Tần, Q3' }
-  ]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any>(null);
   const [branchForm, setBranchForm] = useState({ name: '', address: '' });
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/branches', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setBranches(data.map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            address: b.address || '',
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch branches:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBranches();
+  }, []);
 
   const handleOpenModal = (branch?: any) => {
     if (branch) {
@@ -24,20 +52,52 @@ export default function SettingsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveBranch = () => {
+  const handleSaveBranch = async () => {
     if (!branchForm.name) return;
-    if (editingBranch) {
-      setBranches(branches.map(b => b.id === editingBranch.id ? { ...b, ...branchForm } : b));
-    } else {
-      const newId = `CN0${branches.length + 1}`;
-      setBranches([...branches, { id: newId, ...branchForm }]);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (editingBranch) {
+        const res = await fetch(`/api/branches/${editingBranch.id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(branchForm),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setBranches(branches.map(b => b.id === editingBranch.id ? { ...b, name: updated.name, address: updated.address || '' } : b));
+        }
+      } else {
+        const res = await fetch('/api/branches', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(branchForm),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setBranches([...branches, { id: created.id, name: created.name, address: created.address || '' }]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to save branch:', e);
     }
     setIsModalOpen(false);
   };
 
-  const handleDeleteBranch = (id: string) => {
+  const handleDeleteBranch = async (id: string) => {
     if (confirm('Bạn có chắc muốn xóa chi nhánh này?')) {
-      setBranches(branches.filter(b => b.id !== id));
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/branches/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setBranches(branches.filter(b => b.id !== id));
+        }
+      } catch (e) {
+        console.error('Failed to delete branch:', e);
+      }
     }
   };
 
@@ -61,7 +121,6 @@ export default function SettingsPage() {
         ))}
       </div>
       {/* General Settings */}
-      {/* General Settings */}
       {activeTab === 'Thông tin chung' && (
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6 animate-fade-in">
           <h2 className="font-h2 text-white mb-4">Thông tin chung</h2>
@@ -71,16 +130,8 @@ export default function SettingsPage() {
             <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-white font-body-md focus:outline-none focus:border-primary-container" defaultValue="admin@karaoke.com" /></div>
             <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Logo</label><button onClick={() => alert('Mở cửa sổ chọn file ảnh...')} className="w-full bg-surface-secondary border border-border-subtle border-dashed rounded-lg px-4 py-3 text-slate-400 font-body-md hover:border-primary-container hover:text-primary-container transition-colors">Chọn file...</button></div>
           </div>
-          <div className="mt-6 pt-6 border-t border-slate-700/50">
-            <h3 className="font-label-caps text-slate-400 uppercase mb-4">Cài đặt tích điểm</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center gap-3"><span className="text-slate-400 font-body-md">1,000đ =</span><input type="number" className="w-20 bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 text-white font-body-md text-center focus:outline-none focus:border-primary-container" defaultValue={1} /><span className="text-slate-400 font-body-md">điểm</span></div>
-              <div className="flex items-center gap-3"><span className="text-slate-400 font-body-md">Quy đổi:</span><input type="number" className="w-20 bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 text-white font-body-md text-center focus:outline-none focus:border-primary-container" defaultValue={100} /><span className="text-slate-400 font-body-md">điểm =</span><input className="w-28 bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 text-white font-body-md text-center focus:outline-none focus:border-primary-container" defaultValue="10,000đ" /></div>
-            </div>
-          </div>
         </div>
       )}
-      {/* Branch Management */}
       {/* Branch Management */}
       {(activeTab === 'Thông tin chung' || activeTab === 'Chi nhánh') && (
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6 animate-fade-in">
@@ -88,26 +139,30 @@ export default function SettingsPage() {
             <h2 className="font-h2 text-white">Quản lý chi nhánh</h2>
             <button onClick={() => handleOpenModal()} className="flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary-container rounded-lg font-label-caps hover:bg-primary transition-colors"><span className="material-symbols-outlined text-[16px]">add</span>Thêm CN</button>
           </div>
-          <table className="w-full text-left whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-slate-700/50 text-slate-400 font-label-caps">
-                <th className="py-3 px-4">Mã</th><th className="py-3 px-4">Tên</th><th className="py-3 px-4">Địa chỉ</th><th className="py-3 px-4">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="font-body-md divide-y divide-slate-800/50">
-              {branches.map(b => (
-                <tr key={b.id}>
-                  <td className="py-3 px-4 text-primary-container">{b.id}</td>
-                  <td className="py-3 px-4 text-white">{b.name}</td>
-                  <td className="py-3 px-4 text-slate-300">{b.address}</td>
-                  <td className="py-3 px-4 flex gap-2">
-                    <button onClick={() => handleOpenModal(b)} className="px-3 py-1 bg-surface-secondary border border-border-subtle rounded-lg text-slate-300 hover:text-primary-container hover:border-primary-container transition-colors font-label-caps">Sửa</button>
-                    <button onClick={() => handleDeleteBranch(b.id)} className="px-3 py-1 bg-status-occupied/10 border border-status-occupied/20 rounded-lg text-status-occupied hover:bg-status-occupied hover:text-white transition-colors font-label-caps">Xóa</button>
-                  </td>
+          {loading ? (
+            <p className="text-slate-400">Đang tải...</p>
+          ) : (
+            <table className="w-full text-left whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-slate-700/50 text-slate-400 font-label-caps">
+                  <th className="py-3 px-4">Mã</th><th className="py-3 px-4">Tên</th><th className="py-3 px-4">Địa chỉ</th><th className="py-3 px-4">Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="font-body-md divide-y divide-slate-800/50">
+                {branches.map(b => (
+                  <tr key={b.id}>
+                    <td className="py-3 px-4 text-primary-container">{b.id}</td>
+                    <td className="py-3 px-4 text-white">{b.name}</td>
+                    <td className="py-3 px-4 text-slate-300">{b.address}</td>
+                    <td className="py-3 px-4 flex gap-2">
+                      <button onClick={() => handleOpenModal(b)} className="px-3 py-1 bg-surface-secondary border border-border-subtle rounded-lg text-slate-300 hover:text-primary-container hover:border-primary-container transition-colors font-label-caps">Sửa</button>
+                      <button onClick={() => handleDeleteBranch(b.id)} className="px-3 py-1 bg-status-occupied/10 border border-status-occupied/20 rounded-lg text-status-occupied hover:bg-status-occupied hover:text-white transition-colors font-label-caps">Xóa</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 

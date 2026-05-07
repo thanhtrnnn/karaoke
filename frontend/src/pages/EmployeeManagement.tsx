@@ -1,21 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface Employee {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  branch: string;
+}
+
+const roleMap: Record<string, string> = {
+  RECEPTIONIST: 'Lễ tân',
+  SERVICE_STAFF: 'Phục vụ',
+  BRANCH_MANAGER: 'Quản lý',
+  ADMIN: 'Admin',
+  CLIENT: 'Khách hàng',
+};
 
 export default function EmployeeManagement() {
-  const initialEmployees = [
-    { id: 'NV001', name: 'Nguyễn Văn Hùng', role: 'Lễ tân', phone: '0901234567', branch: 'CN1 - Quận 1' },
-    { id: 'NV002', name: 'Trần Thị Mai', role: 'Phục vụ', phone: '0912345678', branch: 'CN1 - Quận 1' },
-    { id: 'NV003', name: 'Lê Hoàng Nam', role: 'Quản lý', phone: '0923456789', branch: 'CN2 - Quận 3' },
-    { id: 'NV004', name: 'Phạm Minh Tuấn', role: 'Phục vụ', phone: '0934567890', branch: 'CN1 - Quận 1' },
-    { id: 'NV005', name: 'Đỗ Thị Hương', role: 'Lễ tân', phone: '0945678901', branch: 'CN3 - Quận 7' },
-  ];
-
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('Tất cả');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', role: 'Lễ tân', phone: '', branch: 'CN1 - Quận 1' });
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/employees', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEmployees(data.map((e: any) => ({
+            id: e.id,
+            name: e.fullName,
+            role: roleMap[e.role] || e.role,
+            phone: e.phone,
+            branch: e.branch?.name || 'N/A',
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch employees:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   const filteredEmployees = employees.filter(e => {
     const matchRole = filterRole === 'Tất cả' || e.role === filterRole;
@@ -34,30 +69,84 @@ export default function EmployeeManagement() {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.phone) {
       alert("Vui lòng nhập đủ thông tin.");
       return;
     }
-    if (editingEmp) {
-      setEmployees(employees.map(e => e.id === editingEmp.id ? { ...e, ...formData } : e));
-    } else {
-      const newId = `NV00${employees.length + 1}`;
-      setEmployees([...employees, { id: newId, ...formData }]);
+
+    const reverseRoleMap: Record<string, string> = {
+      'Lễ tân': 'RECEPTIONIST',
+      'Phục vụ': 'SERVICE_STAFF',
+      'Quản lý': 'BRANCH_MANAGER',
+    };
+
+    const body = {
+      fullName: formData.name,
+      phone: formData.phone,
+      role: reverseRoleMap[formData.role] || formData.role,
+    };
+
+    try {
+      const token = localStorage.getItem('token');
+      if (editingEmp) {
+        const res = await fetch(`/api/employees/${editingEmp.id}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          setEmployees(employees.map(e => e.id === editingEmp.id ? { ...e, ...formData } : e));
+        }
+      } else {
+        const res = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setEmployees([...employees, {
+            id: created.id,
+            name: created.fullName,
+            role: roleMap[created.role] || created.role,
+            phone: created.phone,
+            branch: created.branch?.name || 'N/A',
+          }]);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to save employee:', e);
     }
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Bạn có chắc muốn xóa nhân viên này?")) {
-      setEmployees(employees.filter(e => e.id !== id));
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/employees/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setEmployees(employees.filter(e => e.id !== id));
+        }
+      } catch (e) {
+        console.error('Failed to delete employee:', e);
+      }
     }
   };
+
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải danh sách nhân viên...</div>;
+  }
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="font-h1 text-white">Quản lý nhân viên</h1>
-        <button 
+        <button
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 px-6 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
         >
@@ -67,15 +156,15 @@ export default function EmployeeManagement() {
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-5 border border-slate-700/50">
         <div className="relative flex-1 min-w-[250px]">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
-          <input 
+          <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-11 pr-4 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all placeholder:text-slate-500" 
-            placeholder="Tìm kiếm nhân viên (Tên hoặc SĐT)..." 
+            className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-11 pr-4 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all placeholder:text-slate-500"
+            placeholder="Tìm kiếm nhân viên (Tên hoặc SĐT)..."
           />
         </div>
         <div className="relative min-w-[220px]">
-          <select 
+          <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
             className="w-full appearance-none bg-none bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all cursor-pointer"
@@ -108,13 +197,13 @@ export default function EmployeeManagement() {
                 <td className="py-4 px-6">{e.phone}</td>
                 <td className="py-4 px-6">{e.branch}</td>
                 <td className="py-4 px-6 flex gap-2">
-                  <button 
+                  <button
                     onClick={() => handleOpenModal(e)}
                     className="px-3 py-1.5 bg-surface-secondary border border-border-subtle rounded-lg text-slate-300 hover:border-primary-container hover:text-primary-container transition-colors font-label-caps"
                   >
                     Sửa
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(e.id)}
                     className="px-3 py-1.5 bg-status-occupied/10 border border-status-occupied/20 rounded-lg text-status-occupied hover:bg-status-occupied hover:text-white transition-colors font-label-caps"
                   >
@@ -127,7 +216,6 @@ export default function EmployeeManagement() {
         </table>
       </div>
 
-      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface-container border border-slate-700/50 rounded-2xl w-full max-w-md p-6 shadow-2xl">
@@ -140,25 +228,25 @@ export default function EmployeeManagement() {
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Họ & Tên</label>
-                <input 
+                <input
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: Nguyễn Văn A"
                 />
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Số điện thoại</label>
-                <input 
+                <input
                   value={formData.phone}
                   onChange={e => setFormData({...formData, phone: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container" 
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
                   placeholder="VD: 0901234567"
                 />
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Vai trò</label>
-                <select 
+                <select
                   value={formData.role}
                   onChange={e => setFormData({...formData, role: e.target.value})}
                   className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
@@ -170,7 +258,7 @@ export default function EmployeeManagement() {
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Chi nhánh</label>
-                <select 
+                <select
                   value={formData.branch}
                   onChange={e => setFormData({...formData, branch: e.target.value})}
                   className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
@@ -182,13 +270,13 @@ export default function EmployeeManagement() {
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="px-6 py-2.5 border border-slate-700/50 text-slate-300 rounded-lg font-body-md hover:bg-surface-secondary transition-colors"
               >
                 Hủy
               </button>
-              <button 
+              <button
                 onClick={handleSave}
                 className="px-6 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
               >
