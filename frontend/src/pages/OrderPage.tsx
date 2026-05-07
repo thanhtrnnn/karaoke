@@ -1,16 +1,55 @@
-import { useState } from 'react';
-import { mockMenu } from '../data/mockData';
+import { useState, useEffect } from 'react';
+
+interface MenuItem {
+  id: string;
+  name: string;
+  cat: string;
+  price: number;
+  stock: number;
+  image: string;
+  active: boolean;
+}
 
 export default function OrderPage() {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tất cả');
 
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/menu-items', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setMenuItems(data.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            cat: item.category,
+            price: item.price,
+            stock: item.stock,
+            image: item.image || '/images/snack.png',
+            active: item.active
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to fetch menu items:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
+
   const categories = ['Tất cả', 'Đồ uống', 'Đồ ăn', 'Trái cây', 'Khác'];
-  
-  const filteredProducts = mockMenu.filter(p => {
+
+  const filteredProducts = menuItems.filter(p => {
     const matchCategory = activeCategory === 'Tất cả' || p.cat === activeCategory;
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
+    return matchCategory && matchSearch && p.active;
   });
 
   const [cart, setCart] = useState<any[]>([]);
@@ -40,19 +79,23 @@ export default function OrderPage() {
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
+  if (loading) {
+    return <div className="p-8 text-slate-400">Đang tải menu...</div>;
+  }
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <h1 className="font-h1 text-white">Gọi món - Phòng P01</h1>
       <div className="relative w-full md:w-96">
         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-        <input 
-          className="w-full bg-surface-container border border-slate-700/50 rounded-full py-2.5 pl-10 pr-10 text-sm text-on-surface focus:outline-none focus:border-primary-container placeholder:text-slate-500" 
-          placeholder="Tìm kiếm món..." 
+        <input
+          className="w-full bg-surface-container border border-slate-700/50 rounded-full py-2.5 pl-10 pr-10 text-sm text-on-surface focus:outline-none focus:border-primary-container placeholder:text-slate-500"
+          placeholder="Tìm kiếm món..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         {searchQuery && (
-          <button 
+          <button
             onClick={() => setSearchQuery('')}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
           >
@@ -62,8 +105,8 @@ export default function OrderPage() {
       </div>
       <div className="flex flex-wrap gap-2">
         {categories.map((c) => (
-          <button 
-            key={c} 
+          <button
+            key={c}
             onClick={() => setActiveCategory(c)}
             className={`px-4 py-2 rounded-lg font-body-md transition-colors ${activeCategory === c ? 'bg-primary-container/10 border border-primary-container text-primary-container font-medium' : 'bg-transparent border border-slate-700/50 text-slate-400 hover:border-primary-container hover:text-primary-container'}`}
           >
@@ -88,7 +131,7 @@ export default function OrderPage() {
                 <p className="text-primary-container font-semibold mt-1">{p.price.toLocaleString()}đ</p>
                 <p className="text-slate-500 text-sm mt-1">Tồn: {p.stock}</p>
                 <div className="mt-auto pt-3">
-                  <button 
+                  <button
                     onClick={() => addToCart(p)}
                     className="w-full py-2 bg-primary-container/10 text-primary-container border border-primary-container/30 rounded-lg font-label-caps hover:bg-primary-container hover:text-on-primary transition-colors flex items-center justify-center gap-1"
                   >
@@ -123,14 +166,14 @@ export default function OrderPage() {
           <div className="border-t border-slate-700/50 pt-4 flex justify-between items-center mb-4">
             <span className="font-body-md text-slate-400">Tổng:</span><span className="font-h2 text-primary-container">{cartTotal.toLocaleString()}đ</span>
           </div>
-          <button 
+          <button
             onClick={() => {
               if (cart.length === 0) alert('Giỏ hàng đang trống!');
               else {
                 alert('Đã gửi Order xuống bếp/bar thành công!');
                 setCart([]);
               }
-            }} 
+            }}
             className="w-full py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
           >
             Gửi order

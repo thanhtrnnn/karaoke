@@ -38,7 +38,7 @@ export default function LoginPage() {
         <img alt="Luxurious Karaoke Space" className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNWtcs6g6WVgqkV9LshXogMObWdZobOlujUhK8EamhlBSotlUM9gH58Qyv-KfhnudTJTmWmp7bA3NqEEGEb3Jre43VetYojimzNGEs9sSX0_A_TvS4hL7LjM-28WE3GaWTdLGYkBtPGXtbmyMpbx3QjmHWgeaB69h2IZwzE9ChRDq4cKanzonezQ6USVYm9k2HwK7-sE8iiih6gXwx9dn-123hjiDQ_toPhkcTRts9jRJmj0yNPhWV0NK_gKxA7kPaJC833EH8Ow" />
         <div className="absolute inset-0 bg-gradient-to-t from-bg-base via-bg-base/50 to-transparent"></div>
         <div className="absolute bottom-16 left-16 z-10 max-w-md">
-          <h2 className="font-h1 text-h1 text-primary-container tracking-tighter mb-4">Midnight Elegance</h2>
+          <h2 className="font-h1 text-h1 text-primary-container tracking-tighter mb-4">Famtaoke</h2>
           <p className="font-body-lg text-body-lg text-text-secondary leading-relaxed">Hệ thống quản lý dịch vụ giải trí cao cấp. Đem lại trải nghiệm hoàn hảo, tối ưu hóa quy trình vận hành với sự tinh tế và chuyên nghiệp.</p>
         </div>
       </div>
@@ -48,16 +48,16 @@ export default function LoginPage() {
           <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-primary-container/5 rounded-full blur-[120px]"></div>
         </div>
         <div className="w-full max-w-[420px] relative z-10">
-            <div className="mb-12">
-              <h1 className="font-h1 text-h1 text-text-primary mb-3 tracking-tight">Chào mừng trở lại</h1>
-              <p className="font-body-md text-body-md text-text-secondary">Đăng nhập bằng tài khoản nội bộ để tiếp tục quản lý hệ thống.</p>
+          <div className="mb-12">
+            <h1 className="font-h1 text-h1 text-text-primary mb-3 tracking-tight">Chào mừng trở lại</h1>
+            <p className="font-body-md text-body-md text-text-secondary">Đăng nhập bằng tài khoản nội bộ để tiếp tục quản lý hệ thống.</p>
+          </div>
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 font-body-md">
+              {error}
             </div>
-            {error && (
-              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 font-body-md">
-                {error}
-              </div>
-            )}
-            <form className="space-y-6" onSubmit={handleLogin}>
+          )}
+          <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-5">
               <div className="relative">
                 <label className="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase tracking-wider" htmlFor="username">Tên đăng nhập</label>
