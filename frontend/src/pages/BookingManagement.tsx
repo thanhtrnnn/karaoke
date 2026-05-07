@@ -23,6 +23,7 @@ export default function BookingManagement() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Tất cả');
+  const [dateFilter, setDateFilter] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
@@ -61,7 +62,26 @@ export default function BookingManagement() {
     fetchBookings();
   }, []);
 
-  const filteredBookings = bookings.filter(b => statusFilter === 'Tất cả' || b.status === statusFilter);
+  const handleApprove = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/bookings/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CONFIRMED' }),
+      });
+      if (res.ok) {
+        setBookings(bookings.map(b => b.id === id ? { ...b, status: 'Đã xác nhận', color: 'status-available' } : b));
+      }
+    } catch (e) {
+      console.error('Failed to approve booking:', e);
+    }
+  };
+
+  const filteredBookings = bookings.filter(b =>
+    (statusFilter === 'Tất cả' || b.status === statusFilter) &&
+    (!dateFilter || b.date === new Date(dateFilter).toLocaleDateString('vi-VN'))
+  );
 
   if (loading) {
     return <div className="p-8 text-slate-400">Đang tải danh sách đặt phòng...</div>;
@@ -77,8 +97,10 @@ export default function BookingManagement() {
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
         <input
           type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
           className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-          defaultValue="2026-05-04"
+          style={{ colorScheme: 'dark' }}
         />
         <select
           value={statusFilter}
@@ -128,7 +150,10 @@ export default function BookingManagement() {
                 </td>
                 <td className="py-4 px-6 flex justify-end gap-2">
                   {b.status === 'Chờ xác nhận' && (
-                    <button className="px-3 py-1.5 bg-status-available/10 text-status-available border border-status-available/20 rounded-lg font-label-caps hover:bg-status-available hover:text-white transition-colors flex items-center gap-1">
+                    <button
+                      onClick={() => handleApprove(b.id)}
+                      className="px-3 py-1.5 bg-status-available/10 text-status-available border border-status-available/20 rounded-lg font-label-caps hover:bg-status-available hover:text-white transition-colors flex items-center gap-1"
+                    >
                       <span className="material-symbols-outlined text-[16px]">check</span> Duyệt
                     </button>
                   )}

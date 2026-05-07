@@ -14,7 +14,7 @@ interface Room {
 export default function RoomManagement() {
   const [roomList, setRoomList] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ id: '', name: '', type: 'VIP', capacity: '', price: '' });
+  const [formData, setFormData] = useState({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
   const [isEditing, setIsEditing] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -34,6 +34,7 @@ export default function RoomManagement() {
             capacity: `${r.capacity} người`,
             price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : r.status === 'CLEANING' ? 'Đang dọn' : 'Bảo trì',
+            statusRaw: r.status,
             color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
             canBook: r.status === 'AVAILABLE',
           })));
@@ -49,7 +50,7 @@ export default function RoomManagement() {
 
   const handleAddNew = () => {
     setIsEditing(false);
-    setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '' });
+    setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -60,7 +61,8 @@ export default function RoomManagement() {
       name: room.name,
       type: room.type,
       capacity: room.capacity.replace(/\D/g, ''),
-      price: room.price
+      price: room.price,
+      status: room.statusRaw || 'AVAILABLE',
     });
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -93,6 +95,7 @@ export default function RoomManagement() {
       type: formData.type,
       capacity: parseInt(formData.capacity) || 0,
       hourlyPrice: parseInt(formData.price.replace(/[^0-9]/g, '')) || 0,
+      status: formData.status,
     };
 
     try {
@@ -237,9 +240,15 @@ export default function RoomManagement() {
           </div>
           <div>
             <label className="font-label-caps text-slate-400 uppercase block mb-2">Trạng thái</label>
-            <select className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container">
-              <option>Hoạt động</option>
-              <option>Bảo trì</option>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+            >
+              <option value="AVAILABLE">Trống</option>
+              <option value="OCCUPIED">Đang dùng</option>
+              <option value="RESERVED">Đặt trước</option>
+              <option value="MAINTENANCE">Bảo trì</option>
             </select>
           </div>
           <div className="flex items-end gap-3">
@@ -251,7 +260,7 @@ export default function RoomManagement() {
             </button>
             <button
               onClick={() => {
-                setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '' });
+                setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
                 setIsEditing(false);
               }}
               className="flex-1 py-3 bg-transparent border border-slate-700/50 text-slate-400 rounded-lg font-body-md hover:border-status-occupied hover:text-status-occupied transition-colors"

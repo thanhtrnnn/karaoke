@@ -6,6 +6,8 @@ interface InventoryItem {
   cat: string;
   stock: number;
   unit: string;
+  price: number;
+  active: boolean;
 }
 
 export default function InventoryPage() {
@@ -33,6 +35,8 @@ export default function InventoryPage() {
             cat: p.category,
             stock: p.stock,
             unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
+            price: p.price,
+            active: p.active,
           })));
         }
       } catch (e) {
@@ -88,9 +92,9 @@ export default function InventoryPage() {
             id: product.id,
             name: product.name,
             category: product.cat,
-            price: 0,
+            price: product.price,
             stock: newStock,
-            active: true,
+            active: product.active,
           }),
         });
         if (res.ok) successCount++;
@@ -110,6 +114,8 @@ export default function InventoryPage() {
           cat: p.category,
           stock: p.stock,
           unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
+          price: p.price,
+          active: p.active,
         })));
       }
       alert(`Nhập kho thành công ${successCount}/${validRows.length} sản phẩm!`);

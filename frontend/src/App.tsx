@@ -68,7 +68,7 @@ function App() {
           <Route path="/booking-management" element={<BookingManagement />} />
 
           {/* Room */}
-          <Route path="/room-session" element={<RoomSession />} />
+          <Route path="/room-session/:roomId" element={<RoomSession />} />
           <Route path="/rooms" element={<RoomManagement />} />
 
           {/* Orders */}

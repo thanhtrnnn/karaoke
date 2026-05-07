@@ -5,6 +5,7 @@ interface OrderItem {
   room: string;
   items: string;
   time: string;
+  date: string;
   status: string;
   color: string;
 }
@@ -36,12 +37,15 @@ export default function OrderManagement() {
           const mapped = data.map((o: any) => {
             const st = statusMap[o.status] || { label: o.status, color: 'slate-400' };
             const itemNames = (o.items || []).map((i: any) => `${i.name || 'N/A'} x${i.quantity}`).join(', ');
-            const time = o.orderedAt ? new Date(o.orderedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+            const dt = o.orderedAt ? new Date(o.orderedAt) : null;
+            const time = dt ? dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+            const date = dt ? dt.toISOString().split('T')[0] : '';
             return {
               id: o.id,
               room: o.roomId || o.room?.id || 'N/A',
               items: itemNames,
               time,
+              date,
               status: st.label,
               color: st.color,
             };
@@ -61,7 +65,8 @@ export default function OrderManagement() {
 
   const filteredOrders = orders.filter(o =>
     (roomFilter === 'Tất cả' || o.room === roomFilter) &&
-    (statusFilter === 'Tất cả' || o.status.includes(statusFilter))
+    (statusFilter === 'Tất cả' || o.status.includes(statusFilter)) &&
+    (!dateFilter || o.date === dateFilter)
   );
 
   const handleComplete = async (id: string) => {

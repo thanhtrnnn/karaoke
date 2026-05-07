@@ -16,6 +16,7 @@ export default function CheckoutPage() {
   const [selectedId, setSelectedId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | 'CARD'>('CASH');
 
   const token = localStorage.getItem('token');
 
@@ -152,9 +153,24 @@ export default function CheckoutPage() {
         <div className="bg-surface-primary rounded-xl border border-slate-700/50 p-6 shadow-sm">
           <h3 className="font-label-caps text-slate-400 mb-4 uppercase">Phương thức thanh toán</h3>
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <button className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-700/50 bg-surface-container-high hover:border-primary-container text-slate-400 hover:text-primary-container gap-2 transition-all"><span className="material-symbols-outlined text-2xl">payments</span><span className="font-label-caps">Tiền mặt</span></button>
-            <button className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary-container bg-primary-container/10 text-primary-container gap-2"><span className="material-symbols-outlined text-2xl">account_balance</span><span className="font-label-caps">Chuyển khoản</span></button>
-            <button className="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-700/50 bg-surface-container-high hover:border-primary-container text-slate-400 hover:text-primary-container gap-2 transition-all"><span className="material-symbols-outlined text-2xl">credit_card</span><span className="font-label-caps">Thẻ</span></button>
+            {[
+              { key: 'CASH' as const, label: 'Tiền mặt', icon: 'payments' },
+              { key: 'TRANSFER' as const, label: 'Chuyển khoản', icon: 'account_balance' },
+              { key: 'CARD' as const, label: 'Thẻ', icon: 'credit_card' },
+            ].map(m => (
+              <button
+                key={m.key}
+                onClick={() => setPaymentMethod(m.key)}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl gap-2 transition-all ${
+                  paymentMethod === m.key
+                    ? 'border-2 border-primary-container bg-primary-container/10 text-primary-container'
+                    : 'border border-slate-700/50 bg-surface-container-high hover:border-primary-container text-slate-400 hover:text-primary-container'
+                }`}
+              >
+                <span className="material-symbols-outlined text-2xl">{m.icon}</span>
+                <span className="font-label-caps">{m.label}</span>
+              </button>
+            ))}
           </div>
           <button
             onClick={handlePay}

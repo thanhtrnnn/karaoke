@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 interface MenuItem {
   id: string;
@@ -11,10 +12,29 @@ interface MenuItem {
 }
 
 export default function OrderPage() {
+  const [searchParams] = useSearchParams();
+  const roomFromUrl = searchParams.get('room') || '';
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tất cả');
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState(roomFromUrl);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setRooms(data);
+        }
+      } catch (e) { /* ignore */ }
+    };
+    fetchRooms();
+  }, []);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -84,13 +104,17 @@ export default function OrderPage() {
       alert('Giỏ hàng đang trống!');
       return;
     }
+    if (!selectedRoom) {
+      alert('Vui lòng chọn phòng trước khi gửi order!');
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          roomId: 'P01',
+          roomId: selectedRoom,
           items: cart.map(item => ({ menuItemId: item.id, quantity: item.qty })),
         }),
       });
@@ -112,7 +136,19 @@ export default function OrderPage() {
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
-      <h1 className="font-h1 text-white">Gọi món - Phòng P01</h1>
+      <div className="flex flex-wrap items-center gap-4">
+        <h1 className="font-h1 text-white">Gọi món</h1>
+        <select
+          value={selectedRoom}
+          onChange={(e) => setSelectedRoom(e.target.value)}
+          className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
+        >
+          <option value="">-- Chọn phòng --</option>
+          {rooms.map((r: any) => (
+            <option key={r.id} value={r.id}>{r.id} - {r.name}</option>
+          ))}
+        </select>
+      </div>
       <div className="relative w-full md:w-96">
         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
         <input
