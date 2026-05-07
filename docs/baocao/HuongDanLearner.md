@@ -1,5 +1,5 @@
 # HƯỚNG DẪN HỌC CHO LEARNER
-## Hệ thống Quản lý Quán Karaoke - 8 ngày
+## Hệ thống Quản lý Quán Karaoke - Famtaoke
 
 ---
 
@@ -16,9 +16,74 @@
 
 ---
 
+## Bài tập 0 - Chạy dự án (Tất cả)
+
+> Trước khi bắt đầu bất kỳ bài tập nào, bạn PHẢI chạy được dự án trên máy mình.
+
+### Bước 1: Clone dự án
+
+```bash
+git clone https://github.com/thanhtrnnn/karaoke.git
+cd karaoke
+```
+
+### Bước 2: Checkout nhánh bài tập của bạn
+
+```bash
+# Trung:
+git checkout bai-tap/trung-xac-thuc
+
+# Tuấn:
+git checkout bai-tap/tuan-quan-ly-phong
+
+# Khánh:
+git checkout bai-tap/khanh-goi-mon
+
+# Hành:
+git checkout bai-tap/hanh-thanh-toan-bao-cao
+```
+
+### Bước 3: Chạy bằng Docker
+
+```bash
+docker compose up -d --build
+```
+
+Đợi build xong (lần đầu 3-5 phút). Khi thấy 4 container chạy:
+
+```
+docker compose ps
+```
+
+Phải thấy cả 4 service đều `Up` hoặc `healthy`.
+
+### Bước 4: Kiểm tra
+
+1. Mở trình duyệt → http://localhost:6969 → thấy trang đăng nhập
+2. Đăng nhập: `admin` / `admin123`
+3. Mở http://localhost:8080/swagger-ui.html → thấy danh sách API
+4. Click "Tất cả phòng" (hoặc bất kỳ trang nào trong sidebar) → xem dữ liệu hiển thị
+
+### Bước 5: Chụp screenshot
+
+Chụp lại kết quả thành công, gửi cho QA xác nhận.
+
+### Không chạy được?
+
+Xem chi tiết tại: [DEPLOYMENT.md](../../DEPLOYMENT.md)
+
+| Lỗi | Giải pháp |
+|-----|-----------|
+| `docker: command not found` | Cài Docker Desktop: https://docker.com/products/docker-desktop |
+| `port already allocated` | Tắt process đang dùng port, hoặc đổi port trong `docker-compose.yml` |
+| Build chậm | Bình thường, lần đầu tải dependency. Các lần sau nhanh hơn |
+| Frontend trắng | Kiểm tra `docker compose logs frontend` |
+
+---
+
 ## Bạn cần làm gì?
 
-Mỗi file bài tập có **3 bài**, đánh số rõ ràng:
+Sau khi hoàn thành Bài tập 0, mỗi file bài tập có **3 bài**:
 
 ### Bài 1 - Trace luồng dữ liệu
 > Hiểu code chạy từ đâu đến đâu
@@ -31,8 +96,7 @@ Mỗi file bài tập có **3 bài**, đánh số rõ ràng:
 ### Bài 2 - Sửa lỗi có chủ đích
 > QA đã giấu 1 lỗi trong code, bạn phải tìm và sửa
 
-- QA sẽ tạo lỗi trước khi bạn bắt đầu
-- Chạy thử chức năng → thấy lỗi
+- Chạy thử chức năng trên nhánh của bạn → thấy lỗi
 - Dùng DevTools / Debugger tìm nguyên nhân
 - Sửa code → chạy lại → hết lỗi
 - **Mục tiêu:** Tìm và sửa lỗi trong < 45 phút
@@ -50,60 +114,47 @@ Mỗi file bài tập có **3 bài**, đánh số rõ ràng:
 
 | Ngày | Nội dung | Bạn cần làm |
 |------|----------|-------------|
-| **1** | Đọc hiểu code | Đọc **Bài 1** trong file của bạn. Mở IDE, tìm từng file, từng dòng code được chỉ ra. Ghi chú những gì chưa hiểu. |
-| **2** | Đọc hiểu code (tiếp) | Trace lại flow bằng lời nói (không nhìn code). Hỏi QA những phần chưa hiểu. |
-| **3** | Sửa lỗi | QA tạo lỗi. Bạn mở chức năng → thấy lỗi → debug → sửa. Ghi lại quá trình debug. |
-| **4** | Sửa lỗi (tiếp) | Nếu chưa sửa xong → tiếp tục. Nếu xong → giải thích cho QA tại sao lỗi đó xảy ra. |
-| **5** | Sửa UI | Đọc **Bài 3**, sửa text/màu như hướng dẫn. Chạy thử xem giao diện thay đổi đúng chưa. |
-| **6** | Vấn đáp module | QA hỏi 5 câu trong **Bài 3**. Bạn trả lời bằng cách chỉ ra file + dòng code. Ôn lại câu sai. |
-| **7** | Vấn đáp liên module | QA hỏi câu hỏi chung (trong [BaiTap_4Learners.md](BaiTap_4Learners.md)). Ôn toàn bộ. |
-| **8** | Tổng duyệt | Thuyết trình 5 phút về module của bạn. Trả lời câu hỏi chất vấn ngẫu nhiên. |
-
----
-
-## Khi gặp vấn đề
-
-| Tình huống | Giải quyết |
-|-----------|-----------|
-| Không chạy được dự án | Xem hướng dẫn setup trong [README.md](../../README.md) |
-| Không tìm thấy file | Xem bảng "File cần đọc" trong file bài tập của bạn |
-| Không hiểu code | Đọc comment trong code → hỏi QA → ghi chú lại |
-| Không biết debug | Xem phần "Công cụ hỗ trợ" bên dưới |
-| Lỗi không giống bài tập mô tả | Chụp screenshot Console/Network → hỏi QA |
+| **0** | Cài đặt | Hoàn thành **Bài tập 0** ở trên. Chạy được dự án, chụp screenshot. |
+| **1** | Đọc hiểu code | Đọc **Bài 1** trong file của bạn. Mở IDE, tìm từng file, từng dòng code. Ghi chú. |
+| **2** | Đọc hiểu (tiếp) | Trace lại flow bằng lời nói (không nhìn code). Hỏi QA. |
+| **3** | Sửa lỗi | Chạy chức năng trên nhánh → thấy lỗi → debug → sửa. |
+| **4** | Sửa lỗi (tiếp) | Giải thích cho QA tại sao lỗi xảyra. |
+| **5** | Sửa UI | Đọc **Bài 3**, sửa text/màu. Chạy thử. |
+| **6** | Vấn đáp module | QA hỏi 5 câu. Trả lời bằng cách chỉ ra code. |
+| **7** | Vấn đáp liên module | QA hỏi câu hỏi chung. Ôn toàn bộ. |
+| **8** | Tổng duyệt | Thuyết trình 5 phút. Trả lời câu hỏi ngẫu nhiên. |
 
 ---
 
 ## Công cụ hỗ trợ
 
-### Swagger UI - Test API trực tiếp
+### Swagger UI - Test API
 - Mở: http://localhost:8080/swagger-ui.html
-- Chọn endpoint → "Try it out" → nhập body → "Execute"
 - API auth (`/api/auth/**`) không cần token
 - API khác cần header: `Authorization: Bearer dev-token-USR001`
 
-### H2 Console - Xem database
+### H2 Console - Xem database (chế độ dev không Docker)
 - Mở: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:karaoke`
-- User: `sa`, Password: (trống)
-- Nhập SQL trực tiếp để query, ví dụ: `SELECT * FROM tblUser`
+- JDBC URL: `jdbc:h2:mem:karaoke`, User: `sa`, Password: trống
+
+### psql - Xem database (Docker)
+```bash
+docker compose exec postgres psql -U karaoke_admin -d karaoke
+# SELECT * FROM tbl_user;
+# \q
+```
 
 ### DevTools - Debug frontend
 - Chrome: **F12**
 - **tab Network:** Xem request/response API
 - **tab Console:** Xem lỗi JavaScript
-- **tab Sources:** Đặt breakpoint trong file `.tsx`
-
-### IDE - Debug backend
-- IntelliJ: Click dòng số bên trái → tạo breakpoint → Run > Debug
-- VS Code + Java Extension: Tương tự
-- Khi breakpoint dừng: hover chuột vào biến để xem giá trị
 
 ---
 
 ## Quy tắc
 
+- Hoàn thành **Bài tập 0** trước khi bắt đầu bất kỳ bài nào khác
 - **Đọc kỹ** file bài tập trước khi hỏi QA
-- **Không sửa** file ngoài module của mình
+- **Không sửa** file ngoài module của mình (trừ Bài 0)
 - **Không commit** khi chưa được QA đồng ý
-- **Ghi chú** những gì chưa hiểu để hỏi
-- Khi gặp lỗi → **chụp screenshot** trước khi hỏi
+- Khi gặp lỗi → **chụp screenshot** Console/Network trước khi hỏi
