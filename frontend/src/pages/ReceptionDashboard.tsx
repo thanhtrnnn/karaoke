@@ -7,6 +7,8 @@ export default function ReceptionDashboard() {
   const [loading, setLoading] = useState(true);
 
   const [rooms, setRooms] = useState<any[]>([]);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -39,6 +41,38 @@ export default function ReceptionDashboard() {
 
     fetchRooms();
   }, []);
+
+  const handleAddCustomer = async () => {
+    if (!newCustomerName || !newCustomerPhone) {
+      alert('Vui lòng nhập đầy đủ tên và SĐT!');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: `KH${Date.now()}`,
+          fullName: newCustomerName,
+          phone: newCustomerPhone,
+          tier: 'Đồng',
+          points: 0,
+        }),
+      });
+      if (res.ok) {
+        alert('Đã thêm khách mới!');
+        setIsModalOpen(false);
+        setNewCustomerName('');
+        setNewCustomerPhone('');
+      } else {
+        alert('Thêm khách thất bại!');
+      }
+    } catch (e) {
+      console.error('Failed to add customer:', e);
+      alert('Lỗi kết nối server.');
+    }
+  };
 
   const counts = {
     all: rooms.length,
@@ -184,24 +218,52 @@ export default function ReceptionDashboard() {
             {/* Hover Actions Overlay */}
             <div className="absolute inset-0 bg-surface-container/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center gap-3 p-4 z-20">
               {room.status === 'available' && (
-                <button className="w-full py-2.5 bg-status-available/10 text-status-available border border-status-available rounded-lg font-body-md font-semibold hover:bg-status-available hover:text-slate-950 transition-colors flex items-center justify-center gap-2">
+                <button
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    await fetch(`/api/rooms/${room.id}`, {
+                      method: 'PUT',
+                      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ...room, status: 'OCCUPIED' }),
+                    });
+                    setRooms(rooms.map(r => r.id === room.id ? { ...r, status: 'occupied' } : r));
+                  }}
+                  className="w-full py-2.5 bg-status-available/10 text-status-available border border-status-available rounded-lg font-body-md font-semibold hover:bg-status-available hover:text-slate-950 transition-colors flex items-center justify-center gap-2"
+                >
                   <span className="material-symbols-outlined text-[20px]">add</span>
                   Nhận khách
                 </button>
               )}
               {room.status === 'occupied' && (
                 <>
-                  <button className="w-full py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => window.location.href = '/order'}
+                    className="w-full py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-2"
+                  >
                     <span className="material-symbols-outlined text-[20px]">room_service</span>
                     Order dịch vụ
                   </button>
-                  <button className="w-full py-2.5 bg-transparent border border-slate-600 text-slate-300 rounded-lg font-body-md font-medium hover:bg-slate-800 transition-colors">
+                  <button
+                    onClick={() => window.location.href = '/checkout'}
+                    className="w-full py-2.5 bg-transparent border border-slate-600 text-slate-300 rounded-lg font-body-md font-medium hover:bg-slate-800 transition-colors"
+                  >
                     Thanh toán
                   </button>
                 </>
               )}
               {room.status === 'cleaning' && (
-                <button className="w-full py-2.5 bg-transparent border border-status-cleaning text-status-cleaning rounded-lg font-body-md font-semibold hover:bg-status-cleaning hover:text-slate-950 transition-colors flex items-center justify-center gap-2">
+                <button
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    await fetch(`/api/rooms/${room.id}`, {
+                      method: 'PUT',
+                      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ...room, status: 'AVAILABLE' }),
+                    });
+                    setRooms(rooms.map(r => r.id === room.id ? { ...r, status: 'available' } : r));
+                  }}
+                  className="w-full py-2.5 bg-transparent border border-status-cleaning text-status-cleaning rounded-lg font-body-md font-semibold hover:bg-status-cleaning hover:text-slate-950 transition-colors flex items-center justify-center gap-2"
+                >
                   <span className="material-symbols-outlined text-[20px]">check</span>
                   Dọn xong
                 </button>
@@ -219,11 +281,11 @@ export default function ReceptionDashboard() {
             <div className="space-y-4">
               <div>
                 <label className="block text-slate-400 font-label-caps mb-1">Tên khách hàng</label>
-                <input type="text" className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg p-2.5 text-white focus:border-primary-container focus:outline-none" placeholder="VD: Nguyễn Văn A" />
+                <input type="text" value={newCustomerName} onChange={e => setNewCustomerName(e.target.value)} className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg p-2.5 text-white focus:border-primary-container focus:outline-none" placeholder="VD: Nguyễn Văn A" />
               </div>
               <div>
                 <label className="block text-slate-400 font-label-caps mb-1">Số điện thoại</label>
-                <input type="text" className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg p-2.5 text-white focus:border-primary-container focus:outline-none" placeholder="VD: 0901234567" />
+                <input type="text" value={newCustomerPhone} onChange={e => setNewCustomerPhone(e.target.value)} className="w-full bg-surface-secondary border border-slate-700/50 rounded-lg p-2.5 text-white focus:border-primary-container focus:outline-none" placeholder="VD: 0901234567" />
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-6">
@@ -234,7 +296,7 @@ export default function ReceptionDashboard() {
                 Hủy
               </button>
               <button
-                onClick={() => { setIsModalOpen(false); alert('Đã thêm khách mới!'); }}
+                onClick={handleAddCustomer}
                 className="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container font-semibold hover:bg-primary-fixed-dim transition-colors"
               >
                 Xác nhận

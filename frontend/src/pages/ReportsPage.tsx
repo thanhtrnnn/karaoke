@@ -4,26 +4,29 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function ReportsPage() {
   const [chartType, setChartType] = useState('weekly');
   const [summary, setSummary] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/reports/summary', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSummary(data);
-        }
-      } catch (e) {
-        console.error('Failed to fetch report summary:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSummary();
+    const token = localStorage.getItem('token');
+    Promise.all([
+      fetch('/api/reports/summary', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+      fetch('/api/invoices', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+    ])
+      .then(([summaryData, invoicesData]) => {
+        setSummary(summaryData);
+        setTransactions(invoicesData.map((inv: any) => ({
+          id: inv.id,
+          customer: inv.booking?.customer?.fullName || 'N/A',
+          room: inv.booking?.room?.name || 'N/A',
+          amount: `${Number(inv.grandTotal).toLocaleString()}đ`,
+          status: inv.status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán',
+        })));
+      })
+      .catch(e => {
+        console.error('Failed to fetch reports:', e);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Chart data - TODO: fetch from backend when endpoint available
@@ -78,13 +81,6 @@ export default function ReportsPage() {
     }
     return null;
   };
-
-  // Transactions - TODO: fetch from /api/invoices when available
-  const transactions = [
-    { id: 'HD001', customer: 'Nguyễn Văn A', room: 'VIP 02', amount: '1,305,000đ', status: 'Đã thanh toán' },
-    { id: 'HD002', customer: 'Trần Thị B', room: 'P03', amount: '450,000đ', status: 'Đã thanh toán' },
-    { id: 'HD003', customer: 'Lê Hoàng C', room: 'P01', amount: '780,000đ', status: 'Chưa thanh toán' },
-  ];
 
   if (loading) {
     return <div className="p-8 text-slate-400">Đang tải báo cáo...</div>;

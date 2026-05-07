@@ -65,23 +65,57 @@ export default function InventoryPage() {
     }
   };
 
-  const handleSaveImport = () => {
+  const handleSaveImport = async () => {
     const validRows = importRows.filter(r => r.productId && r.qty);
     if (validRows.length === 0) {
       alert('Vui lòng chọn sản phẩm và nhập số lượng.');
       return;
     }
 
-    const updatedProducts = [...products];
-    validRows.forEach(row => {
-      const idx = updatedProducts.findIndex(p => p.id === row.productId);
-      if (idx !== -1) {
-        updatedProducts[idx].stock += parseInt(row.qty) || 0;
-      }
-    });
+    const token = localStorage.getItem('token');
+    let successCount = 0;
 
-    setProducts(updatedProducts);
-    alert('Nhập kho thành công!');
+    for (const row of validRows) {
+      const product = products.find(p => p.id === row.productId);
+      if (!product) continue;
+
+      const newStock = product.stock + (parseInt(row.qty) || 0);
+      try {
+        const res = await fetch(`/api/menu-items/${row.productId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: product.id,
+            name: product.name,
+            category: product.cat,
+            price: 0,
+            stock: newStock,
+            active: true,
+          }),
+        });
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error(`Failed to update stock for ${row.productId}:`, e);
+      }
+    }
+
+    if (successCount > 0) {
+      // Refresh products
+      const res = await fetch('/api/menu-items', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          cat: p.category,
+          stock: p.stock,
+          unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
+        })));
+      }
+      alert(`Nhập kho thành công ${successCount}/${validRows.length} sản phẩm!`);
+    } else {
+      alert('Nhập kho thất bại!');
+    }
     setImportRows([{ id: Date.now(), productId: '', qty: '', price: '' }]);
   };
 

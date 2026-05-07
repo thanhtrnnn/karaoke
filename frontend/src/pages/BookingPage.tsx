@@ -16,6 +16,12 @@ export default function BookingPage() {
   const [activeFilter, setActiveFilter] = useState('Tất cả');
   const [capacityFilter, setCapacityFilter] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [bookingDate, setBookingDate] = useState('2026-05-04');
+  const [startTime, setStartTime] = useState('18:00');
+  const [endTime, setEndTime] = useState('21:00');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [guestCount, setGuestCount] = useState('');
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -62,12 +68,74 @@ export default function BookingPage() {
     return <div className="p-8 text-slate-400">Đang tải danh sách phòng...</div>;
   }
 
+  const handleBooking = async () => {
+    if (!selectedRoom) {
+      alert('Vui lòng chọn phòng trước khi đặt!');
+      return;
+    }
+    if (!customerPhone) {
+      alert('Vui lòng nhập SĐT khách hàng!');
+      return;
+    }
+    setBooking(true);
+    try {
+      const token = localStorage.getItem('token');
+      // Look up customer by phone
+      const custRes = await fetch('/api/customers', { headers: { 'Authorization': `Bearer ${token}` } });
+      const customers = await custRes.json();
+      const customer = customers.find((c: any) => c.phone === customerPhone);
+      if (!customer) {
+        alert('Không tìm thấy khách hàng với SĐT này!');
+        setBooking(false);
+        return;
+      }
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: customer.id,
+          roomId: selectedRoom.id,
+          startTime: `${bookingDate}T${startTime}:00`,
+          endTime: `${bookingDate}T${endTime}:00`,
+          guestCount: parseInt(guestCount) || 2,
+        }),
+      });
+      if (res.ok) {
+        alert(`Đã đặt thành công phòng ${selectedRoom.id}!`);
+        setSelectedRoom(null);
+        setCustomerPhone('');
+        setGuestCount('');
+        // Refresh rooms
+        const roomsRes = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (roomsRes.ok) {
+          const data = await roomsRes.json();
+          setRooms(data.map((r: any) => ({
+            id: r.id,
+            type: r.type,
+            cap: `${r.capacity} người`,
+            price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
+            status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
+            color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
+            canBook: r.status === 'AVAILABLE',
+          })));
+        }
+      } else {
+        alert('Đặt phòng thất bại!');
+      }
+    } catch (e) {
+      console.error('Failed to create booking:', e);
+      alert('Lỗi kết nối server.');
+    } finally {
+      setBooking(false);
+    }
+  };
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <h1 className="font-h1 text-white">Đặt phòng</h1>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
-        <input type="date" className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container" defaultValue="2026-05-04" />
+        <input type="date" className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={bookingDate} onChange={e => setBookingDate(e.target.value)} />
         <div className="flex gap-2">
           {['Tất cả', 'VIP', 'Thường'].map((f) => (
             <button
@@ -138,19 +206,17 @@ export default function BookingPage() {
               value={selectedRoom ? `${selectedRoom.id} - ${selectedRoom.type} (${selectedRoom.price}/giờ)` : 'Vui lòng chọn phòng...'}
             />
           </div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Giờ bắt đầu</label><select className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"><option>18:00</option><option>19:00</option><option>20:00</option></select></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Giờ kết thúc</label><select className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"><option>21:00</option><option>22:00</option><option>23:00</option></select></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">SĐT khách hàng</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" placeholder="0901234567" /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Ghi chú</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" placeholder="Ghi chú..." /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Giờ bắt đầu</label><select value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"><option>18:00</option><option>19:00</option><option>20:00</option></select></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Giờ kết thúc</label><select value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"><option>21:00</option><option>22:00</option><option>23:00</option></select></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">SĐT khách hàng</label><input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" placeholder="0901234567" /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Số người</label><input value={guestCount} onChange={e => setGuestCount(e.target.value)} type="number" className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" placeholder="8" /></div>
           <div className="flex items-end">
             <button
-              onClick={() => {
-                if (!selectedRoom) alert('Vui lòng chọn phòng trước khi đặt!');
-                else alert(`Đã đặt thành công phòng ${selectedRoom.id}!`);
-              }}
-              className="w-full py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
+              onClick={handleBooking}
+              disabled={booking}
+              className="w-full py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors disabled:opacity-50"
             >
-              Xác nhận đặt
+              {booking ? 'Đang xử lý...' : 'Xác nhận đặt'}
             </button>
           </div>
         </div>

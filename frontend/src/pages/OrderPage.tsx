@@ -79,6 +79,33 @@ export default function OrderPage() {
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
+  const handleSendOrder = async () => {
+    if (cart.length === 0) {
+      alert('Giỏ hàng đang trống!');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: 'P01',
+          items: cart.map(item => ({ menuItemId: item.id, quantity: item.qty })),
+        }),
+      });
+      if (res.ok) {
+        alert('Đã gửi Order xuống bếp/bar thành công!');
+        setCart([]);
+      } else {
+        alert('Gửi order thất bại!');
+      }
+    } catch (e) {
+      console.error('Failed to send order:', e);
+      alert('Lỗi kết nối server.');
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-slate-400">Đang tải menu...</div>;
   }
@@ -167,13 +194,7 @@ export default function OrderPage() {
             <span className="font-body-md text-slate-400">Tổng:</span><span className="font-h2 text-primary-container">{cartTotal.toLocaleString()}đ</span>
           </div>
           <button
-            onClick={() => {
-              if (cart.length === 0) alert('Giỏ hàng đang trống!');
-              else {
-                alert('Đã gửi Order xuống bếp/bar thành công!');
-                setCart([]);
-              }
-            }}
+            onClick={handleSendOrder}
             className="w-full py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
           >
             Gửi order
