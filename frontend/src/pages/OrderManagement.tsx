@@ -35,11 +35,11 @@ export default function OrderManagement() {
           const data = await res.json();
           const mapped = data.map((o: any) => {
             const st = statusMap[o.status] || { label: o.status, color: 'slate-400' };
-            const itemNames = (o.items || []).map((i: any) => `${i.menuItem?.name || 'N/A'} x${i.quantity}`).join(', ');
+            const itemNames = (o.items || []).map((i: any) => `${i.name || 'N/A'} x${i.quantity}`).join(', ');
             const time = o.orderedAt ? new Date(o.orderedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
             return {
               id: o.id,
-              room: o.room?.id || 'N/A',
+              room: o.roomId || o.room?.id || 'N/A',
               items: itemNames,
               time,
               status: st.label,
@@ -47,7 +47,7 @@ export default function OrderManagement() {
             };
           });
           setOrders(mapped);
-          const rooms = [...new Set(data.map((o: any) => o.room?.id).filter(Boolean))] as string[];
+          const rooms = [...new Set(data.map((o: any) => o.roomId || o.room?.id).filter(Boolean))] as string[];
           setAvailableRooms(rooms);
         }
       } catch (e) {
