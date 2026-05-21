@@ -1,15 +1,23 @@
 @startuml
+' Class Diagram - User & Branch Module
+' Branch, Room, Customer, UserAccount, Employee, MembershipTierConfig, SystemConfig
+
+top to bottom direction
+
 skinparam classAttributeIconSize 0
 skinparam classFontSize 11
 skinparam packageFontSize 13
 skinparam linetype polyline
-skinparam nodesep 40
-skinparam ranksep 30
-skinparam padding 4
+skinparam shadowing true
 
-left to right direction
+<style>
+root {
+  nodesep 60
+  ranksep 40
+}
+</style>
 
-package "com.karaoke.backend.domain" {
+package "User & Branch" {
 
   class Branch {
     - id : Long
@@ -57,45 +65,6 @@ package "com.karaoke.backend.domain" {
     - active : boolean
   }
 
-  class Booking {
-    - id : Long
-    - startTime : LocalDateTime
-    - endTime : LocalDateTime
-    - guestCount : int
-    - status : BookingStatus
-  }
-
-  class ServiceOrder {
-    - id : Long
-    - orderedAt : LocalDateTime
-    - status : OrderStatus
-  }
-
-  class ServiceOrderItem {
-    - id : Long
-    - quantity : int
-    - unitPrice : BigDecimal
-  }
-
-  class MenuItem {
-    - id : Long
-    - name : String
-    - category : String
-    - price : BigDecimal
-    - stock : int
-    - active : boolean
-  }
-
-  class Invoice {
-    - id : Long
-    - roomTotal : BigDecimal
-    - serviceTotal : BigDecimal
-    - discount : BigDecimal
-    - grandTotal : BigDecimal
-    - paidAt : LocalDateTime
-    - status : InvoiceStatus
-  }
-
   class MembershipTierConfig {
     - tierName : String
     - minPoints : int
@@ -105,27 +74,6 @@ package "com.karaoke.backend.domain" {
   class SystemConfig {
     - configKey : String
     - configValue : String
-  }
-
-  enum BookingStatus {
-    PENDING
-    CONFIRMED
-    CHECKED_IN
-    COMPLETED
-    CANCELLED
-  }
-
-  enum InvoiceStatus {
-    DRAFT
-    PAID
-    CANCELLED
-  }
-
-  enum OrderStatus {
-    PENDING
-    PREPARING
-    SERVED
-    CANCELLED
   }
 
   enum RoomStatus {
@@ -147,16 +95,8 @@ package "com.karaoke.backend.domain" {
 
 Branch "1" --> "*" Room
 Branch "1" --> "*" Employee
-Room "1" --> "*" Booking
-Customer "1" --> "*" Booking
-Booking "1" --> "0..1" Invoice
-Room "1" --> "*" ServiceOrder
-ServiceOrder "1" --> "*" ServiceOrderItem
-MenuItem "1" --> "*" ServiceOrderItem
 Room --> RoomStatus
-Booking --> BookingStatus
-Invoice --> InvoiceStatus
-ServiceOrder --> OrderStatus
 UserAccount --> UserRole
 Employee --> UserRole
+
 @enduml
