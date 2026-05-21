@@ -2,11 +2,19 @@
 ' Bieu do Use Case Tong Quan - He thong Quan ly Karaoke
 ' 22 Use Case | 5 Modules | 6 Actors
 
-left to right direction
+top to bottom direction
+
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
 skinparam backgroundColor #FEFEFE
 skinparam shadowing true
+
+<style>
+root {
+  nodesep 30
+  ranksep 15
+}
+</style>
 
 ' ===== ACTORS =====
 actor "Thanh vien" as Member
@@ -100,25 +108,10 @@ Admin --> UC18
 Admin --> UC19
 Admin --> UC22
 
-' ===== GHI CHÚ =====
-note right of M1
-  Xac thuc & quan ly tai khoan
-end note
-
-note right of M2
-  Vong doi dat phong & thanh toan
-end note
-
-note right of M3
-  Dich vu, kho & minibar
-end note
-
-note right of M4
-  Cau hinh he thong & nhan su
-end note
-
-note right of M5
-  KPI, doanh thu & bao cao
-end note
+' ===== FORCE 5-ROW VERTICAL LAYOUT =====
+M1 -[hidden]down-> M2
+M2 -[hidden]down-> M3
+M3 -[hidden]down-> M4
+M4 -[hidden]down-> M5
 
 @enduml
