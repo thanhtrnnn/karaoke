@@ -1,0 +1,69 @@
+@startuml
+' Class Diagram - Service Module
+' ServiceOrder, ServiceOrderItem, MenuItem, ImportReceipt, ImportItem
+
+top to bottom direction
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam packageFontSize 13
+skinparam linetype polyline
+skinparam shadowing true
+
+<style>
+root {
+  nodesep 60
+  ranksep 40
+}
+</style>
+
+package "Service" {
+
+  class ServiceOrder {
+    - id : Long
+    - orderedAt : LocalDateTime
+    - status : OrderStatus
+  }
+
+  class ServiceOrderItem {
+    - id : Long
+    - quantity : int
+    - unitPrice : BigDecimal
+  }
+
+  class MenuItem {
+    - id : Long
+    - name : String
+    - category : String
+    - price : BigDecimal
+    - stock : int
+    - active : boolean
+  }
+
+  class ImportReceipt {
+    - id : Long
+    - importedAt : LocalDateTime
+    - totalCost : BigDecimal
+  }
+
+  class ImportItem {
+    - id : Long
+    - quantity : int
+    - unitCost : BigDecimal
+  }
+
+  enum OrderStatus {
+    PENDING
+    PREPARING
+    SERVED
+    CANCELLED
+  }
+}
+
+ServiceOrder "1" --> "*" ServiceOrderItem
+MenuItem "1" --> "*" ServiceOrderItem
+ImportReceipt "1" --> "*" ImportItem
+MenuItem "1" --> "*" ImportItem
+ServiceOrder --> OrderStatus
+
+@enduml

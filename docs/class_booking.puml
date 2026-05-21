@@ -1,0 +1,59 @@
+@startuml
+' Class Diagram - Booking Module
+' Booking, Invoice
+
+top to bottom direction
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam packageFontSize 13
+skinparam linetype polyline
+skinparam shadowing true
+
+<style>
+root {
+  nodesep 60
+  ranksep 40
+}
+</style>
+
+package "Booking" {
+
+  class Booking {
+    - id : Long
+    - startTime : LocalDateTime
+    - endTime : LocalDateTime
+    - guestCount : int
+    - status : BookingStatus
+  }
+
+  class Invoice {
+    - id : Long
+    - roomTotal : BigDecimal
+    - serviceTotal : BigDecimal
+    - discount : BigDecimal
+    - grandTotal : BigDecimal
+    - paidAt : LocalDateTime
+    - status : InvoiceStatus
+  }
+
+  enum BookingStatus {
+    PENDING
+    CONFIRMED
+    CHECKED_IN
+    COMPLETED
+    CANCELLED
+  }
+
+  enum InvoiceStatus {
+    DRAFT
+    PAID
+    CANCELLED
+  }
+}
+
+Booking "1" --> "0..1" Invoice
+Booking --> BookingStatus
+Invoice --> InvoiceStatus
+
+@enduml
