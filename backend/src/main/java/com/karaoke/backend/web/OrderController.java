@@ -17,7 +17,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -100,6 +102,7 @@ public class OrderController {
                             }
                             """)))
     )
+    @Transactional
     OrderResponse create(@Valid @RequestBody CreateOrderRequest request) {
         Room room = rooms.findById(request.roomId())
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + request.roomId()));
@@ -159,7 +162,7 @@ public class OrderController {
     record CreateOrderRequest(@NotBlank String roomId, @NotEmpty List<CreateOrderItemRequest> items) {
     }
 
-    record CreateOrderItemRequest(@NotBlank String menuItemId, int quantity) {
+    record CreateOrderItemRequest(@NotBlank String menuItemId, @Min(1) int quantity) {
     }
 
     record UpdateOrderStatusRequest(@NotNull OrderStatus status) {
