@@ -2,3 +2,21 @@ settings*.json
 tmp/
 scripts/
 .DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build output
+target/
+build/
+*.class
+*.jar
+node_modules/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp

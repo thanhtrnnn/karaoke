@@ -34,9 +34,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/h2-console/**"
+                                "/v3/api-docs/**"
                         ).permitAll()
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                        .requestMatchers("/api/employees/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
