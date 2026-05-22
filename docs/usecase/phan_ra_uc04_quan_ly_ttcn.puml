@@ -1,0 +1,21 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "Khách hàng" as Client
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "Quản lý TTCN" as UC04
+usecase "Đăng nhập" as UC01
+usecase "Cập nhật thông tin" as UC_update
+usecase "Kiểm tra hạng thẻ" as UC_check
+usecase "Nâng hạng thẻ (tự động)" as UC_upgrade
+
+UC04 .> UC01 : <<include>>
+UC04 .> UC_update : <<include>>
+UC04 .> UC_check : <<include>>
+UC_upgrade .> UC04 : <<extend>>
+}
+
+Client --> UC04
+@enduml

@@ -1,0 +1,124 @@
+@startuml
+' Bieu do Use Case Tong Quan - He thong Quan ly Karaoke
+' 22 Use Case | 5 Modules | 6 Actors
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam backgroundColor #FEFEFE
+skinparam shadowing true
+
+' ===== ACTORS =====
+actor "Thanh vien" as Member
+actor "Khach hang" as Client
+actor "Nhan vien le tan" as Receptionist
+actor "Nhan vien phuc vu" as Staff
+actor "Quan ly chi nhanh" as Manager
+actor "Chu doanh nghiep\n(Admin)" as Admin
+
+' ===== KẾ THỪA =====
+Client --|> Member
+Receptionist --|> Member
+Staff --|> Member
+Manager --|> Member
+Admin --|> Member
+
+' ===== MODULE 1: TÀI KHOẢN & THÀNH VIÊN =====
+package "Tai Khoan & Thanh Vien" as M1 {
+  usecase "UC01: Dang nhap" as UC01
+  usecase "UC02: Dang ky" as UC02
+  usecase "UC03: Doi mat khau" as UC03
+  usecase "UC04: Quan ly thong tin ca nhan" as UC04
+}
+
+' ===== MODULE 2: QUẢN LÝ ĐẶT VÀ TRẢ PHÒNG =====
+package "Quan Ly Dat & Tra Phong" as M2 {
+  usecase "UC05: Dat phong" as UC05
+  usecase "UC07: Quan ly dat phong" as UC07
+  usecase "UC08: Quan ly tra phong" as UC08
+}
+
+' ===== MODULE 3: DỊCH VỤ & KHO HÀNG =====
+package "Dich Vu & Kho Hang" as M3 {
+  usecase "UC06: Tuong tac dich vu\n(Goi mon)" as UC06
+  usecase "UC09: Kiem ke hang tai quay" as UC09
+  usecase "UC10: Quan ly order" as UC10
+  usecase "UC11: Bao cao tinh trang hang hoa" as UC11
+  usecase "UC13: Quan ly kho" as UC13
+}
+
+' ===== MODULE 4: QUẢN TRỊ CỐT LÕI & NHÂN SỰ =====
+package "Quan Tri Cot Loi & Nhan Su" as M4 {
+  usecase "UC12: Quan ly nhan vien chi nhanh" as UC12
+  usecase "UC16: Quan ly he thong chi nhanh" as UC16
+  usecase "UC17: Quan ly danh muc chung" as UC17
+  usecase "UC20: Quan ly phong hat" as UC20
+  usecase "UC21: Quan ly tai khoan nhan vien" as UC21
+}
+
+' ===== MODULE 5: BÁO CÁO & THỐNG KÊ =====
+package "Bao Cao & Thong Ke" as M5 {
+  usecase "UC14: Bao cao so lieu chi nhanh" as UC14
+  usecase "UC15: Xem thong tin KH\nchi nhanh" as UC15
+  usecase "UC18: Quan ly khach hang\ntoan he thong" as UC18
+  usecase "UC19: Quan ly hang hoi vien" as UC19
+  usecase "UC22: Tong hop bao cao\ntoan chuoi" as UC22
+}
+
+' ===== KẾT NỐI ACTOR - UC =====
+' Module 1
+Member --> UC01
+Member --> UC02
+Member --> UC03
+Client --> UC04
+
+' Module 2
+Client --> UC05
+Receptionist --> UC05
+Receptionist --> UC07
+Receptionist --> UC08
+
+' Module 3
+Client --> UC06
+Receptionist --> UC09
+Receptionist --> UC10
+Staff --> UC10
+Staff --> UC11
+Manager --> UC13
+
+' Module 4
+Manager --> UC12
+Admin --> UC16
+Admin --> UC17
+Admin --> UC20
+Admin --> UC21
+
+' Module 5
+Manager --> UC14
+Manager --> UC15
+Admin --> UC18
+Admin --> UC19
+Admin --> UC22
+
+' ===== GHI CHÚ =====
+note right of M1
+  Xac thuc & quan ly tai khoan
+end note
+
+note right of M2
+  Vong doi dat phong & thanh toan
+end note
+
+note right of M3
+  Dich vu, kho & minibar
+end note
+
+note right of M4
+  Cau hinh he thong & nhan su
+end note
+
+note right of M5
+  KPI, doanh thu & bao cao
+end note
+
+@enduml

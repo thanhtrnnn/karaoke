@@ -1,0 +1,162 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam packageFontSize 13
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 30
+skinparam padding 4
+
+left to right direction
+
+package "com.karaoke.backend.domain" {
+
+  class Branch {
+    - id : Long
+    - name : String
+    - address : String
+    - phone : String
+    - active : boolean
+  }
+
+  class Room {
+    - id : Long
+    - name : String
+    - type : String
+    - capacity : int
+    - hourlyPrice : BigDecimal
+    - status : RoomStatus
+    - active : boolean
+  }
+
+  class Customer {
+    - id : Long
+    - salutation : String
+    - firstName : String
+    - lastName : String
+    - fullName : String
+    - phone : String
+    - tier : String
+    - points : int
+  }
+
+  class UserAccount {
+    - id : Long
+    - username : String
+    - email : String
+    - passwordHash : String
+    - role : UserRole
+    - active : boolean
+  }
+
+  class Employee {
+    - id : Long
+    - fullName : String
+    - phone : String
+    - role : UserRole
+    - active : boolean
+  }
+
+  class Booking {
+    - id : Long
+    - startTime : LocalDateTime
+    - endTime : LocalDateTime
+    - guestCount : int
+    - status : BookingStatus
+  }
+
+  class ServiceOrder {
+    - id : Long
+    - orderedAt : LocalDateTime
+    - status : OrderStatus
+  }
+
+  class ServiceOrderItem {
+    - id : Long
+    - quantity : int
+    - unitPrice : BigDecimal
+  }
+
+  class MenuItem {
+    - id : Long
+    - name : String
+    - category : String
+    - price : BigDecimal
+    - stock : int
+    - active : boolean
+  }
+
+  class Invoice {
+    - id : Long
+    - roomTotal : BigDecimal
+    - serviceTotal : BigDecimal
+    - discount : BigDecimal
+    - grandTotal : BigDecimal
+    - paidAt : LocalDateTime
+    - status : InvoiceStatus
+  }
+
+  class MembershipTierConfig {
+    - tierName : String
+    - minPoints : int
+    - discount : BigDecimal
+  }
+
+  class SystemConfig {
+    - configKey : String
+    - configValue : String
+  }
+
+  enum BookingStatus {
+    PENDING
+    CONFIRMED
+    CHECKED_IN
+    COMPLETED
+    CANCELLED
+  }
+
+  enum InvoiceStatus {
+    DRAFT
+    PAID
+    CANCELLED
+  }
+
+  enum OrderStatus {
+    PENDING
+    PREPARING
+    SERVED
+    CANCELLED
+  }
+
+  enum RoomStatus {
+    AVAILABLE
+    OCCUPIED
+    RESERVED
+    CLEANING
+    MAINTENANCE
+  }
+
+  enum UserRole {
+    CLIENT
+    RECEPTIONIST
+    SERVICE_STAFF
+    BRANCH_MANAGER
+    ADMIN
+  }
+}
+
+Branch "1" --> "*" Room
+Branch "1" --> "*" Employee
+Room "1" --> "*" Booking
+Customer "1" --> "*" Booking
+Booking "1" --> "0..1" Invoice
+Room "1" --> "*" ServiceOrder
+ServiceOrder "1" --> "*" ServiceOrderItem
+MenuItem "1" --> "*" ServiceOrderItem
+Room --> RoomStatus
+Booking --> BookingStatus
+Invoice --> InvoiceStatus
+ServiceOrder --> OrderStatus
+UserAccount --> UserRole
+Employee --> UserRole
+@enduml

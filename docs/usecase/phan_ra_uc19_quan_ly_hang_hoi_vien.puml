@@ -1,0 +1,26 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "Chủ DN (Admin)" as Admin
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "QL Hạng hội viên" as UC19
+usecase "Đăng nhập" as UC01
+usecase "Xem DS hạng HV" as UC_view
+usecase "Cấu hình điều kiện
+nâng hạng tự động" as UC_rule
+usecase "Cấu hình ưu đãi
+theo hạng" as UC_benefit
+usecase "Thay đổi hạng
+thủ công cho KH" as UC_manual
+
+UC19 .> UC01 : <<include>>
+UC19 .> UC_view : <<include>>
+UC_rule .> UC19 : <<extend>>
+UC_benefit .> UC19 : <<extend>>
+UC_manual .> UC19 : <<extend>>
+}
+
+Admin --> UC19
+@enduml

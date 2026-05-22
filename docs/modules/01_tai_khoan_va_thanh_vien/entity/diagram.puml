@@ -1,0 +1,10 @@
+@startuml
+' Entity Diagram - Module 1: Tai Khoan va Thanh Vien
+' Nen dien day chi tiet
+
+entity "Tai Khoan" {
+  * id
+  --
+}
+
+@enduml

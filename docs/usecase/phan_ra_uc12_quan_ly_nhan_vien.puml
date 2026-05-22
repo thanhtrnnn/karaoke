@@ -1,0 +1,23 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "QL Chi nhánh" as Manager
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "QL Nhân viên CN" as UC12
+usecase "Đăng nhập" as UC01
+usecase "Phân ca làm việc" as UC_shift
+usecase "Theo dõi chấm công" as UC_time
+usecase "Đánh giá nhân viên" as UC_eval
+usecase "Khen thưởng / Kỷ luật" as UC_reward
+
+UC12 .> UC01 : <<include>>
+UC12 .> UC_shift : <<include>>
+UC12 .> UC_time : <<include>>
+UC12 .> UC_eval : <<include>>
+UC_reward .> UC12 : <<extend>>
+}
+
+Manager --> UC12
+@enduml

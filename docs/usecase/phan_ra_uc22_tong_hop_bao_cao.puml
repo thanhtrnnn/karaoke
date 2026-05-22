@@ -1,0 +1,26 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "Chủ DN (Admin)" as Admin
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "Tổng hợp báo cáo" as UC22
+usecase "Đăng nhập" as UC01
+usecase "Chọn thời gian & CN" as UC_filter
+usecase "Tổng hợp BC từng CN" as UC_branch
+usecase "Báo cáo tổng doanh thu" as UC_revenue
+usecase "So sánh hiệu suất CN" as UC_compare
+usecase "Xuất file báo cáo" as UC_export
+
+UC22 .> UC01 : <<include>>
+UC22 .> UC_filter : <<include>>
+UC_filter .> UC_branch : <<include>>
+UC_branch .> UC22 : <<include>>
+UC_revenue .> UC22 : <<include>>
+UC_compare .> UC22 : <<include>>
+UC_export .> UC22 : <<extend>>
+}
+
+Admin --> UC22
+@enduml

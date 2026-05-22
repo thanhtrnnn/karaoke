@@ -1,0 +1,35 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+actor "QL Chi nhánh" as Manager
+
+package "Hệ thống Quản lý Karaoke" {
+usecase "BC Số liệu CN" as UC14
+usecase "Đăng nhập" as UC01
+usecase "Chọn tiêu chí thời gian" as UC_time
+usecase "Theo ngày" as UC_day
+usecase "Theo tuần" as UC_week
+usecase "Theo tháng" as UC_month
+usecase "Theo quý" as UC_quarter
+usecase "Theo năm" as UC_year
+usecase "BC số lượng khách" as UC_clients
+usecase "BC doanh số bán hàng" as UC_sales
+usecase "BC công suất phòng" as UC_capacity
+usecase "Xuất Excel / In báo cáo" as UC_export
+
+UC14 .> UC01 : <<include>>
+UC14 .> UC_time : <<include>>
+UC_day .> UC_time : <<include>>
+UC_week .> UC_time : <<include>>
+UC_month .> UC_time : <<include>>
+UC_quarter .> UC_time : <<include>>
+UC_year .> UC_time : <<include>>
+UC_clients .> UC14 : <<include>>
+UC_sales .> UC14 : <<include>>
+UC_capacity .> UC14 : <<include>>
+UC_export .> UC14 : <<extend>>
+}
+
+Manager --> UC14
+@enduml
