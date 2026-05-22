@@ -16,7 +16,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -93,6 +95,7 @@ public class BookingController {
                             }
                             """)))
     )
+    @Transactional
     Booking create(@Valid @RequestBody CreateBookingRequest request) {
         Customer customer = customers.findById(request.customerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found: " + request.customerId()));
@@ -167,6 +170,7 @@ public class BookingController {
                             }
                             """)))
     )
+    @Transactional
     Booking updateStatus(@PathVariable String id, @Valid @RequestBody UpdateStatusRequest request) {
         Booking booking = bookings.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + id));
@@ -186,7 +190,7 @@ public class BookingController {
             @NotBlank String roomId,
             @NotNull LocalDateTime startTime,
             @NotNull LocalDateTime endTime,
-            int guestCount
+            @Min(1) int guestCount
     ) {
     }
 

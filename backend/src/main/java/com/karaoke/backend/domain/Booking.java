@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -15,7 +16,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tblBooking")
+@Table(name = "tblBooking", indexes = {
+    @Index(name = "idx_booking_status", columnList = "status"),
+    @Index(name = "idx_booking_room", columnList = "room_id"),
+    @Index(name = "idx_booking_customer", columnList = "customer_id")
+})
 public class Booking {
     @Id
     private String id;

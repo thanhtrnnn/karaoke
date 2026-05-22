@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -14,7 +15,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @Entity
-@Table(name = "tblRoom")
+@Table(name = "tblRoom", indexes = {
+    @Index(name = "idx_room_status", columnList = "status"),
+    @Index(name = "idx_room_branch", columnList = "branch_id")
+})
 public class Room {
     @com.fasterxml.jackson.annotation.JsonCreator
     public Room() {}
