@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -16,7 +17,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tblInvoice")
+@Table(name = "tblInvoice", indexes = {
+    @Index(name = "idx_invoice_status", columnList = "status"),
+    @Index(name = "idx_invoice_booking", columnList = "booking_id"),
+    @Index(name = "idx_invoice_paidat", columnList = "paidAt")
+})
 public class Invoice {
     @Id
     private String id;
