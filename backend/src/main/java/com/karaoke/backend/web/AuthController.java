@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -69,7 +70,7 @@ public class AuthController {
                 request.username(),
                 request.email(),
                 passwordEncoder.encode(request.password()),
-                request.role() == null ? UserRole.CLIENT : request.role(),
+                UserRole.CLIENT,
                 true
         );
         users.save(user);
@@ -143,7 +144,7 @@ public class AuthController {
     record RegisterRequest(
             @NotBlank String username,
             @Email String email,
-            @NotBlank String password,
+            @NotBlank @Size(min = 8) String password,
             UserRole role
     ) {
     }
@@ -154,7 +155,7 @@ public class AuthController {
     record ChangePasswordRequest(
             @NotBlank String username,
             @NotBlank String currentPassword,
-            @NotBlank String newPassword
+            @NotBlank @Size(min = 8) String newPassword
     ) {
     }
 
