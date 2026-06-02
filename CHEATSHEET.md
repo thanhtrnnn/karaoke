@@ -1,626 +1,582 @@
-# CHEATSHEET VẤN ĐÁP: Famtaoke Karaoke Management System
+# CHEATSHEET VẤN ĐÁP — Hệ thống Quản lý Chuỗi Karaoke Famtaoke
+> Tài liệu UP (mọi pha theo skill cnpm) · OOP codebase · Câu hỏi + câu trả lời
 
 ---
 
-## 1. KIẾN TRÚC TỔNG QUAN
+## PHẦN 1: TỔNG QUAN DỰ ÁN
 
-```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Frontend   │────>│    Nginx     │────>│   Backend    │
-│  React+Vite  │     │  Reverse     │     │ Spring Boot  │
-│  Port 6969   │     │  Proxy       │     │  Port 8080   │
-└─────────────┘     └──────────────┘     └──────┬───────┘
-                                                │
-                                    ┌───────────┴───────────┐
-                                    │                       │
-                              ┌─────┴─────┐          ┌─────┴─────┐
-                              │ PostgreSQL │          │   Redis   │
-                              │  Port 5432 │          │  Port 6379│
-                              └───────────┘          └───────────┘
-```
+### Q1. Hệ thống này giải quyết bài toán gì?
 
-**5 services**: frontend (Nginx), backend (Spring Boot), postgres, redis, pgadmin
+Quản lý tập trung chuỗi nhà hàng karaoke nhiều chi nhánh. Trước đây mỗi chi nhánh quản lý độc lập (Excel, sổ tay) → thiếu nhất quán, chủ doanh nghiệp không có báo cáo tổng hợp. Hệ thống cung cấp một nền tảng web để quản lý đặt phòng, gọi món, kho hàng, nhân sự và báo cáo cho toàn chuỗi.
 
-### Tại sao chọn công nghệ này?
+### Q2. Hệ thống có bao nhiêu actor? Liệt kê và vai trò.
 
-| Công nghệ | Lý do |
-|-----------|-------|
-| **Spring Boot 4.0** | Auto-configuration, embedded Tomcat, ecosystem rộng (Security, JPA, Validation) |
-| **React 19 + TypeScript** | Type safety, component-based UI, Vite HMR nhanh |
-| **PostgreSQL 16** | ACID transactions, phức tạp query, production-ready |
-| **Redis 7** | Caching real-time (trạng thái phòng, session) |
-| **Docker Compose** | Môi trường nhất quán, multi-stage build, health checks |
-| **H2 (dev)** | Không cần cài DB khi develop, PostgreSQL compatibility mode |
+5 actor cụ thể + 2 actor trừu tượng:
 
----
+| Actor | Loại | Vai trò |
+|-------|------|---------|
+| Khách hàng | Cụ thể | Đặt phòng trực tuyến, gọi món, quản lý tài khoản cá nhân |
+| Nhân viên lễ tân | Cụ thể | Đặt phòng tại quầy, check-in, check-out, thanh toán |
+| Nhân viên phục vụ | Cụ thể | Nhận và xử lý order gọi món, báo cáo hàng hóa |
+| Quản lý chi nhánh | Cụ thể | Quản lý nhân sự, kho, menu, phòng hát, xem báo cáo chi nhánh |
+| Chủ doanh nghiệp | Cụ thể | Quản lý toàn chuỗi, xem báo cáo tổng hợp |
+| Thành viên | Trừu tượng | Cha của tất cả actor (login, đổi mật khẩu) |
+| Nhân viên | Trừu tượng | Cha của NV lễ tân + NV phục vụ |
 
-## 2. DESIGN PATTERNS SỬ DỤNG
+### Q3. Có bao nhiêu Use Case? Phân bổ theo module.
 
-### MVC (Model-View-Controller)
-- **Model**: `domain/` package -- 11 JPA entities (`@Entity`, `@Table`)
-- **View**: React SPA (không có server-side template)
-- **Controller**: `web/` package -- `@RestController` classes
+20 UC (UC01–UC21, bỏ UC09):
 
-### Repository Pattern
-Mỗi entity có 1 repository extends `JpaRepository<Entity, Id>`:
-- Custom queries: `findByStatus()`, `findByUsername()`, `existsByUsername()`, `countByTier()`
-- `@EntityGraph` trên `ServiceOrderRepository` để tránh N+1 query
+| Module | UC | Tên |
+|--------|----|-----|
+| Tài khoản | UC01–04, UC20 | Đăng nhập, Đăng ký, Đổi MK, Quản lý TTCN, Quản lý tài khoản NV |
+| Đặt phòng | UC05, UC07, UC08 | Đặt phòng, Check-in (QL đặt phòng), Check-out (QL trả phòng) |
+| Dịch vụ | UC06, UC10, UC12, UC15 | Gọi món/Quản lý order, Báo cáo hàng hóa, Quản lý kho, Quản lý menu |
+| Quản trị cốt lõi | UC16–19 | Quản lý chi nhánh, Quản lý KH, Quản lý hạng HV, Quản lý phòng hát |
+| Nhân sự | UC11, UC13, UC14, UC21 | Quản lý NV, Báo cáo chi nhánh, Xem thông tin KH, Tổng hợp báo cáo |
 
-### DTO Pattern (Java Records)
-Request/response objects là **Java records** (immutable):
-- `RegisterRequest`, `LoginRequest`, `AuthResponse` trong `AuthController`
-- `CreateBookingRequest`, `UpdateStatusRequest` trong `BookingController`
-- `OrderResponse.from()` -- static factory method chuyển entity -> DTO
+### Q4. Tại sao bỏ UC09?
 
-### Filter Chain
-- `TokenAuthenticationFilter` extends `OncePerRequestFilter`
-- Chạy trước `UsernamePasswordAuthenticationFilter` trong Spring Security chain
-
-### Factory Method Pattern
-- `AuthResponse.from(UserAccount)` -- chuyển entity sang response DTO
-- `OrderResponse.from(ServiceOrder)` -- tương tự
-
-### Singleton Pattern
-- Spring beans mặc định là singleton (controllers, repositories, configs)
+UC09 (Kiểm kê hàng tại quầy) bị loại — chức năng này được tích hợp vào UC10 (Báo cáo tình trạng hàng hóa) và UC12 (Quản lý kho).
 
 ---
 
-## 3. BẢO MẬT (SECURITY)
+## PHẦN 2: PHA I — REQUIREMENTS (I.1 Mô hình nghiệp vụ UML)
 
-### Luồng xác thực Dev-Token
+### Q5. I.1 gồm những gì?
+
+Pha I của mỗi module gồm:
+- **Biểu đồ UC tổng quan module** — actor + UC + quan hệ Include/Extend/Generalization
+- **Mô tả từng UC** — bảng 2 cột: Use Case / Actor / Tiền điều kiện / Hậu điều kiện / Mô tả ngắn
+
+Biểu đồ UC module là biểu đồ con của biểu đồ UC toàn hệ thống, giữ nguyên mã UC (UC01, UC02...) không đổi alias.
+
+### Q6. 3 loại quan hệ trong biểu đồ UC.
+
+| Quan hệ | Ký hiệu PlantUML | Ý nghĩa | Ví dụ trong dự án |
+|---------|-----------------|---------|------------------|
+| **Include** | `UC1 ..> UC2 : <<include>>` | UC cha **bắt buộc** gọi UC con mỗi lần | UC01 Đăng nhập include Xác thực thông tin |
+| **Extend** | `UC2 ..> UC1 : <<extend>>` | UC con **tuỳ chọn** mở rộng UC cha khi có điều kiện | UC05 extend Hủy phòng trực tuyến |
+| **Generalization** | `UC_con <\|-- UC_cha` | UC con kế thừa hành vi UC cha | "Tìm theo tên" + "Tìm theo mã" là con của "Tìm kiếm" |
+
+Quy tắc PlantUML bắt buộc: `left to right direction`, `skinparam linetype ortho`, UC con trong cùng package không chồng chéo.
+
+### Q7. Mô tả luồng UC01 – Đăng nhập (theo format kịch bản I.1).
+
+**Actor:** Thành viên (Khách hàng / NV / Admin)  
+**Tiền điều kiện:** Tài khoản đã tồn tại trong hệ thống  
+**Hậu điều kiện:** Phiên đăng nhập được tạo, chuyển vào trang chính tương ứng vai trò  
+
+Luồng chính: Thành viên mở trang đăng nhập → nhập username/email + mật khẩu → nhấn Đăng nhập → hệ thống kiểm tra credentials → tạo LoginSession → chuyển trang chính.  
+Ngoại lệ: sai mật khẩu → thông báo lỗi, cho nhập lại; vượt N lần → khóa tài khoản tạm thời.
+
+### Q8. UC05 – Đặt phòng có 2 luồng actor. Mô tả.
+
+**Luồng 1 — Khách hàng trực tuyến:** Khách đăng nhập → chọn chi nhánh → chọn loại phòng → chọn khung giờ → hệ thống kiểm tra phòng trống → xác nhận đặt → ghi Booking (PENDING) → cập nhật Room (RESERVED).
+
+**Luồng 2 — Lễ tân tại quầy:** Lễ tân tìm/tạo tài khoản khách → chọn phòng trống → chọn giờ → tạo Booking (CONFIRMED trực tiếp) → Room (RESERVED).
+
+### Q9. UC06 – Gọi món có mấy actor? Tại sao cùng 1 UC?
+
+2 actor: **Khách hàng** (đặt món qua app trong phòng) và **NV phục vụ** (nhận order miệng, nhập thay khách). Cùng 1 UC vì nghiệp vụ giống nhau — hệ thống xử lý giống nhau, chỉ khác giao diện tiếp cận.
+
+### Q10. Biểu đồ UC toàn hệ thống (tab XÁC ĐỊNH YÊU CẦU mục 3.3) khác biểu đồ UC module (I.1) như thế nào?
+
+| | UC toàn hệ thống (3.3) | UC module (I.1) |
+|--|----------------------|----------------|
+| Phạm vi | Tất cả 20 UC, tất cả 7 actor | Chỉ UC của 1 module + actor liên quan |
+| Mức độ | Tổng quan, không có Include/Extend chi tiết | Chi tiết, đầy đủ Include/Extend/Generalization |
+| Vị trí | Tab XÁC ĐỊNH YÊU CẦU | Tab từng module |
+
+---
+
+## PHẦN 3: PHA II — PHÂN TÍCH
+
+### Q11. II.1 – Mô hình hóa chức năng: cấu trúc bảng gồm gì?
+
+Mỗi UC có 1 bảng 2 cột với 6 trường bắt buộc theo thứ tự:
+
+| Trường | Yêu cầu |
+|--------|---------|
+| **Use case** | Tên UC |
+| **Actor** | Tên actor thực hiện |
+| **Tiền điều kiện** | Điều kiện phải đúng TRƯỚC khi UC bắt đầu |
+| **Hậu điều kiện** | Trạng thái hệ thống SAU khi UC thành công |
+| **Kịch bản chính** | Danh sách đánh số, mỗi bước nguyên tử; khi hệ thống hiển thị danh sách → **dùng HTML table inline** (KHÔNG dùng bullet) với dữ liệu mẫu thực tế |
+| **Ngoại lệ** | Đánh số theo bước rẽ nhánh (VD: bước 6 fail → 6. / 6.1 / 6.2 ...) |
+
+### Q12. II.1 – Tại sao phải dùng HTML table trong kịch bản? Cho ví dụ.
+
+Quy tắc: khi hệ thống **hiển thị dữ liệu có cấu trúc** (danh sách phòng, danh sách order, kết quả tìm kiếm...) phải dùng HTML table inline — không được dùng bullet liệt kê tên cột.
+
+❌ SAI: `6. Hệ thống hiển thị danh sách phòng: Mã, Tên, Giá, Loại`
+
+✅ ĐÚNG:
+```
+6. Hệ thống hiển thị danh sách phòng:
+<table><tr><th>Mã</th><th>Tên</th><th>Giá/giờ</th><th>Loại</th></tr>
+<tr><td>P01</td><td>VIP 01</td><td>200.000</td><td>VIP</td></tr>
+<tr><td>P04</td><td>Phòng 04</td><td>120.000</td><td>Thường</td></tr></table>
+```
+Mã xuất hiện trong bảng (P01) phải được dùng lại chính xác ở bước sau ("Lễ tân chọn dòng P01").
+
+### Q13. II.2 – Mô hình hóa lớp: 5 bước noun extraction.
+
+**Bước 1:** Viết lại toàn bộ luồng hoạt động module thành đoạn văn xuôi liên tục.
+
+**Bước 2+3:** Liệt kê từng danh từ + đánh giá:
+- **Loại** (lý do): "hệ thống" → quá chung; "danh sách" → không phải thực thể; "giao diện" → là Boundary, không phải Entity
+- **Giữ thành lớp Entity**: ghi tên lớp + thuộc tính sơ bộ (VD: `Booking: ngày đặt, trạng thái`)
+- **Giữ thành thuộc tính**: ghi rõ thuộc tính của lớp nào
+
+**Bước 4:** Xác định cardinality giữa các thực thể:
+- **1-1**: có thể gộp lại hoặc giữ riêng
+- **1-n**: giữ nguyên (VD: Branch – Room: 1-n)
+- **n-n**: phải đề xuất **lớp trung gian** (VD: Client – Room là n-n → Booking ở giữa)
+
+**Bước 5:** Bổ sung quan hệ mới phát sinh (composition, aggregation).
+
+**Biểu đồ thực thể II.2**: chỉ có tên lớp, thuộc tính sơ bộ, quan hệ — **CHƯA có phương thức, CHƯA có kiểu dữ liệu cụ thể**.
+
+### Q14. II.2 – Phân biệt Composition và Aggregation.
+
+| | Composition (◆) | Aggregation (◇) |
+|--|----------------|----------------|
+| Phụ thuộc | Con KHÔNG tồn tại độc lập | Con có thể tồn tại độc lập |
+| Khi xóa cha | Con bị xóa theo | Con vẫn còn |
+| Ví dụ | Order ◆ OrderDetail | OrderDetail ◇ Product |
+| PlantUML | `Order "1" *-- "n" OrderDetail` | `OrderDetail "n" o-- "1" Product` |
+
+Quy tắc với n-n qua lớp trung gian: Lớp cha `composition` với trung gian; trung gian `aggregation` với lớp con.
+
+### Q15. II.3 – Sơ đồ lớp phân tích (BCE) gồm những gì?
+
+Sơ đồ lớp II.3 thêm 2 tầng so với II.2:
+- **Boundary**: lớp giao tiếp với actor (LoginPage, RegisterPage, OrderPage...)
+- **Control**: lớp xử lý nghiệp vụ (AuthController, BookingController...)
+- **Entity**: lớp dữ liệu từ II.2 (User, Room, Booking...)
+
+**Ngôn ngữ**: tiếng Việt tự nhiên cho tên phương thức — `kiemTraMatKhau()`, `timPhongTrong()` — CHƯA có kiểu dữ liệu Java cụ thể, CHƯA có DAO.
+
+Ví dụ module Tài khoản:
+```
+Boundary: LoginPage, RegisterPage, OTPVerifyPage, ChangePasswordPage, ProfilePage, StaffManagePage
+Control:  AuthController, ProfileController, StaffController
+Entity:   User, Client, Employee, OTP, LoginSession, MembershipTier
+```
+
+### Q16. II.4 – Biểu đồ tuần tự phân tích: kịch bản phiên bản 2 là gì?
+
+Diễn giải tuần tự bằng **tiếng Việt tự nhiên**, thứ tự tương tác Actor → Boundary → Control → Entity. Thông điệp là mô tả hành vi, chưa có tên hàm Java:
 
 ```
-Client                    Backend
-  │                         │
-  │── POST /api/auth/login ─>│
-  │<─ { token: "dev-token-USR001" } ─│
-  │                         │
-  │── GET /api/rooms ───────>│
-  │   Authorization: Bearer  │
-  │   dev-token-USR001       │
-  │                         │── TokenAuthenticationFilter
-  │                         │   ├─ Extract token from header
-  │                         │   ├─ Strip "dev-token-" prefix
-  │                         │   ├─ findById("USR001")
-  │                         │   └─ Set SecurityContext
-  │<─ [{ room data }] ─────│
+1. Thành viên nhập username/email và mật khẩu vào LoginPage
+2. LoginPage gửi thông tin đăng nhập sang AuthController
+3. AuthController gọi User để kiểm tra username/email
+4. User trả về bản ghi người dùng cho AuthController
+5. AuthController kiểm tra mật khẩu có khớp không
+6. Nếu khớp: AuthController yêu cầu LoginSession tạo phiên mới
+7. AuthController trả kết quả thành công về LoginPage
+8. LoginPage hiển thị trang chính tương ứng vai trò
 ```
 
-### Các thành phần bảo mật
+Participants xếp theo thứ tự: **Actor → Boundary → Control → Entity**. Dùng `alt` cho ngoại lệ.
 
-| Component | File | Vai trò |
-|-----------|------|---------|
-| `SecurityConfig` | `config/SecurityConfig.java` | Filter chain, CORS, BCrypt, public endpoints |
-| `TokenAuthenticationFilter` | `config/TokenAuthenticationFilter.java` | Validate token, set authentication context |
-| `CorsProperties` | `config/CorsProperties.java` | Type-safe CORS config từ properties |
-| `ApiExceptionHandler` | `common/ApiExceptionHandler.java` | Global error handling (400, 404) |
+### Q17. II.3 khác II.2 và III.3.2 ở điểm nào?
 
-### Security Config chi tiết
-- **CSRF**: disabled (phù hợp REST API stateless)
-- **Session**: STATELESS (không dùng HTTP session)
-- **Password**: BCrypt encoding
-- **CORS**: Cho phép `localhost:6969`, methods GET/POST/PUT/DELETE/OPTIONS
-- **Public endpoints**: `/api/auth/**`, `/api/health`, `/swagger-ui/**`, `/api-docs/**`
-- **Tất cả endpoint khác**: yêu cầu authentication
+| | II.2 (Thực thể) | II.3 (Phân tích BCE) | III.3.2 (Thiết kế) |
+|--|----------------|---------------------|------------------|
+| Lớp có | Entity | Boundary + Control + Entity | Boundary + DAO + Entity |
+| Phương thức | Không | Tiếng Việt sơ bộ | Tên hàm Java + kiểu |
+| Kiểu dữ liệu | Không | Không | Java đầy đủ (String, int...) |
+| DAO | Không | Không | Có (RoomDAO, UserDAO...) |
 
-### User Roles
+---
+
+## PHẦN 4: PHA III — THIẾT KẾ
+
+### Q18. III.1 – Thiết kế lớp thực thể: 4 bước bắt buộc.
+
+Input: biểu đồ thực thể từ II.2.
+
+**Bước 1:** Thêm thuộc tính `id: int` cho các lớp không kế thừa từ lớp khác.
+
+**Bước 2:** Bổ sung **kiểu dữ liệu Java** cụ thể cho tất cả thuộc tính:
+```
+User: id: int, username: String, email: String, passwordHash: String, role: String
+Room: id: int, name: String, hourlyPrice: double, status: String, capacity: int
+Booking: id: int, startTime: Date, endTime: Date, guestCount: int, status: String
+```
+
+**Bước 3:** Chuyển `association` → `composition` hoặc `aggregation`:
+- `Booking "1" *-- "n" OrderDetail` (composition: OrderDetail không tồn tại không có Booking)
+- `OrderDetail "n" o-- "1" Product` (aggregation: Product tồn tại độc lập)
+
+**Bước 4:** Bổ sung **thuộc tính kiểu đối tượng**:
+```
+Booking: client: Client, room: Room, dsOrder: Order[]
+Order:   room: Room, dsOrderDetail: OrderDetail[]
+```
+
+### Q19. III.2 – Thiết kế CSDL: convention đặt tên bảng và cột.
+
+- **Tên bảng**: tiền tố `tbl` + tên entity (VD: `tblUser`, `tblRoom`, `tblBooking`, `tblOrder`)
+- **Khóa chính (PK)**: `tbl[Tên]Ma` — kiểu int auto-increment hoặc String manual
+- **Khóa ngoại (FK)**: `tbl[TênBảngCha]Ma` — là cột FK trỏ sang bảng cha
+- **Quan hệ n-n**: bảng trung gian `tbl[A][B]` với 2 FK (VD: `tblOrderDetail`: FK `tblOrderMa` + `tblProductMa`)
+
+Các bảng chính trong hệ thống karaoke:
+
+| Bảng | Entity | PK |
+|------|--------|----|
+| tblUser | User / Client / Employee (gộp single-table) | String id |
+| tblBranch | Branch | String id |
+| tblRoom | Room | String id |
+| tblRoomType | RoomType | String id |
+| tblBooking | Booking | String id |
+| tblProduct | Product (MenuItem) | String id |
+| tblOrder | Order | String id |
+| tblOrderDetail | OrderDetail | Long id (auto) |
+| tblRoomReceipt | RoomReceipt (Invoice) | String id |
+| tblMembershipTier | MembershipTier | String id |
+| tblOTP | Otp | Long id |
+| tblLoginSession | LoginSession | Long id |
+
+### Q20. III.2 – Tại sao tblUser gộp User + Client + Employee (Single-Table Inheritance)?
+
+User, Client, Employee có nhiều thuộc tính chung (id, email, password, role). Gộp vào 1 bảng `tblUser` với cột `role` (CLIENT / EMPLOYEE / ADMIN) để phân biệt loại. Thuộc tính riêng (điểm tích lũy của Client, chi nhánh của Employee) để NULL với các loại không áp dụng. Lợi ích: không cần JOIN phức tạp khi xác thực, truy vấn đơn giản.
+
+### Q21. III.3.1 – Wireframe: format nào? Ví dụ màn hình đặt phòng.
+
+Dùng ASCII box diagram, mô tả đầy đủ các thành phần UI. Ví dụ màn hình tạo booking:
+
+```
+┌──────────────────────────────────────────────┐
+│  Đặt phòng mới                               │
+│                                              │
+│  Khách hàng: [____________________▼]         │
+│  Chi nhánh:  [____________________▼]         │
+│  Phòng:      [____________________▼]         │
+│  Bắt đầu:    [2026-06-02  19:00  ]           │
+│  Kết thúc:   [2026-06-02  21:00  ]           │
+│  Số khách:   [___]                           │
+│                                              │
+│           [Hủy]    [Đặt phòng]               │
+└──────────────────────────────────────────────┘
+```
+
+Số màn hình wireframe phải ≥ số UC trong module (mỗi UC cần ít nhất 1 màn hình).
+
+### Q22. III.3.2 – Sơ đồ lớp thiết kế (MVC): thành phần và ví dụ.
+
+Dự án dùng **React + Spring Boot MVC** nên kiến trúc:
+```
+Boundary (React Component) → Control (@RestController) → Entity (@Entity JPA)
+```
+
+Mỗi `@RestController` thay thế cho cả Control lẫn DAO (Spring Data JPA tự generate SQL). Tên hàm theo RESTful CRUD: `getAll()`, `getById()`, `create()`, `update()`, `delete()`.
+
+Boundary là React component — tên theo hậu tố:
+
+| Hậu tố | Ví dụ | Loại |
+|--------|-------|------|
+| `Page` | `BookingPage` | Trang gắn route |
+| `Form` | `OrderForm` | Vùng nhập liệu |
+| `Table` | `RoomListTable` | Bảng dữ liệu |
+| `Modal` | `CheckoutModal` | Hộp thoại |
+| `Card` | `RoomCard` | Ô trong danh sách |
+
+Ví dụ module Đặt phòng:
+```
+Boundary: BookingPage, BookingForm, BookingManagement, BookingTable
+Control:  BookingController (getAll, create, updateStatus)
+Entity:   Booking, Client, Room
+```
+
+### Q23. III.3.2 – Bảng chữ ký hàm Controller: ví dụ từ BookingController.
+
+| Phương thức | HTTP | Endpoint | Input (Request) | Output |
+|------------|------|----------|-----------------|--------|
+| `list()` | GET | `/api/bookings` | `?status=CONFIRMED` | `List<Booking>` |
+| `create()` | POST | `/api/bookings` | `CreateBookingRequest(clientId, roomId, startTime, endTime, guestCount)` | `Booking` |
+| `updateStatus()` | PUT | `/api/bookings/{id}/status` | `UpdateStatusRequest(status: CHECKED_IN)` | `Booking` |
+
+### Q24. III.4 – Biểu đồ tuần tự thiết kế: kịch bản phiên bản 3.
+
+Dùng **tên hàm Java đầy đủ + kiểu dữ liệu**, thông điệp là method calls thực tế:
+
+```
+1.  LoginPage.handleSubmit(username: String, password: String)
+2.  LoginPage → POST /api/auth/login (fetch)
+3.  AuthController.login(request: LoginRequest): AuthResponse
+4.  AuthController → UserRepository.findByUsername(username: String): Optional<User>
+5.  AuthController → BCryptPasswordEncoder.matches(raw: String, hash: String): boolean
+6.  [alt thành công]
+7.    AuthController → LoginSessionRepository.save(session: LoginSession): LoginSession
+8.    AuthController return AuthResponse.from(user): AuthResponse
+9.    LoginPage: localStorage.setItem("token", token)
+10. [alt thất bại]
+11.   AuthController throw IllegalArgumentException("Sai mật khẩu")
+12.   ApiExceptionHandler → 400 Bad Request { message: "Sai mật khẩu" }
+```
+
+Participants: **Actor → Boundary → Control → Repository → Entity**
+
+### Q25. III.4 – Khác biệt ngôn ngữ giữa phân tích (II.4) và thiết kế (III.4).
+
+| | II.4 Phân tích | III.4 Thiết kế |
+|--|---------------|---------------|
+| Thông điệp | Tiếng Việt tự nhiên | Tên hàm Java + kiểu dữ liệu |
+| VD | "LoginPage gửi thông tin sang AuthController" | `AuthController.login(req: LoginRequest): AuthResponse` |
+| Participants | Actor, Boundary, Control, Entity | Actor, Boundary, Controller, Repository, Entity |
+| Ngoại lệ | "Nếu sai mật khẩu: hệ thống thông báo lỗi" | `throw IllegalArgumentException("Sai mật khẩu")` |
+
+---
+
+## PHẦN 5: PHA IV — KIỂM THỬ
+
+### Q26. IV – Kế hoạch kiểm thử có 4 mục theo skill cnpm.
+
+**4a. Bảng Test Case tổng hợp** — liệt kê ngắn gọn:
+
+| TT | Module | Test case |
+|----|--------|-----------|
+| 1 | Tài khoản | Đăng nhập đúng credentials → vào trang chính |
+| 2 | Tài khoản | Đăng nhập sai mật khẩu → thông báo lỗi |
+| 3 | Đặt phòng | Đặt phòng trống → Booking tạo thành công |
+| 4 | Đặt phòng | Đặt phòng đã OCCUPIED → từ chối, thông báo lỗi |
+| ... | | |
+
+**4b. Trạng thái CSDL trước test** — dữ liệu mẫu đủ để chạy TC:
+```
+tblUser
+| id     | username | passwordHash | role   |
+|--------|----------|-------------|--------|
+| USR001 | admin    | $2a$...     | ADMIN  |
+
+tblRoom
+| id  | name  | status    | hourlyPrice |
+|-----|-------|-----------|-------------|
+| P01 | VIP 01| AVAILABLE | 200000      |
+```
+
+**4c. Kịch bản thực hiện + Kết quả mong đợi**:
+
+| Kịch bản | Kết quả mong đợi |
+|----------|-----------------|
+| 1. Mở `/login` | Hiển thị form đăng nhập |
+| 2. Nhập username="admin", password="admin123" → nhấn Đăng nhập | Redirect `/`, hiển thị Dashboard |
+| 3. LocalStorage.token = "dev-token-USR001" | Token được lưu |
+
+**4d. Trạng thái CSDL sau test**:
+```
+tblLoginSession (sau test)
+| id | userId | createdAt           |
+|----|--------|---------------------|
+| 1  | USR001 | 2026-06-02T19:00:00 | ← hàng mới
+```
+
+### Q27. Test case cần phủ những gì?
+
+- **Happy path**: đầu vào hợp lệ → thành công
+- **Failure path**: đầu vào sai → thông báo lỗi đúng
+- **Edge case**: input rỗng, giá trị biên (0, -1, max length), trùng lặp (username đã tồn tại, đặt phòng đã có người)
+- **Mỗi UC cần ≥1 TC thành công + ≥1 TC thất bại**
+
+---
+
+## PHẦN 6: OOP — CODEBASE KARAOKE
+
+### Q28. 4 tính chất OOP thể hiện trong codebase.
+
+**1. Encapsulation (Đóng gói)**
+- Tất cả field Entity là `private`, truy cập qua getter/setter (Lombok `@Data`)
+- `User.passwordHash` chỉ được encode khi tạo, verify khi login — không expose raw
+
+**2. Inheritance (Kế thừa)**
+- `TokenAuthenticationFilter extends OncePerRequestFilter`
+- Mọi repository `extends JpaRepository<Entity, IdType>` — kế thừa 30+ CRUD method
+- Tài liệu: User ← {Client, Employee} (single-table inheritance, `role` phân biệt)
+
+**3. Polymorphism (Đa hình)**
+- `ApiExceptionHandler`: 3 `@ExceptionHandler` method khác nhau cùng gọi private `error()` — dispatch theo runtime type của exception
+- `JpaRepository.save()` hoạt động đúng với mọi Entity type
+- `PasswordEncoder` interface → Spring inject `BCryptPasswordEncoder` runtime
+
+**4. Abstraction (Trừu tượng hóa)**
+- `JpaRepository<T, ID>` interface — ẩn SQL hoàn toàn, gọi `findById()`, `save()`
+- `PasswordEncoder` interface — code không phụ thuộc BCrypt implementation
+- React `ProtectedRoute` — ẩn logic check token, chỉ wrap route
+
+### Q29. Repository Pattern — giải thích và ví dụ.
+
+Tách biệt business logic khỏi data access. Spring Data JPA tự generate implementation từ interface:
+
 ```java
-enum UserRole { CLIENT, RECEPTIONIST, SERVICE_STAFF, BRANCH_MANAGER, ADMIN }
+public interface BookingRepository extends JpaRepository<Booking, String> {
+    List<Booking> findByStatus(BookingStatus status);  // method naming → SELECT WHERE status=?
+    List<Booking> findByRoomId(String roomId);
+}
 ```
 
-### Tại sao Dev-Token thay vì JWT?
-- Đơn giản hóa demo và development
-- Không cần JWT library, signing keys, expiration handling
-- Thầy có thể test Swagger bằng cách gõ `dev-token-USR001` trực tiếp
-- Production sẽ thay bằng JWT (signed, expiration, refresh tokens)
+Trong Controller không cần biết SQL — chỉ gọi `bookings.save(booking)`, `bookings.findByStatus(CONFIRMED)`.
 
----
+### Q30. @Transactional — ví dụ BookingController.create().
 
-## 4. DATABASE SCHEMA
-
-### Entities & Tables
-
-| Entity | Table | PK | Relationships |
-|--------|-------|-----|---------------|
-| `UserAccount` | `tblUser` | String (manual) | -- |
-| `Customer` | `tblMember` | String (manual) | -- |
-| `Branch` | `tblBranch` | String (manual) | -- |
-| `Room` | `tblRoom` | String (manual) | `@ManyToOne` Branch |
-| `Booking` | `tblBooking` | String (manual) | `@ManyToOne` Customer, Room |
-| `MenuItem` | `tblProduct` | String (manual) | -- |
-| `ServiceOrder` | `tblOrder` | String (manual) | `@ManyToOne` Room, `@OneToMany` Items (cascade ALL) |
-| `ServiceOrderItem` | `tblOrderItem` | Long (auto) | `@ManyToOne` Order (`@JsonIgnore`), MenuItem |
-| `Invoice` | `tblInvoice` | String (manual) | `@ManyToOne` Booking |
-| `MembershipTierConfig` | `tblMembershipTierConfig` | String (tierName) | -- |
-| `SystemConfig` | `tblSystemConfig` | String (configKey) | -- |
-
-### Enums (State Machines)
-
-| Enum | Giá trị | Ý nghĩa |
-|------|---------|---------|
-| `RoomStatus` | AVAILABLE, OCCUPIED, RESERVED, CLEANING, MAINTENANCE | Trạng thái phòng |
-| `BookingStatus` | PENDING, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED | Trạng thái đặt phòng |
-| `OrderStatus` | PENDING, PREPARING, SERVED, CANCELLED | Trạng thái order |
-| `InvoiceStatus` | DRAFT, PAID, CANCELLED | Trạng thái hóa đơn |
-| `UserRole` | CLIENT, RECEPTIONIST, SERVICE_STAFF, BRANCH_MANAGER, ADMIN | Vai trò người dùng |
-
-### Relationships Diagram
-```
-Branch (1) ──< (N) Room
-Branch (1) ──< (N) Employee
-Customer (1) ──< (N) Booking
-Room (1) ──< (N) Booking
-Room (1) ──< (N) ServiceOrder
-Booking (1) ──< (N) Invoice
-ServiceOrder (1) ──< (N) ServiceOrderItem
-MenuItem (1) ──< (N) ServiceOrderItem
+```java
+@Transactional
+Booking create(CreateBookingRequest req) {
+    Client client = clients.findById(req.clientId())...;  // 1
+    Room room = rooms.findById(req.roomId())...;           // 2
+    Booking booking = new Booking(...);                    // 3
+    return bookings.save(booking);                         // 4
+}
 ```
 
-### Naming Convention
-- Bảng: `tbl` prefix (`tblUser`, `tblRoom`, `tblOrder`, `tblProduct`)
-- ID: String với prefix (`USR-XXX`, `BK-XXX`, `ORD-XXX`, `CN###`, `KH###`, `NV###`, `SP###`, `P##`)
-- **Lưu ý**: `MenuItem` map -> `tblProduct` (thể hiện tính dual: menu display vs inventory)
+Nếu bước 4 fail → rollback toàn bộ: không có booking orphan trong DB. Tương tự `updateStatus()`: check-in booking + room OCCUPIED là 1 transaction — không thể booking CHECKED_IN mà phòng vẫn AVAILABLE.
 
----
+### Q31. @JsonIgnore trên OrderDetail.order — tại sao?
 
-## 5. API DESIGN
-
-### Endpoints
-
-| Resource | Path | Controller |
-|----------|------|-----------|
-| Auth | `/api/auth` | `AuthController` |
-| Bookings | `/api/bookings` | `BookingController` |
-| Orders | `/api/orders` | `OrderController` |
-| Reports | `/api/reports` | `ReportController` |
-| Rooms | `/api/rooms` | `CrudControllers.RoomController` |
-| Customers | `/api/customers` | `CrudControllers.CustomerController` |
-| Menu Items | `/api/menu-items` | `CrudControllers.MenuItemController` |
-| Employees | `/api/employees` | `CrudControllers.EmployeeController` |
-| Invoices | `/api/invoices` | `CrudControllers.InvoiceController` |
-| Branches | `/api/branches` | `CrudControllers.BranchController` |
-| Membership | `/api/membership` | `CrudControllers.MembershipController` |
-| System Config | `/api/system-config` | `CrudControllers.SystemConfigController` |
-
-### HTTP Methods
-- `GET /api/resource` -- List (optional `?status=`, `?category=`)
-- `GET /api/resource/{id}` -- Detail
-- `POST /api/resource` -- Create
-- `PUT /api/resource/{id}` -- Update
-- `DELETE /api/resource/{id}` -- Delete
-- `PUT /api/resource/{id}/status` -- Update status (Booking, Order)
-- `PUT /api/resource/{id}/pay` -- Mark paid (Invoice)
-
-### Request/Response
-- Request: Java records + `@Valid` + Bean Validation (`@NotBlank`, `@Email`, `@NotNull`)
-- Response: Entity trực tiếp (simple CRUD) hoặc DTO record (complex)
-- Error: `{ timestamp, status, error, message }` từ `ApiExceptionHandler`
-
-### Swagger/OpenAPI
-- UI: `/swagger-ui.html` (hoặc qua proxy: `localhost:6969/swagger-ui/index.html`)
-- Docs: `/api-docs`
-- Security scheme: Bearer token (nhập `dev-token-USR001` để test)
-
----
-
-## 6. FRONTEND ARCHITECTURE
-
-### Routing (App.tsx)
-
+`Order @OneToMany → items[]`, mỗi `OrderDetail @ManyToOne → order`. Khi Jackson serialize:
 ```
-/ (AuthLayout)
-├── /login          → LoginPage
-└── /register       → RegisterPage
+Order → items → OrderDetail → order → Order → items → ... → StackOverflowError
+```
+`@JsonIgnore` trên `OrderDetail.order` ngắt vòng lặp khi serialize về phía OrderDetail.
 
-/ (MainLayout + ProtectedRoute)
-├── /               → ReceptionDashboard (lễ tân)
-├── /manager        → ManagerDashboard (quản lý)
-├── /booking        → BookingPage
-├── /booking-management → BookingManagement
-├── /room-session/:roomId → RoomSession
-├── /rooms          → RoomManagement
-├── /orders         → OrderPage
-├── /order-management → OrderManagement
-├── /menu           → MenuManagement
-├── /inventory      → InventoryPage
-├── /checkout       → CheckoutPage
-├── /customers      → CustomerPage
-├── /membership     → MembershipPage
-├── /employees      → EmployeeManagement
-├── /reports        → ReportsPage
-├── /settings       → SettingsPage
-├── /profile        → ProfilePage
-└── *               → NotFound (404)
+### Q32. N+1 Query Problem và cách dự án xử lý.
+
+N+1: load 10 Order → N query cho room, N query cho items, N cho branch... → 31+ queries.
+
+`@EntityGraph` fetch tất cả trong 1 JOIN:
+```java
+@EntityGraph(attributePaths = {"room", "room.branch", "items", "items.menuItem"})
+List<Order> findAll();
 ```
 
-### State Management
-- **Zustand** (`uiStore.ts`): Chỉ quản lý `isSidebarOpen` (toggle sidebar)
-- **Component-local**: Business data dùng `useState` + `useEffect` + `fetch()`
-- **localStorage**: `token` và `user` data
+### Q33. Java Records cho DTO — tại sao?
 
-### API Communication Pattern
-```typescript
-const token = localStorage.getItem('token');
-const res = await fetch('/api/endpoint', {
-  headers: { 'Authorization': `Bearer ${token}` }
-});
+Records (Java 16+) là immutable value objects — tự generate constructor, getters, equals/hashCode/toString:
+```java
+record RegisterRequest(
+    @NotBlank String username,
+    @Email String email,
+    @NotBlank @Size(min = 6) String password,
+    UserRole role
+) {}
 ```
-- Dev: Vite proxy `/api` -> `localhost:8080`
-- Prod: Nginx proxy `/api/` -> `karaoke-backend:8080`
+Ngắn gọn hơn class thông thường 60-70%. Không thể thay đổi sau tạo → thread-safe.
 
-### Theming
-- Dark mode default, Tailwind `darkMode: "class"`
-- Colors: Gold primary (`#D4AF37`), dark slate backgrounds
-- Status: green (available), red (occupied), amber (cleaning)
-- Font: Plus Jakarta Sans, Icons: Material Symbols Outlined
-
----
-
-## 7. SPRING BOOT FEATURES
-
-### Spring Data JPA
-- `JpaRepository<Entity, Id>` -- CRUD + paging/sorting
-- Custom queries: method naming convention
-- `@EntityGraph` -- tránh N+1 query
-- `spring.jpa.open-in-view=false` -- best practice
-- `ddl-auto=update` -- auto schema migration
-
-### Bean Validation
-- `@Valid` trên `@RequestBody`
-- `@NotBlank`, `@NotNull`, `@Email`, `@NotEmpty`
-- Error 400 với field-level message
-
-### Spring Profiles
-- Default: H2 in-memory (dev)
-- `postgres`: PostgreSQL (Docker)
-- Switch: `SPRING_PROFILES_ACTIVE=postgres`
-
-### Health Checks
-- App: `GET /api/health` -> `{"status":"UP"}`
-- Docker: `pg_isready` (postgres), `redis-cli ping` (redis)
-
-### OpenAPI (Swagger)
-- `springdoc-openapi-starter-webmvc-ui` 3.0.3
-- `@Operation`, `@ApiResponse`, `@ExampleObject` trên mỗi endpoint
-- Bearer auth scheme trong `OpenApiConfig`
-
----
-
-## 8. DOCKER SETUP
-
-### docker-compose.yml -- 5 Services
-
-| Service | Image | Port | Health Check |
-|---------|-------|------|-------------|
-| postgres | `postgres:16` | 5432 | `pg_isready` 5s x5 |
-| redis | `redis:7` | 6379 | `redis-cli ping` 5s x5 |
-| pgadmin | `dpage/pgadmin4` | 5050 | -- |
-| backend | `eclipse-temurin:17` | 8080 | -- (waits for postgres+redis healthy) |
-| frontend | `nginx:alpine` | 6969 | -- (waits for backend) |
-
-### Multi-Stage Builds
-**Backend** (`backend/Dockerfile`):
-1. Build: `eclipse-temurin:17-jdk` + Maven -> JAR
-2. Run: `eclipse-temurin:17-jre` + JAR only (small image)
-
-**Frontend** (`frontend/Dockerfile`):
-1. Build: `node:20-alpine` + npm -> `dist/`
-2. Run: `nginx:alpine` + `dist/` + custom `nginx.conf`
-
-### Nginx Config
-- SPA fallback: `try_files $uri $uri/ /index.html`
-- Proxy: `/api/`, `/swagger-ui/`, `/api-docs` -> backend
-
----
-
-## 9. CODE PATTERNS ĐẶC BIỆT
-
-### @JsonIgnore trên reverse relationship
-`ServiceOrderItem.java`: `@JsonIgnore` trên field `order` -> tránh infinite recursion khi serialize
-
-### @EntityGraph cho N+1 prevention
-`ServiceOrderRepository`: fetch `room`, `room.branch`, `items`, `items.menuItem` trong 1 query
-
-### Stock decrement khi tạo order
-`OrderController`: Giảm stock ngay khi tạo order, throw exception nếu hết hàng
-
-### Room status synchronization
-`BookingController`: Khi booking `CHECKED_IN` -> room `OCCUPIED`; khi completed/cancelled -> room `AVAILABLE`
-
-### Report notifications
-`ReportController`: `/api/reports/notifications` tổng hợp 3 loại cảnh báo:
-- Tồn kho thấp (stock <= 10)
-- Order chờ xử lý
-- Phòng đang có khách
-
-### 8 Controllers trong 1 file
-`CrudControllers.java`: 8 `@RestController` classes (Branch, Customer, Room, MenuItem, Employee, Invoice, Membership, SystemConfig)
-
----
-
-## 10. DATASEEDER
-
-**File**: `config/DataSeeder.java` -- `CommandLineRunner`, chạy 1 lần khi startup
-
-| Entity | Số lượng | IDs |
-|--------|---------|-----|
-| Branch | 1 | CN001 |
-| Customer | 4 | KH001-KH004 (Đồng/Bạc/Vàng/Kim cương) |
-| MembershipTierConfig | 4 | Đồng(0), Bạc(300), Vàng(1000), Kim cương(5000) |
-| SystemConfig | 3 | app.name, app.hotline, app.email |
-| Room | 5 | P01-P05 (VIP/Thường/Deluxe, statuses khác nhau) |
-| MenuItem | 10 | SP001-SP010 (đồ uống, đồ ăn, trái cây) |
-| Employee | 3 | NV001-NV003 |
-| UserAccount | 5 | admin, reception, phucvu, quanly, client |
-| ServiceOrder | 3 | ORD001-ORD003 (PENDING, PREPARING, SERVED) |
-
-**Tại sao data này?**
-- Nhiều trạng thái phòng -> demo reception dashboard
-- Nhiều trạng thái order -> demo order workflow
-- Membership tiers -> demo loyalty program
-- Stock thấp (Chivas = 5) -> trigger notification system
-
----
-
-## 11. ERROR HANDLING
-
-**File**: `common/ApiExceptionHandler.java` -- `@RestControllerAdvice`
-
-| Exception | HTTP | Khi nào |
-|-----------|------|---------|
-| `EntityNotFoundException` | 404 | Không tìm thấy entity |
-| `IllegalArgumentException` | 400 | Vi phạm business rule |
-| `MethodArgumentNotValidException` | 400 | Bean Validation fail |
-
-Response format:
-```json
-{ "timestamp": "...", "status": 400, "error": "Bad Request", "message": "..." }
-```
-
----
-
-## 12. SEED CREDENTIALS
-
-| Username | Password | Role | Token |
-|----------|----------|------|-------|
-| admin | admin123 | ADMIN | `dev-token-USR001` |
-| reception | reception123 | RECEPTIONIST | `dev-token-USR002` |
-| phucvu | phucvu123 | SERVICE_STAFF | `dev-token-USR003` |
-| quanly | quanly123 | BRANCH_MANAGER | `dev-token-USR004` |
-| client | client123 | CLIENT | `dev-token-USR005` |
-
----
-
-## 13. FILE LOCATIONS NHANH
-
-| Concern | Path |
-|---------|------|
-| Security Config | `backend/.../config/SecurityConfig.java` |
-| Token Filter | `backend/.../config/TokenAuthenticationFilter.java` |
-| Data Seeder | `backend/.../config/DataSeeder.java` |
-| OpenAPI Config | `backend/.../config/OpenApiConfig.java` |
-| Error Handler | `backend/.../common/ApiExceptionHandler.java` |
-| Auth Controller | `backend/.../web/AuthController.java` |
-| Booking Controller | `backend/.../web/BookingController.java` |
-| Order Controller | `backend/.../web/OrderController.java` |
-| Report Controller | `backend/.../web/ReportController.java` |
-| CRUD Controllers | `backend/.../web/CrudControllers.java` |
-| Entities | `backend/.../domain/*.java` (11 files) |
-| Repositories | `backend/.../repository/*.java` (11 files) |
-| App Properties | `backend/src/main/resources/application.properties` |
-| Frontend App | `frontend/src/App.tsx` |
-| Sidebar | `frontend/src/components/Sidebar.tsx` |
-| Login Page | `frontend/src/pages/LoginPage.tsx` |
-| Docker Compose | `docker-compose.yml` |
-| Nginx Config | `frontend/nginx.conf` |
-
----
-
-## 14. CÂU HỎI THƯỜNG GẶP & CÂU TRẢ LỜI
-
-### Q: Tại sao dùng Dev-Token thay vì JWT?
-**A**: Đơn giản hóa demo. Dev-token chỉ cần `dev-token-<USER_ID>`, không cần JWT library, signing keys, expiration. Production sẽ thay bằng JWT.
-
-### Q: Tại sao dùng `@JsonIgnore` trên `ServiceOrderItem.order`?
-**A**: Tránh infinite recursion khi serialize. `ServiceOrder` -> `items` -> mỗi item -> `order` -> `items` -> ...
-
-### Q: Tại sao `spring.jpa.open-in-view=false`?
-**A**: Best practice. Ngăn lazy-loading ngoài transaction, tránh unexpected queries và performance issues.
-
-### Q: Tại sao dùng Java Records cho DTO?
-**A**: Immutable, concise, tự动生成 equals/hashCode/toString. Phù hợp cho request/response objects không cần thay đổi.
-
-### Q: Tại sao `ddl-auto=update`?
-**A**: Auto-create/update schema từ entities. Tiện cho dev/demo. Production sẽ dùng Flyway/Liquibase.
-
-### Q: Tại sao 8 controllers trong 1 file?
-**A**: Group các CRUD endpoints đơn giản lại. Controllers phức tạp (Auth, Booking, Order, Report) có file riêng.
-
-### Q: Tại sao dùng `Integer` thay vì `int` cho entity fields?
-**A**: Wrapper types cho phép null. Khi Jackson deserialize partial objects (chỉ có id), primitive `int` sẽ fail với null.
-
-### Q: Docker health check để làm gì?
-**A**: `depends_on: condition: service_healthy` đảm bảo backend chỉ start khi postgres và redis sẵn sàng, tránh connection errors.
-
----
-
-## 15. KỊCH BẢN DEMO UI
-
-**Truy cập**: http://localhost:6969
-**Login**: `admin` / `admin123`
-
-### Flow 1: Đăng nhập & Dashboard Lễ tân
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Mở `localhost:6969` | Redirect sang `/login` (ProtectedRoute) |
-| 2 | Nhập `admin` / `admin123` -> Đăng nhập | Vào trang `/` - Dashboard Lễ tân |
-| 3 | Quan sát lưới phòng | Thấy 5 phòng (P01-P05), mỗi phòng có màu theo trạng thái |
-| 4 | Chú ý phòng **VIP 01** (OCCUPIED - đỏ) | Đang có khách, có nút "Order dịch vụ" và "Thanh toán" |
-| 5 | Chú ý phòng **P.02** (RESERVED - vàng) | Đã đặt trước |
-| 6 | Chú ý phòng **P.04, P.05** (AVAILABLE - xanh) | Phòng trống, có nút "Đặt phòng" |
-
-**Nói**: "Đây là giao diện lễ tân, hiển thị tất cả phòng theo thời gian thực. Màu xanh = trống, đỏ = đang có khách, vàng = đã đặt. Lễ tân có thể thao tác nhanh từ đây."
-
-### Flow 2: Đặt phòng
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Đặt phòng** | Vào `/booking` |
-| 2 | Chọn khách hàng (dropdown) | Hiển thị danh sách khách từ API `/api/customers` |
-| 3 | Chọn phòng trống (P04 hoặc P05) | Hiển thị giá/giờ |
-| 4 | Chọn giờ bắt đầu / kết thúc | DateTime picker |
-| 5 | Nhập số khách -> **Đặt phòng** | Alert thành công, phòng chuyển sang RESERVED |
-
-**Nói**: "Lễ tân chọn khách, chọn phòng, chọn giờ. Hệ thống tự động kiểm tra phòng trống và tạo booking. Phòng chuyển trạng thái RESERVED."
-
-### Flow 3: Quản lý đặt phòng
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **QL Đặt phòng** | Vào `/booking-management` |
-| 2 | Xem danh sách booking | Hiển thị tất cả booking với trạng thái |
-| 3 | Click **Check-in** trên booking CONFIRMED | Trạng thái chuyển CHECKED_IN, phòng chuyển OCCUPIED |
-| 4 | Click **Hoàn tất** trên booking CHECKED_IN | Trạng thái chuyển COMPLETED, phòng chuyển AVAILABLE |
-
-**Nói**: "Quản lý đặt phòng: từ CONFIRMED -> CHECKED_IN -> COMPLETED. Mỗi lần thay đổi trạng thái booking, trạng thái phòng tự động đồng bộ."
-
-### Flow 4: Gọi món (Order dịch vụ)
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Gọi món** | Vào `/orders` |
-| 2 | Chọn phòng (dropdown: VIP 01) | Chọn phòng đang có khách |
-| 3 | Tìm kiếm "bia" | Filter realtime |
-| 4 | Chọn category "Đồ uống" | Filter theo category |
-| 5 | Click **Thêm** trên Bia Tiger (x2) | Thêm vào giỏ hàng |
-| 6 | Click **Thêm** trên Khoai tây chiên (x1) | Thêm vào giỏ hàng |
-| 7 | Tăng/giảm số lượng trong giỏ | Nút +/- hoạt động |
-| 8 | Click **Gửi order** | Alert thành công, gửi xuống bếp/bar |
-
-**Nói**: "Giao diện gọi món: chọn phòng, tìm kiếm, filter category, thêm vào giỏ. Khi gửi order, bếp/bar nhận được qua trang QL Order. Stock tự động giảm."
-
-### Flow 5: Quản lý Order (Bếp/Bar)
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **QL Order** | Vào `/order-management` |
-| 2 | Xem danh sách order | Hiển thị với trạng thái PENDING, PREPARING, SERVED |
-| 3 | Click **Chế biến** trên order PENDING | Chuyển sang PREPARING |
-| 4 | Click **Đã phục vụ** trên order PREPARING | Chuyển sang SERVED |
-
-**Nói**: "Bếp/bar quản lý order theo workflow: PENDING -> PREPARING -> SERVED. Mỗi order hiển thị chi tiết món, số lượng, phòng."
-
-### Flow 6: Thanh toán
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> trang **Lễ tân** -> phòng VIP 01 -> **Thanh toán** | Vào `/checkout` |
-| 2 | Xem chi tiết hóa đơn | Hiển thị tiền phòng + tiền dịch vụ |
-| 3 | Click **Thanh toán** | Hóa đơn chuyển PAID, phòng chuyển AVAILABLE |
-
-**Nói**: "Thanh toán tự động tính tổng: tiền phòng (giá/giờ x số giờ) + tiền dịch vụ (từ order). Khi thanh toán, phòng giải phóng."
-
-### Flow 7: Quản lý phòng
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Quản lý phòng** | Vào `/rooms` |
-| 2 | Xem danh sách phòng | Hiển thị 5 phòng với thông tin chi tiết |
-| 3 | Click **Thêm phòng mới** | Form thêm phòng |
-| 4 | Nhập thông tin -> Lưu | Phòng mới xuất hiện trong danh sách |
-| 5 | Click **Sửa** trên phòng -> sửa giá -> Lưu | Cập nhật thành công |
-
-**Nói**: "CRUD phòng: thêm, sửa, xóa. Mỗi phòng gán cho chi nhánh, có loại (VIP/Thường/Deluxe), giá/giờ, sức chứa."
-
-### Flow 8: Quản lý Menu
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **QL Menu** | Vào `/menu` |
-| 2 | Xem danh sách món | 10 món: đồ uống, đồ ăn, trái cây |
-| 3 | Click **Thêm món** -> nhập thông tin -> Lưu | Món mới xuất hiện |
-| 4 | Sửa stock của Chivas 18 (5 -> 10) | Cập nhật thành công |
-
-**Nói**: "Quản lý menu: thêm/sửa/xóa món. Mỗi món có category, giá, tồn kho. Stock tự động giảm khi có order."
-
-### Flow 9: Khách hàng & Hội viên
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Khách hàng** | Vào `/customers` |
-| 2 | Xem danh sách | 5 khách với hạng hội viên |
-| 3 | Thêm khách mới -> Lưu | Khách mới xuất hiện |
-| 4 | Sidebar -> **Hội viên** | Vào `/membership` |
-| 5 | Xem 4 hạng: Đồng, Bạc, Vàng, Kim cương | Hiển thị điểm tối thiểu và ưu đãi |
-| 6 | Xem thống kê | Biểu đồ phân bố hội viên |
-
-**Nói**: "Khách hàng tích điểm theo hạng. Kim cương (5000+ điểm) giảm 15%. Hệ thống tự động phân hạng dựa trên điểm tích lũy."
-
-### Flow 10: Dashboard Quản lý
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> `/manager` hoặc đổi URL | Vào Manager Dashboard |
-| 2 | Xem thống kê tổng quan | Số phòng, khách, doanh thu |
-| 3 | Xem biểu đồ doanh thu | Recharts line/bar chart |
-| 4 | Xem thông báo | Cảnh báo tồn kho thấp, order chờ xử lý |
-
-**Nói**: "Dashboard quản lý: tổng quan số liệu, biểu đồ doanh thu theo tuần/tháng, cảnh báo tự động (hết hàng, order chờ)."
-
-### Flow 11: Báo cáo
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Báo cáo** | Vào `/reports` |
-| 2 | Xem doanh thu theo thời gian | Biểu đồ |
-| 3 | Filter theo tuần/tháng | Dữ liệu thay đổi |
-
-**Nói**: "Báo cáo doanh thu theo thời gian thực. Filter theo ngày/tuần/tháng để phân tích xu hướng."
-
-### Flow 12: Nhân viên
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Nhân viên** | Vào `/employees` |
-| 2 | Xem 3 nhân viên | Lễ tân, Phục vụ, Quản lý |
-| 3 | Thêm/sửa nhân viên | CRUD hoạt động |
-
-**Nói**: "Quản lý nhân viên theo chi nhánh. Mỗi nhân viên có vai trò: Lễ tân, Phục vụ, Quản lý chi nhánh."
-
-### Flow 13: Cài đặt & Swagger
-
-| Bước | Thao tác | Kỳ vọng |
-|------|----------|---------|
-| 1 | Sidebar -> **Cài đặt** | Vào `/settings` |
-| 2 | Xem/sửa cấu hình hệ thống | Tên app, hotline, email |
-| 3 | Mở `localhost:6969/swagger-ui/index.html` | Swagger UI |
-| 4 | Click **Authorize** -> nhập `dev-token-USR001` | Xác thực thành công |
-| 5 | Test `GET /api/rooms` -> Try it out | Trả về JSON 5 phòng |
-| 6 | Test `POST /api/bookings` -> tạo booking | Booking mới tạo |
-
-**Nói**: "Swagger UI để test API trực tiếp. Nhập token từ login để xác thực. Tất cả endpoint đều có documentation với example."
-
----
-
-### Thứ tự demo gợi ý (10-15 phút)
+### Q34. Luồng xác thực đầy đủ (Auth Flow).
 
 ```
-1. Đăng nhập (30s)
-2. Dashboard Lễ tân - xem lưới phòng (1p)
-3. Đặt phòng (2p)
-4. Gọi món cho phòng đang có khách (2p)
-5. QL Order - bếp/bar xử lý (1p)
-6. Thanh toán (1p)
-7. Dashboard Quản lý - xem thống kê (1p)
-8. Khách hàng & Hội viên (1p)
-9. Swagger UI - test API (2p)
+1. POST /api/auth/login { username, password }
+2. AuthController: UserRepository.findByUsername() → User
+3. BCryptPasswordEncoder.matches(raw, hash) → true/false
+4. Nếu true: return AuthResponse { token: "dev-token-USR001" }
+5. Frontend: localStorage.setItem("token", "dev-token-USR001")
+6. Request sau: Header "Authorization: Bearer dev-token-USR001"
+7. TokenAuthenticationFilter.doFilterInternal():
+   - Extract "dev-token-USR001" từ header
+   - Strip "dev-token-" → userId = "USR001"
+   - UserRepository.findById("USR001") → User
+   - Set SecurityContextHolder (authentication)
+8. SecurityConfig kiểm tra role cho endpoint
 ```
 
-### Lưu ý khi demo
+### Q35. Tại sao Dev-Token thay vì JWT?
 
-- **Mở F12 Network tab** để show API calls thực tế
-- **Giải thích màu sắc** phòng: xanh=trống, đỏ=có khách, vàng=đã đặt
-- **Show Swagger** để chứng minh API documentation đầy đủ
-- **Nói rõ luồng**: Đặt phòng -> Check-in -> Gọi món -> Thanh toán -> Check-out
-- **Nếu thầy hỏi về security**: Chỉ `Authorization: Bearer dev-token-USR001` trong Network tab
+Dev-Token đơn giản: `dev-token-<ID>` chứa user ID plain text, server chỉ lookup DB. Không cần JWT library, signing keys, expiration handling.
+
+**Nhược điểm**: không secure — ai biết ID là giả mạo được. Production: JWT signed (secret key) + expiration (access 15 phút + refresh 7 ngày).
+
+### Q36. SecurityConfig — các quyết định thiết kế.
+
+```java
+.csrf(disable)                    // REST API stateless → không cần CSRF
+.sessionManagement(STATELESS)     // Không lưu session → scale được
+.authorizeHttpRequests(auth ->
+    .requestMatchers("/api/auth/**").permitAll()     // Login/Register công khai
+    .requestMatchers("/api/reports/**").hasRole("ADMIN")  // Báo cáo chỉ admin
+    .anyRequest().authenticated())                  // Còn lại cần đăng nhập
+```
+
+### Q37. Enum và State Machine trong dự án.
+
+| Enum | Luồng trạng thái |
+|------|----------------|
+| `BookingStatus` | PENDING → CONFIRMED → CHECKED_IN → COMPLETED \| CANCELLED |
+| `OrderStatus` | PENDING → PREPARING → SERVED \| CANCELLED |
+| `RoomStatus` | AVAILABLE ↔ RESERVED ↔ OCCUPIED → CLEANING → AVAILABLE |
+| `InvoiceStatus` | DRAFT → PAID \| CANCELLED |
+
+Tại sao dùng enum thay String: compile-time safety (không assign "TYOP"), switch exhaustiveness, IDE auto-complete.
+
+### Q38. Tại sao BigDecimal thay double cho tiền?
+
+`double` có floating-point error: `0.1 + 0.2 = 0.30000000000000004`. Với tiền tài chính, sai số không chấp nhận được. `BigDecimal` là arbitrary-precision decimal, không có rounding error.
+
+---
+
+## PHẦN 7: CÂU HỎI KHÓ / BẪY
+
+### Q39. Tại sao dùng React (HTML) không dùng JFrame?
+
+Hệ thống nhiều chi nhánh, nhiều địa điểm → web-based là tự nhiên. JFrame (desktop) phải cài đặt trên từng máy, khó update. React: truy cập từ bất kỳ trình duyệt, deploy 1 lần, cross-platform.
+
+### Q40. Tài liệu dùng tên tiếng Việt (Pha II) vs tiếng Anh (Pha III) — tại sao?
+
+Theo skill cnpm:
+- **Pha II (Phân tích)**: ngôn ngữ tự nhiên tiếng Việt — để domain expert không biết code có thể đọc hiểu
+- **Pha III (Thiết kế)**: tên hàm + kiểu dữ liệu tiếng Anh Java — để lập trình viên implement trực tiếp
+
+### Q41. Nếu thầy hỏi phần tài liệu thiếu/sai — trả lời thế nào?
+
+Thừa nhận thẳng thắn: "Chúng em đã phát hiện trong audit: [vấn đề]. Nguyên nhân: [giải thích]. Hướng sửa: [fix]. Tuy nhiên do thời gian chưa cập nhật lên Docs."
+
+**Vấn đề đã biết:**
+- Booking/Services không gán UC ID trong tài liệu module
+- Core dùng "Use Case 16" thay vì "UC16" (sai format)
+- Section 3.3 (Biểu đồ UC toàn hệ thống) trong tab XÁC ĐỊNH YÊU CẦU còn thiếu
+- HR Pha III có 2 chức năng thuộc services bị nhầm (Quản lý order, Quản lý menu thay vì UC14)
+
+### Q42. Điểm mạnh và hạn chế của hệ thống.
+
+**Điểm mạnh**: Tài liệu UP đầy đủ 4 pha cho 5 module · Codebase chạy được · Docker Compose 1 lệnh · Swagger UI đầy đủ · DataSeeder với dữ liệu thực tế.
+
+**Hạn chế**: Dev-Token không production-ready · UC numbering chưa nhất quán · Một số Pha III/IV chưa đầy đủ · Không có role-based UI.
+
+---
+
+## PHẦN 8: SỐ LIỆU NHANH
+
+| Hạng mục | Con số |
+|----------|--------|
+| Actor cụ thể | 5 |
+| Actor trừu tượng | 2 |
+| Use Case | 20 (UC01–UC21, bỏ UC09) |
+| Module | 5 |
+| Entity Java (domain/) | ~16 |
+| Bảng DB (tbl*) | ~12–14 |
+| Controller class | 12 (4 file riêng + 8 trong CrudControllers.java) |
+| Docker services | 5 (frontend, backend, postgres, redis, pgadmin) |
+| Port frontend | 6969 |
+| Port backend | 8080 |
+| Port DB | 5432 |
+| Admin login | admin / admin123 / dev-token-USR001 |
+
+---
+
+## PHẦN 9: DEMO FLOW (15 PHÚT)
+
+```
+1. [2p] localhost:6969 → Login → Dashboard Lễ tân (giải thích màu phòng)
+2. [2p] Đặt phòng → BookingPage → chọn khách/phòng/giờ → tạo
+3. [2p] Gọi món → OrderPage → chọn phòng → add items → gửi
+4. [1p] QL Order → PENDING → PREPARING → SERVED
+5. [1p] Thanh toán → Checkout → Invoice PAID → phòng AVAILABLE
+6. [2p] Dashboard Quản lý → thống kê, biểu đồ, cảnh báo
+7. [2p] Swagger UI → Authorize dev-token → test GET + POST
+8. [3p] Hỏi đáp (F12 Network tab → show API calls thực tế)
+```
+
+**Mẹo**: Mở F12 Network tab trước demo để show request/response trực quan khi trả lời câu hỏi kỹ thuật.

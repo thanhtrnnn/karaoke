@@ -27,6 +27,8 @@ import FacilityPage from './pages/FacilityPage';
 import DamageReportPage from './pages/DamageReportPage';
 import ProviderPage from './pages/ProviderPage';
 import ImportReceiptPage from './pages/ImportReceiptPage';
+import BranchPage from './pages/BranchPage';
+import ChainReportPage from './pages/ChainReportPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -107,6 +109,12 @@ function App() {
 
           {/* Damage Reports */}
           <Route path="/damage-reports" element={<DamageReportPage />} />
+
+          {/* Branches (UC16 - Admin only) */}
+          <Route path="/branches" element={<BranchPage />} />
+
+          {/* Chain Report (UC21 - Admin only) */}
+          <Route path="/chain-report" element={<ChainReportPage />} />
 
           {/* Settings & Profile */}
           <Route path="/settings" element={<SettingsPage />} />

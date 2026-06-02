@@ -20,6 +20,8 @@ const menuItems = [
   { path: '/membership', label: 'Hội viên', icon: 'card_membership' },
   { path: '/employees', label: 'Nhân viên', icon: 'badge' },
   { path: '/reports', label: 'Báo cáo', icon: 'analytics' },
+  { path: '/branches', label: 'Chi nhánh', icon: 'store' },
+  { path: '/chain-report', label: 'Báo cáo chuỗi', icon: 'bar_chart_4_bars' },
   { path: '/settings', label: 'Cài đặt', icon: 'settings' },
 ];
 

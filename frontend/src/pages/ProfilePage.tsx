@@ -55,10 +55,16 @@ export default function ProfilePage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || 'Đổi mật khẩu thất bại. Kiểm tra mật khẩu hiện tại.');
       }
-      setPwSuccess('Đổi mật khẩu thành công!');
+      setPwSuccess('Đổi mật khẩu thành công! Đang đăng xuất...');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      // UC03: Thu hồi phiên sau khi đổi mật khẩu
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }, 2000);
     } catch (err: any) {
       setPwError(err.message);
     } finally {

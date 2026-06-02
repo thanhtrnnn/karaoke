@@ -5,6 +5,7 @@ interface InventoryItem {
   name: string;
   cat: string;
   stock: number;
+  safetyStock: number;
   unit: string;
   price: number;
   active: boolean;
@@ -34,7 +35,8 @@ export default function InventoryPage() {
             name: p.name,
             cat: p.category,
             stock: p.stock,
-            unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
+            safetyStock: p.soLuongToiThieu ?? 15,
+            unit: p.unit || (p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa'),
             price: p.price,
             active: p.active,
           })));
@@ -51,7 +53,7 @@ export default function InventoryPage() {
   const filteredProducts = products.filter(p => {
     const matchCat = filterCat === 'Tất cả' || p.cat === filterCat;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchStock = filterStock === 'Tất cả' || (filterStock === 'Sắp hết' && p.stock <= 15);
+    const matchStock = filterStock === 'Tất cả' || (filterStock === 'Sắp hết' && p.stock <= p.safetyStock);
     return matchCat && matchSearch && matchStock;
   });
 

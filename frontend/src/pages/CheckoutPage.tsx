@@ -22,6 +22,9 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | 'CARD'>('CASH');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
+  const [voucherMsg, setVoucherMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -199,6 +202,45 @@ export default function CheckoutPage() {
           </div>
         </div>
         <div className="bg-surface-primary rounded-xl border border-slate-700/50 p-6 shadow-sm">
+          {/* UC08: Áp dụng voucher / khuyến mãi */}
+          <div className="mb-5 pb-5 border-b border-slate-700/50">
+            <h3 className="font-label-caps text-slate-400 mb-3 uppercase">Mã giảm giá</h3>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={voucherCode}
+                onChange={e => { setVoucherCode(e.target.value); setVoucherMsg(null); }}
+                placeholder="Nhập mã voucher..."
+                className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#D4AF37]"
+              />
+              <button
+                onClick={async () => {
+                  if (!voucherCode.trim() || !invoice) return;
+                  setApplyingVoucher(true); setVoucherMsg(null);
+                  const token = localStorage.getItem('token');
+                  try {
+                    const res = await fetch(`/api/promotions?activeOnly=true`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (res.ok) {
+                      const promos = await res.json();
+                      const match = promos.find((p: any) => p.id === voucherCode || p.tenKhuyenMai === voucherCode);
+                      if (match) {
+                        setVoucherMsg(`✓ Áp dụng "${match.tenKhuyenMai}" — ${match.heSoUuDai || match.giaTriGiam}`);
+                      } else {
+                        setVoucherMsg('✗ Mã không hợp lệ hoặc đã hết hạn');
+                      }
+                    }
+                  } catch { setVoucherMsg('✗ Lỗi kết nối'); } finally { setApplyingVoucher(false); }
+                }}
+                disabled={applyingVoucher}
+                className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm disabled:opacity-50"
+              >
+                {applyingVoucher ? '...' : 'Áp dụng'}
+              </button>
+            </div>
+            {voucherMsg && (
+              <p className={`mt-2 text-xs ${voucherMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{voucherMsg}</p>
+            )}
+          </div>
           <h3 className="font-label-caps text-slate-400 mb-4 uppercase">Phương thức thanh toán</h3>
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[

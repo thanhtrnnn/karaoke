@@ -23,6 +23,8 @@ export default function BookingPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [guestCount, setGuestCount] = useState('');
   const [booking, setBooking] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingCustomer, setPendingCustomer] = useState<any>(null);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -35,7 +37,7 @@ export default function BookingPage() {
           const data = await res.json();
           setRooms(data.map((r: any) => ({
             id: r.id,
-            type: r.type,
+            type: r.roomType?.tenLoai || r.type || 'N/A',
             cap: `${r.capacity} người`,
             price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
@@ -70,32 +72,34 @@ export default function BookingPage() {
   }
 
   const handleBooking = async () => {
-    if (!selectedRoom) {
-      alert('Vui lòng chọn phòng trước khi đặt!');
-      return;
-    }
-    if (!customerPhone) {
-      alert('Vui lòng nhập SĐT khách hàng!');
-      return;
-    }
+    if (!selectedRoom) { alert('Vui lòng chọn phòng trước khi đặt!'); return; }
+    if (!customerPhone) { alert('Vui lòng nhập SĐT khách hàng!'); return; }
     setBooking(true);
     try {
       const token = localStorage.getItem('token');
-      // Look up customer by phone
       const custRes = await fetch('/api/clients', { headers: { 'Authorization': `Bearer ${token}` } });
       if (!custRes.ok) { alert('Không thể tải danh sách khách hàng!'); setBooking(false); return; }
       const customers = await custRes.json();
       const customer = customers.find((c: any) => c.phone === customerPhone);
-      if (!customer) {
-        alert('Không tìm thấy khách hàng với SĐT này!');
-        setBooking(false);
-        return;
-      }
+      if (!customer) { alert('Không tìm thấy khách hàng với SĐT này!'); setBooking(false); return; }
+      // UC05: Hiện ConfirmBookingModal trước khi tạo booking
+      setPendingCustomer(customer);
+      setBooking(false);
+      setShowConfirm(true);
+    } catch (e) { console.error(e); alert('Lỗi kết nối server.'); setBooking(false); }
+  };
+
+  const confirmBooking = async () => {
+    if (!selectedRoom || !pendingCustomer) return;
+    setBooking(true);
+    setShowConfirm(false);
+    try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientId: customer.id,
+          clientId: pendingCustomer.id,
           roomId: selectedRoom.id,
           startTime: `${bookingDate}T${startTime}:00`,
           endTime: `${bookingDate}T${endTime}:00`,
@@ -103,33 +107,21 @@ export default function BookingPage() {
         }),
       });
       if (res.ok) {
-        alert(`Đã đặt thành công phòng ${selectedRoom.id}!`);
-        setSelectedRoom(null);
-        setCustomerPhone('');
-        setGuestCount('');
-        // Refresh rooms
+        alert(`Đặt phòng ${selectedRoom.id} thành công!`);
+        setSelectedRoom(null); setCustomerPhone(''); setGuestCount(''); setPendingCustomer(null);
         const roomsRes = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
         if (roomsRes.ok) {
           const data = await roomsRes.json();
           setRooms(data.map((r: any) => ({
-            id: r.id,
-            type: r.type,
-            cap: `${r.capacity} người`,
-            price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
+            id: r.id, type: r.roomType?.tenLoai || r.type || 'N/A',
+            cap: `${r.capacity} người`, price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
             color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
             canBook: r.status === 'AVAILABLE',
           })));
         }
-      } else {
-        alert('Đặt phòng thất bại!');
-      }
-    } catch (e) {
-      console.error('Failed to create booking:', e);
-      alert('Lỗi kết nối server.');
-    } finally {
-      setBooking(false);
-    }
+      } else { alert('Đặt phòng thất bại! Kiểm tra thông tin và thử lại.'); }
+    } catch (e) { console.error(e); alert('Lỗi kết nối server.'); } finally { setBooking(false); }
   };
 
   return (
@@ -223,6 +215,54 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
+
+      {/* UC05 ConfirmBookingModal */}
+      {showConfirm && selectedRoom && pendingCustomer && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-xl p-6 w-full max-w-sm shadow-2xl border border-slate-600">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#D4AF37]">event_available</span>
+              Xác nhận đặt phòng
+            </h2>
+            <div className="space-y-3 text-sm mb-6">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Phòng</span>
+                <span className="text-white font-semibold">{selectedRoom.id} ({selectedRoom.type})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Khách hàng</span>
+                <span className="text-white">{pendingCustomer.fullName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">SĐT</span>
+                <span className="text-white">{pendingCustomer.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Thời gian</span>
+                <span className="text-white">{bookingDate} | {startTime} — {endTime}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Số người</span>
+                <span className="text-white">{guestCount || 2} người</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Đơn giá</span>
+                <span className="text-[#D4AF37] font-semibold">{selectedRoom.price}/giờ</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setShowConfirm(false); setPendingCustomer(null); }}
+                className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700">
+                Huỷ
+              </button>
+              <button onClick={confirmBooking} disabled={booking}
+                className="flex-1 py-2 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-yellow-400 disabled:opacity-50">
+                {booking ? 'Đang đặt...' : 'Đặt phòng'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

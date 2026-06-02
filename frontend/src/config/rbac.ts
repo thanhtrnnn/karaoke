@@ -14,6 +14,8 @@ export const ROLE_ROUTES: Record<Role, string[]> = {
     '/manager', '/reports', '/employees', '/customers', '/membership',
     '/rooms', '/room-session', '/orders', '/order-management',
     '/menu', '/inventory', '/checkout', '/booking-management', '/settings', '/profile',
+    '/damage-reports', '/facilities', '/import-receipts', '/providers',
+    '/room-types',
   ],
   RECEPTIONIST: [
     '/', '/booking', '/booking-management', '/rooms', '/room-session',

@@ -7,6 +7,8 @@ interface Employee {
   phone: string;
   branch: string;
   branchId: string;
+  status: string;
+  username: string;
 }
 
 interface Branch {
@@ -31,7 +33,7 @@ export default function EmployeeManagement() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: '', role: 'Lễ tân', phone: '', branchId: '' });
+  const [formData, setFormData] = useState({ name: '', role: 'Lễ tân', phone: '', branchId: '', status: 'Working', username: '', password: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +52,8 @@ export default function EmployeeManagement() {
             phone: e.phone,
             branch: e.branch?.name || 'N/A',
             branchId: e.branch?.id || '',
+            status: e.status || 'Working',
+            username: e.username || '',
           })));
         }
         if (branchRes.ok) {
@@ -74,10 +78,10 @@ export default function EmployeeManagement() {
   const handleOpenModal = (emp?: any) => {
     if (emp) {
       setEditingEmp(emp);
-      setFormData({ name: emp.name, role: emp.role, phone: emp.phone, branchId: emp.branchId || '' });
+      setFormData({ name: emp.name, role: emp.role, phone: emp.phone, branchId: emp.branchId || '', status: emp.status || 'Working', username: emp.username || '', password: '' });
     } else {
       setEditingEmp(null);
-      setFormData({ name: '', role: 'Lễ tân', phone: '', branchId: branches.length > 0 ? branches[0].id : '' });
+      setFormData({ name: '', role: 'Lễ tân', phone: '', branchId: branches.length > 0 ? branches[0].id : '', status: 'Working', username: '', password: '' });
     }
     setIsModalOpen(true);
   };
@@ -98,13 +102,12 @@ export default function EmployeeManagement() {
       fullName: formData.name,
       phone: formData.phone,
       role: reverseRoleMap[formData.role] || formData.role,
+      status: formData.status,
+      username: formData.username || undefined,
     };
-    if (formData.branchId) {
-      body.branch = { id: formData.branchId };
-    }
-    if (!editingEmp) {
-      body.id = `NV${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-    }
+    if (formData.password && !editingEmp) body.password = formData.password;
+    if (formData.branchId) body.branch = { id: formData.branchId };
+    if (!editingEmp) body.id = `NV${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 
     try {
       const token = localStorage.getItem('token');
@@ -134,6 +137,8 @@ export default function EmployeeManagement() {
             phone: created.phone,
             branch: created.branch?.name || 'N/A',
             branchId: created.branch?.id || '',
+            status: created.status || 'Working',
+            username: created.username || '',
           }]);
         }
       }
@@ -203,7 +208,7 @@ export default function EmployeeManagement() {
         <table className="w-full text-left whitespace-nowrap">
           <thead>
             <tr className="border-b border-slate-700/50 text-slate-400 font-label-caps bg-surface-container-low">
-              <th className="py-4 px-6">Mã NV</th><th className="py-4 px-6">Họ tên</th><th className="py-4 px-6">Vai trò</th><th className="py-4 px-6">SĐT</th><th className="py-4 px-6">Chi nhánh</th><th className="py-4 px-6">Thao tác</th>
+              <th className="py-4 px-6">Mã NV</th><th className="py-4 px-6">Họ tên</th><th className="py-4 px-6">Vai trò</th><th className="py-4 px-6">SĐT</th><th className="py-4 px-6">Chi nhánh</th><th className="py-4 px-6">Trạng thái</th><th className="py-4 px-6">Thao tác</th>
             </tr>
           </thead>
           <tbody className="font-body-md divide-y divide-slate-800/50">
@@ -218,6 +223,11 @@ export default function EmployeeManagement() {
                 </td>
                 <td className="py-4 px-6">{e.phone}</td>
                 <td className="py-4 px-6">{e.branch}</td>
+                <td className="py-4 px-6">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${e.status === 'Working' ? 'bg-green-900/50 text-green-300' : e.status === 'Resigned' ? 'bg-red-900/50 text-red-300' : 'bg-yellow-900/50 text-yellow-300'}`}>
+                    {e.status === 'Working' ? 'Đang làm' : e.status === 'Resigned' ? 'Nghỉ việc' : e.status || 'Đang làm'}
+                  </span>
+                </td>
                 <td className="py-4 px-6 flex gap-2">
                   <button
                     onClick={() => handleOpenModal(e)}
@@ -280,17 +290,37 @@ export default function EmployeeManagement() {
               </div>
               <div>
                 <label className="block text-slate-400 font-body-md mb-2">Chi nhánh</label>
-                <select
-                  value={formData.branchId}
-                  onChange={e => setFormData({...formData, branchId: e.target.value})}
-                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
-                >
+                <select value={formData.branchId} onChange={e => setFormData({...formData, branchId: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container">
                   {branches.length === 0 && <option value="">Không có chi nhánh</option>}
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.id} - {b.name}</option>
-                  ))}
+                  {branches.map(b => <option key={b.id} value={b.id}>{b.id} - {b.name}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="block text-slate-400 font-body-md mb-2">Trạng thái</label>
+                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container">
+                  <option value="Working">Đang làm</option>
+                  <option value="Resigned">Nghỉ việc</option>
+                  <option value="OnLeave">Nghỉ phép</option>
+                </select>
+              </div>
+              {!editingEmp && (
+                <>
+                  <div>
+                    <label className="block text-slate-400 font-body-md mb-2">Tên đăng nhập</label>
+                    <input value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})}
+                      className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
+                      placeholder="Để trống dùng mã NV" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 font-body-md mb-2">Mật khẩu ban đầu</label>
+                    <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
+                      className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:outline-none focus:border-primary-container"
+                      placeholder="Ít nhất 6 ký tự" />
+                  </div>
+                </>
+              )}
             </div>
             <div className="flex justify-end gap-3">
               <button

@@ -18,7 +18,7 @@ export default function MenuManagement() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', stock: '', active: true });
+  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', stock: '', soLuongToiThieu: '5', active: true });
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -56,10 +56,10 @@ export default function MenuManagement() {
   const handleOpenModal = (item?: any) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), stock: item.stock.toString(), active: item.active });
+      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), stock: item.stock.toString(), soLuongToiThieu: (item.soLuongToiThieu || 5).toString(), active: item.active });
     } else {
       setEditingItem(null);
-      setFormData({ name: '', cat: 'Đồ uống', price: '', stock: '', active: true });
+      setFormData({ name: '', cat: 'Đồ uống', price: '', stock: '', soLuongToiThieu: '5', active: true });
     }
     setIsModalOpen(true);
   };
@@ -75,6 +75,7 @@ export default function MenuManagement() {
       category: formData.cat,
       price: parseInt(formData.price.replace(/,/g, '').replace('đ', '')) || 0,
       stock: parseInt(formData.stock) || 0,
+      soLuongToiThieu: parseInt(formData.soLuongToiThieu) || 5,
       image: '/images/snack.png',
       active: formData.active,
     };
@@ -233,6 +234,10 @@ export default function MenuManagement() {
                 <div>
                   <label className="font-label-caps text-slate-400 uppercase block mb-1">Tồn kho ban đầu</label>
                   <input type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="100" />
+                </div>
+                <div>
+                  <label className="block font-label-caps text-slate-400 uppercase mb-2">Định mức an toàn (soLuongToiThieu)</label>
+                  <input type="number" value={formData.soLuongToiThieu} onChange={e => setFormData({...formData, soLuongToiThieu: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="5" />
                 </div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer mt-2 bg-surface-secondary p-3 rounded-lg border border-border-subtle hover:border-primary-container/50 transition-colors">
