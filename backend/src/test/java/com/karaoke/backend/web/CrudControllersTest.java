@@ -88,7 +88,7 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/clients")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"KH-TEST\",\"fullName\":\"Test Client\",\"phone\":\"0909999999\",\"tier\":\"Dong\",\"points\":0}"))
+                        .content("{\"id\":\"KH-TEST\",\"fullName\":\"Test Client\",\"phone\":\"0909999999\",\"tier\":\"Dong\",\"loyaltyPoints\":0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("KH-TEST"));
 
@@ -98,7 +98,7 @@ class CrudControllersTest {
         mockMvc.perform(put("/api/clients/KH-TEST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"fullName\":\"Updated Client\",\"phone\":\"0909999999\",\"tier\":\"Bac\",\"points\":100}"))
+                        .content("{\"fullName\":\"Updated Client\",\"phone\":\"0909999999\",\"tier\":\"Bac\",\"loyaltyPoints\":100}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.fullName").value("Updated Client"));
 
@@ -125,7 +125,7 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/rooms")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"RM-TEST\",\"name\":\"Test Room\",\"roomType\":{\"id\":\"RT-TEST\"},\"capacity\":10,\"hourlyPrice\":100000,\"status\":\"AVAILABLE\",\"branch\":{\"id\":\"BR-ROOM\"}}"))
+                        .content("{\"id\":\"RM-TEST\",\"name\":\"Test Room\",\"roomType\":{\"id\":\"RT-TEST\"},\"capacity\":10,\"price\":100000,\"status\":\"AVAILABLE\",\"branch\":{\"id\":\"BR-ROOM\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("AVAILABLE"));
 
@@ -185,7 +185,7 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"RT-VIP\",\"nameType\":\"VIP\",\"capacity\":12,\"price\":150000,\"trangThai\":true}"))
+                        .content("{\"id\":\"RT-VIP\",\"nameType\":\"VIP\",\"capacity\":12,\"price\":150000,\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("RT-VIP"))
                 .andExpect(jsonPath("$.nameType").value("VIP"));
@@ -197,7 +197,7 @@ class CrudControllersTest {
         mockMvc.perform(put("/api/room-types/RT-VIP")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nameType\":\"VIP Plus\",\"capacity\":15,\"price\":200000,\"trangThai\":true}"))
+                        .content("{\"nameType\":\"VIP Plus\",\"capacity\":15,\"price\":200000,\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nameType").value("VIP Plus"));
 
@@ -211,10 +211,10 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"KM-001\",\"tenKhuyenMai\":\"Giam 10%\",\"loai\":\"PhanTram\",\"giaTriGiam\":10,\"ngayBatDau\":\"2026-01-01\",\"ngayKetThuc\":\"2026-12-31\",\"trangThai\":true}"))
+                        .content("{\"id\":\"KM-001\",\"name\":\"Giam 10%\",\"type\":\"PhanTram\",\"redeem\":10,\"startDate\":\"2026-01-01\",\"validUntil\":\"2026-12-31\",\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("KM-001"))
-                .andExpect(jsonPath("$.tenKhuyenMai").value("Giam 10%"));
+                .andExpect(jsonPath("$.name").value("Giam 10%"));
 
         mockMvc.perform(get("/api/promotions").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())

@@ -33,6 +33,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && jwt.startsWith("dev-token-")) {
                 String userId = jwt.substring("dev-token-".length());
                 userRepository.findById(userId).ifPresent(user -> {
+                    if (!user.isActive()) return; // Không cho phép user bị khóa đăng nhập
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             user, null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                     );

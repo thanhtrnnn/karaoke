@@ -20,6 +20,7 @@ class ClientRepositoryTest {
         c.setPhone(phone);
         c.setTier(tier);
         c.setLoyaltyPoints(0);
+        c.setAccountStatus(true);
         return repository.save(c);
     }
 

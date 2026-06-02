@@ -138,7 +138,7 @@ class ReportControllerTest {
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(16)); // 10h–23h + 00h–01h–02h = 16 entries
+                .andExpect(jsonPath("$.length()").value(17)); // 10h–23h (14) + 00h–02h (3) = 17 entries
     }
 
     // Module 5 — Thông báo hệ thống (UC13)

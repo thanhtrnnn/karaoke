@@ -22,7 +22,7 @@ public class HealthController {
                       "service": "karaoke-backend",
                       "status": "UP",
                       "apiBase": "/api",
-                      "endpoints": ["/api/health", "/api/auth/login", "/api/customers", "/api/rooms"]
+                      "endpoints": ["/api/health", "/api/auth/login", "/api/clients", "/api/rooms"]
                     }
                     """))))
     Map<String, Object> index() {
@@ -33,9 +33,9 @@ public class HealthController {
                 "endpoints", List.of(
                         "/api/health",
                         "/api/auth/login",
-                        "/api/customers",
+                        "/api/clients",
                         "/api/rooms",
-                        "/api/menu-items",
+                        "/api/products",
                         "/api/orders",
                         "/api/reports/summary"
                 )

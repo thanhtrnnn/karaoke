@@ -76,10 +76,10 @@ class FacilityControllerTest {
         mockMvc.perform(post("/api/facilities")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"TS-001\",\"tenTaiSan\":\"Mic karaoke\",\"loai\":\"AmThanh\",\"trangThai\":\"HoatDong\",\"room\":{\"id\":\"RM-FAC\"}}"))
+                        .content("{\"id\":\"TS-001\",\"name\":\"Mic karaoke\",\"compensationPrice\":50000,\"unit\":\"Cai\",\"stock\":10,\"room\":{\"id\":\"RM-FAC\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("TS-001"))
-                .andExpect(jsonPath("$.tenTaiSan").value("Mic karaoke"));
+                .andExpect(jsonPath("$.name").value("Mic karaoke"));
 
         // List
         mockMvc.perform(get("/api/facilities").header("Authorization", ADMIN_TOKEN))
@@ -89,15 +89,15 @@ class FacilityControllerTest {
         // Get by ID
         mockMvc.perform(get("/api/facilities/TS-001").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.loai").value("AmThanh"));
+                .andExpect(jsonPath("$.compensationPrice").value(50000));
 
         // Update
         mockMvc.perform(put("/api/facilities/TS-001")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenTaiSan\":\"Mic karaoke cao cap\",\"loai\":\"AmThanh\",\"trangThai\":\"BaoTri\",\"room\":{\"id\":\"RM-FAC\"}}"))
+                        .content("{\"name\":\"Mic karaoke cao cap\",\"compensationPrice\":75000,\"unit\":\"Cai\",\"stock\":5,\"room\":{\"id\":\"RM-FAC\"}}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.trangThai").value("BaoTri"));
+                .andExpect(jsonPath("$.stock").value(5));
     }
 
     @Test

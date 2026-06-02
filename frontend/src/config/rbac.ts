@@ -11,7 +11,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_ROUTES: Record<Role, string[]> = {
   ADMIN: ['*'],
   BRANCH_MANAGER: [
-    '/manager', '/reports', '/branch-report', '/employees', '/customers', '/membership',
+    '/manager', '/reports', '/branch-report', '/chain-report', '/employees', '/customers', '/membership',
     '/rooms', '/room-session', '/orders', '/order-management',
     '/menu', '/inventory', '/checkout', '/booking-management', '/settings', '/profile',
     '/damage-reports', '/facilities', '/import-receipts', '/providers',

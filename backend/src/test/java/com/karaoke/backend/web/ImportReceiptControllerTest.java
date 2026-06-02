@@ -56,11 +56,11 @@ class ImportReceiptControllerTest {
         mockMvc.perform(post("/api/import-receipts")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"PN-001\",\"maPhieu\":\"PN-2026-001\",\"tongTien\":500000,\"trangThai\":\"DaNhan\",\"provider\":{\"id\":\"NCC-IR\"}}"))
+                        .content("{\"id\":\"PN-001\",\"maPhieu\":\"PN-2026-001\",\"totalCost\":500000,\"trangThai\":\"DaNhan\",\"provider\":{\"id\":\"NCC-IR\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("PN-001"))
                 .andExpect(jsonPath("$.maPhieu").value("PN-2026-001"))
-                .andExpect(jsonPath("$.tongTien").value(500000));
+                .andExpect(jsonPath("$.totalCost").value(500000));
 
         // List
         mockMvc.perform(get("/api/import-receipts").header("Authorization", ADMIN_TOKEN))
@@ -74,7 +74,7 @@ class ImportReceiptControllerTest {
         mockMvc.perform(post("/api/import-receipts")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"PN-002\",\"maPhieu\":\"PN-2026-002\",\"tongTien\":300000,\"trangThai\":\"DaNhan\",\"provider\":{\"id\":\"NCC-IR\"}}"))
+                        .content("{\"id\":\"PN-002\",\"maPhieu\":\"PN-2026-002\",\"totalCost\":300000,\"trangThai\":\"DaNhan\",\"provider\":{\"id\":\"NCC-IR\"}}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/import-receipts/PN-002").header("Authorization", ADMIN_TOKEN))

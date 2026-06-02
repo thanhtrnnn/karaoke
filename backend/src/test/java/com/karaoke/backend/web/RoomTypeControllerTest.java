@@ -45,7 +45,7 @@ class RoomTypeControllerTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-VIP\",\"nameType\":\"VIP\",\"capacity\":15,\"price\":200000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-VIP\",\"nameType\":\"VIP\",\"capacity\":15,\"price\":200000,\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("LT-VIP"))
                 .andExpect(jsonPath("$.nameType").value("VIP"))
@@ -65,7 +65,7 @@ class RoomTypeControllerTest {
         mockMvc.perform(put("/api/room-types/LT-VIP")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nameType\":\"VIP Deluxe\",\"capacity\":20,\"price\":300000,\"trangThai\":true}"))
+                        .content("{\"nameType\":\"VIP Deluxe\",\"capacity\":20,\"price\":300000,\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nameType").value("VIP Deluxe"))
                 .andExpect(jsonPath("$.capacity").value(20));
@@ -90,13 +90,13 @@ class RoomTypeControllerTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-THUONG\",\"nameType\":\"Thuong\",\"capacity\":8,\"price\":80000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-THUONG\",\"nameType\":\"Thuong\",\"capacity\":8,\"price\":80000,\"status\":true}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-DELUXE\",\"nameType\":\"Deluxe\",\"capacity\":12,\"price\":150000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-DELUXE\",\"nameType\":\"Deluxe\",\"capacity\":12,\"price\":150000,\"status\":true}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/room-types").header("Authorization", ADMIN_TOKEN))

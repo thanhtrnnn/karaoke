@@ -45,11 +45,11 @@ class PromotionControllerTest {
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"KM-001\",\"tenKhuyenMai\":\"Giam 20%\",\"loai\":\"PhanTram\",\"giaTriGiam\":20,\"ngayBatDau\":\"2026-01-01\",\"ngayKetThuc\":\"2026-06-30\",\"trangThai\":true}"))
+                        .content("{\"id\":\"KM-001\",\"name\":\"Giam 20%\",\"type\":\"PhanTram\",\"redeem\":20,\"startDate\":\"2026-01-01\",\"validUntil\":\"2026-06-30\",\"status\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("KM-001"))
-                .andExpect(jsonPath("$.tenKhuyenMai").value("Giam 20%"))
-                .andExpect(jsonPath("$.loai").value("PhanTram"));
+                .andExpect(jsonPath("$.name").value("Giam 20%"))
+                .andExpect(jsonPath("$.type").value("PhanTram"));
 
         // List
         mockMvc.perform(get("/api/promotions").header("Authorization", ADMIN_TOKEN))
@@ -59,15 +59,15 @@ class PromotionControllerTest {
         // Get by ID
         mockMvc.perform(get("/api/promotions/KM-001").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.giaTriGiam").value(20));
+                .andExpect(jsonPath("$.redeem").value(20));
 
         // Update
         mockMvc.perform(put("/api/promotions/KM-001")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenKhuyenMai\":\"Giam 30%\",\"loai\":\"PhanTram\",\"giaTriGiam\":30,\"ngayBatDau\":\"2026-01-01\",\"ngayKetThuc\":\"2026-12-31\",\"trangThai\":true}"))
+                        .content("{\"name\":\"Giam 30%\",\"type\":\"PhanTram\",\"redeem\":30,\"startDate\":\"2026-01-01\",\"validUntil\":\"2026-12-31\",\"status\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.giaTriGiam").value(30));
+                .andExpect(jsonPath("$.redeem").value(30));
 
         // Delete
         mockMvc.perform(delete("/api/promotions/KM-001").header("Authorization", ADMIN_TOKEN))
@@ -88,9 +88,9 @@ class PromotionControllerTest {
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"KM-002\",\"tenKhuyenMai\":\"Giam 50000d\",\"loai\":\"SoTien\",\"giaTriGiam\":50000,\"ngayBatDau\":\"2026-06-01\",\"ngayKetThuc\":\"2026-06-30\",\"trangThai\":true}"))
+                        .content("{\"id\":\"KM-002\",\"name\":\"Giam 50000d\",\"type\":\"SoTien\",\"redeem\":50000,\"startDate\":\"2026-06-01\",\"validUntil\":\"2026-06-30\",\"status\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.loai").value("SoTien"))
-                .andExpect(jsonPath("$.giaTriGiam").value(50000));
+                .andExpect(jsonPath("$.type").value("SoTien"))
+                .andExpect(jsonPath("$.redeem").value(50000));
     }
 }

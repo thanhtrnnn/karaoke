@@ -83,8 +83,8 @@ class MembershipControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(4)))
-                .andExpect(jsonPath("$[0].tenHang").value("Dong"))
-                .andExpect(jsonPath("$[0].diemToiThieu").value(0));
+                .andExpect(jsonPath("$[0].tierName").value("Dong"))
+                .andExpect(jsonPath("$[0].minPoints").value(0));
     }
 
     // UC18 — Cập nhật ngưỡng điểm hạng
@@ -93,10 +93,10 @@ class MembershipControllerTest {
         mockMvc.perform(put("/api/membership/tiers/Bac")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenHang\":\"Bac\",\"diemToiThieu\":150,\"moTa\":\"Hạng bạc mới\",\"heSoUuDai\":\"0.93\"}"))
+                        .content("{\"tierName\":\"Bac\",\"minPoints\":150,\"description\":\"Hạng bạc mới\",\"discountRate\":\"0.93\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.diemToiThieu").value(150))
-                .andExpect(jsonPath("$.heSoUuDai").value("0.93"));
+                .andExpect(jsonPath("$.minPoints").value(150))
+                .andExpect(jsonPath("$.discountRate").value("0.93"));
     }
 
     // UC18 — Tier không tồn tại → 404
@@ -105,7 +105,7 @@ class MembershipControllerTest {
         mockMvc.perform(put("/api/membership/tiers/GHOST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenHang\":\"GHOST\",\"diemToiThieu\":9999,\"moTa\":\"none\",\"heSoUuDai\":1.0}"))
+                        .content("{\"tierName\":\"GHOST\",\"minPoints\":9999,\"description\":\"none\",\"discountRate\":\"1.0\"}"))
                 .andExpect(status().isNotFound());
     }
 
