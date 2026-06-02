@@ -579,50 +579,6 @@ class FacilityController {
     }
 }
 
-// ─── DamageReport ─────────────────────────────────────────────────────────────
-
-@RestController
-@RequestMapping("/api/damage-reports")
-@Tag(name = "Damage Reports", description = "Báo cáo hư hỏng tài sản")
-class DamageReportController {
-    private final DamageReportRepository repository;
-
-    DamageReportController(DamageReportRepository repository) { this.repository = repository; }
-
-    @GetMapping @Operation(summary = "Danh sách báo cáo hư hỏng")
-    List<DamageReport> list(@RequestParam(required = false) String trangThai) {
-        return trangThai == null ? repository.findAll() : repository.findByTrangThai(trangThai);
-    }
-
-    @GetMapping("/{id}") @Operation(summary = "Chi tiết báo cáo")
-    DamageReport get(@PathVariable String id) {
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("DamageReport not found: " + id));
-    }
-
-    @PostMapping @Operation(
-            summary = "Tạo báo cáo hư hỏng",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "BC001",
-                      "maBaoCao": "BC-2026-001",
-                      "trangThai": "Chờ xử lý",
-                      "employee": {"id": "USR002"}
-                    }
-                    """)))
-    )
-    DamageReport create(@RequestBody DamageReport report) {
-        if (report.getReportTime() == null) report.setReportTime(java.time.LocalDateTime.now());
-        return repository.save(report);
-    }
-
-    @PutMapping("/{id}") @Operation(summary = "Cập nhật báo cáo")
-    DamageReport update(@PathVariable String id, @RequestBody DamageReport report) {
-        if (!repository.existsById(id)) throw new EntityNotFoundException("DamageReport not found: " + id);
-        report.setId(id);
-        return repository.save(report);
-    }
-}
-
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 @RestController
@@ -666,47 +622,6 @@ class ProviderController {
 }
 
 // ─── ImportReceipt ────────────────────────────────────────────────────────────
-
-@RestController
-@RequestMapping("/api/import-receipts")
-@Tag(name = "Import Receipts", description = "Quản lý nhập kho")
-class ImportReceiptController {
-    private final ImportReceiptRepository repository;
-
-    ImportReceiptController(ImportReceiptRepository repository) { this.repository = repository; }
-
-    @GetMapping @Operation(summary = "Danh sách phiếu nhập kho")
-    List<ImportReceipt> list() { return repository.findAll(); }
-
-    @GetMapping("/{id}") @Operation(summary = "Chi tiết phiếu nhập")
-    ImportReceipt get(@PathVariable String id) {
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("ImportReceipt not found: " + id));
-    }
-
-    @PostMapping @Operation(
-            summary = "Tạo phiếu nhập kho",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "PN001",
-                      "maPhieu": "PN-2026-001",
-                      "totalCost": 5000000,
-                      "trangThai": "Đã nhận",
-                      "provider": {"id": "NCC001"}
-                    }
-                    """)))
-    )
-    ImportReceipt create(@RequestBody ImportReceipt receipt) {
-        if (receipt.getImportDate() == null) receipt.setImportDate(java.time.LocalDate.now());
-        return repository.save(receipt);
-    }
-
-    @PutMapping("/{id}") @Operation(summary = "Cập nhật phiếu nhập")
-    ImportReceipt update(@PathVariable String id, @RequestBody ImportReceipt receipt) {
-        if (!repository.existsById(id)) throw new EntityNotFoundException("ImportReceipt not found: " + id);
-        receipt.setId(id);
-        return repository.save(receipt);
-    }
-}
 
 // ─── System Config ────────────────────────────────────────────────────────────
 

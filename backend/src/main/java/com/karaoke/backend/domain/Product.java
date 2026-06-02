@@ -31,4 +31,9 @@ public class Product {
     private String unit;
     private String image;
     private boolean active = true;
+
+    // services diagram: updateQuantity, searchProduct
+    public void updateQuantity(int addedQuantity) {
+        this.currentStock = (this.currentStock != null ? this.currentStock : 0) + addedQuantity;
+    }
 }

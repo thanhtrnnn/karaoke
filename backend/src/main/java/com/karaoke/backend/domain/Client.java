@@ -33,4 +33,13 @@ public class Client {
     private Integer loyaltyPoints;
     private boolean accountStatus = true;
     private LocalDateTime joinedAt;
+
+    // account diagram: addPoints, lockAccount
+    public void addPoints(int baseScore) {
+        this.loyaltyPoints = (this.loyaltyPoints != null ? this.loyaltyPoints : 0) + baseScore;
+    }
+
+    public void lockAccount() {
+        this.accountStatus = !this.accountStatus;
+    }
 }

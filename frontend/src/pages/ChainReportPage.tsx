@@ -23,8 +23,6 @@ export default function ChainReportPage() {
   const [reporting, setReporting] = useState(false);
   const [results, setResults] = useState<BranchStats[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
 
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}` };
@@ -51,28 +49,19 @@ export default function ChainReportPage() {
       setError('Vui lòng chọn ít nhất 1 chi nhánh.');
       return;
     }
-    if (fromDate && toDate && toDate < fromDate) {
-      setError('Ngày kết thúc phải >= ngày bắt đầu.');
-      return;
-    }
     setError(null);
     setReporting(true);
 
     try {
-      // Fetch summary for each selected branch in parallel
       const stats = await Promise.all(
         selectedBranches.map(async branchId => {
           const branchName = branches.find(b => b.id === branchId)?.name || branchId;
-          let url = `/api/reports/summary?branchId=${branchId}`;
-          if (fromDate) url += `&from=${fromDate}`;
-          if (toDate) url += `&to=${toDate}`;
           try {
-            const res = await fetch(url, { headers });
+            const res = await fetch(`/api/reports/summary?branchId=${branchId}`, { headers });
             if (res.ok) {
               const data = await res.json();
               return {
-                branchId,
-                branchName,
+                branchId, branchName,
                 revenue: data.revenue || 0,
                 rooms: data.rooms || 0,
                 occupiedRooms: data.occupiedRooms || 0,
@@ -86,18 +75,16 @@ export default function ChainReportPage() {
       );
       const sorted = [...stats].sort((a, b) => b.revenue - a.revenue);
       setResults(sorted);
-    } finally {
-      setReporting(false);
-    }
+    } finally { setReporting(false); }
   };
 
   const totalRevenue = results.reduce((sum, r) => sum + r.revenue, 0);
 
   const exportCSV = () => {
-    const header = 'Xếp hạng,Chi nhánh,Doanh thu,Phòng,Đang dùng,Công suất (%),Khách hàng,Đơn F&B\n';
+    const header = 'Xếp hạng,Chi nhánh,Doanh thu,Phòng,Công suất (%),Khách,Đơn F&B\n';
     const rows = results.map((r, i) => {
       const occ = r.rooms > 0 ? ((r.occupiedRooms / r.rooms) * 100).toFixed(1) : '0.0';
-      return `${i + 1},"${r.branchName}",${r.revenue},${r.rooms},${r.occupiedRooms},${occ}%,${r.clients},${r.orders}`;
+      return `${i+1},"${r.branchName}",${r.revenue},${r.rooms},${occ}%,${r.clients},${r.orders}`;
     }).join('\n');
     const blob = new Blob(['﻿' + header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -116,28 +103,16 @@ export default function ChainReportPage() {
 
       {/* Filter panel */}
       <div className="bg-slate-800 rounded-xl p-5 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1 uppercase">Kỳ báo cáo</label>
-            <select value={period} onChange={e => setPeriod(e.target.value)}
-              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm">
-              <option value="hourly">Theo giờ (hôm nay)</option>
-              <option value="weekly">Theo tuần</option>
-              <option value="monthly">Theo tháng</option>
-              <option value="quarterly">Theo quý</option>
-              <option value="yearly">Theo năm</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1 uppercase">Từ ngày</label>
-            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
-              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-400 mb-1 uppercase">Đến ngày</label>
-            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
-              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" />
-          </div>
+        <div>
+          <label className="block text-xs text-slate-400 mb-1 uppercase">Kỳ báo cáo</label>
+          <select value={period} onChange={e => setPeriod(e.target.value)}
+            className="w-full max-w-xs bg-slate-700 text-white rounded-lg px-3 py-2 text-sm">
+            <option value="hourly">Theo giờ (hôm nay)</option>
+            <option value="weekly">Theo tuần</option>
+            <option value="monthly">Theo tháng</option>
+            <option value="quarterly">Theo quý</option>
+            <option value="yearly">Theo năm</option>
+          </select>
         </div>
 
         {/* Branch multi-select */}
@@ -185,14 +160,13 @@ export default function ChainReportPage() {
       {/* Results */}
       {results.length > 0 && (
         <div className="space-y-4">
-          {/* Summary footer */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-slate-800 rounded-xl p-4 border border-[#D4AF37]/30">
               <p className="text-xs text-slate-400 uppercase mb-1">Tổng doanh thu chuỗi</p>
               <p className="text-2xl font-bold text-[#D4AF37]">{totalRevenue.toLocaleString('vi-VN')}đ</p>
             </div>
             <div className="bg-slate-800 rounded-xl p-4">
-              <p className="text-xs text-slate-400 uppercase mb-1">Số chi nhánh báo cáo</p>
+              <p className="text-xs text-slate-400 uppercase mb-1">Chi nhánh báo cáo</p>
               <p className="text-2xl font-bold text-white">{results.length}</p>
             </div>
             <div className="bg-slate-800 rounded-xl p-4">
@@ -201,35 +175,26 @@ export default function ChainReportPage() {
             </div>
           </div>
 
-          {/* Ranking table */}
           <div className="bg-slate-800 rounded-xl overflow-hidden">
             <div className="px-4 py-3 bg-slate-700 text-slate-300 text-xs uppercase font-semibold flex">
               <span className="w-10">Hạng</span>
               <span className="flex-1">Chi nhánh</span>
               <span className="w-36 text-right">Doanh thu</span>
               <span className="w-24 text-center">Công suất</span>
-              <span className="w-24 text-center">Khách</span>
-              <span className="w-24 text-center">Đơn F&B</span>
               <span className="w-24 text-center">Tỷ trọng</span>
             </div>
             {results.map((r, i) => {
               const occ = r.rooms > 0 ? ((r.occupiedRooms / r.rooms) * 100).toFixed(1) : '0.0';
               const share = totalRevenue > 0 ? ((r.revenue / totalRevenue) * 100).toFixed(1) : '0.0';
               return (
-                <div key={r.branchId}
-                  className="border-t border-slate-700 px-4 py-3 flex items-center hover:bg-slate-750">
-                  <span className={`w-10 font-bold text-sm ${i === 0 ? 'text-[#D4AF37]' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-700' : 'text-slate-500'}`}>
-                    #{i + 1}
-                  </span>
+                <div key={r.branchId} className="border-t border-slate-700 px-4 py-3 flex items-center hover:bg-slate-750">
+                  <span className={`w-10 font-bold text-sm ${i === 0 ? 'text-[#D4AF37]' : 'text-slate-500'}`}>#{i + 1}</span>
                   <span className="flex-1 text-white font-medium">{r.branchName}</span>
                   <span className="w-36 text-right text-[#D4AF37] font-semibold">{r.revenue.toLocaleString('vi-VN')}đ</span>
                   <span className="w-24 text-center text-slate-300">{occ}%</span>
-                  <span className="w-24 text-center text-slate-300">{r.clients}</span>
-                  <span className="w-24 text-center text-slate-300">{r.orders}</span>
                   <span className="w-24 text-center">
                     <div className="relative h-2 bg-slate-700 rounded-full overflow-hidden mx-2">
-                      <div className="absolute left-0 top-0 h-full bg-[#D4AF37] rounded-full"
-                        style={{ width: `${share}%` }} />
+                      <div className="absolute left-0 top-0 h-full bg-[#D4AF37] rounded-full" style={{ width: `${share}%` }} />
                     </div>
                     <span className="text-xs text-slate-400">{share}%</span>
                   </span>
@@ -241,9 +206,7 @@ export default function ChainReportPage() {
       )}
 
       {results.length === 0 && !reporting && selectedBranches.length > 0 && (
-        <div className="text-center py-12 text-slate-500">
-          Nhấn "Xem báo cáo" để tổng hợp dữ liệu các chi nhánh đã chọn
-        </div>
+        <div className="text-center py-12 text-slate-500">Nhấn "Xem báo cáo" để tổng hợp dữ liệu</div>
       )}
     </div>
   );

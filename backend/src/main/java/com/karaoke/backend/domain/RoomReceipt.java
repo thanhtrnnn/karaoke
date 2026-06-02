@@ -8,6 +8,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -48,4 +49,35 @@ public class RoomReceipt {
 
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
+
+    // booking/services diagram: CalculateTotalAmount, calculateTimeFee, calculateServiceFee,
+    // updateServiceFee, updateDamageFee, updateStatus
+    public BigDecimal calculateTimeFee(Room room) {
+        if (this.checkinTime == null || this.checkoutTime == null || room == null) return BigDecimal.ZERO;
+        double hours = Duration.between(this.checkinTime, this.checkoutTime).toMinutes() / 60.0;
+        hours = Math.max(hours, 0.5); // minimum 30 minutes
+        return room.getPrice().multiply(BigDecimal.valueOf(hours));
+    }
+
+    public BigDecimal calculateServiceFee() {
+        return this.serviceFee != null ? this.serviceFee : BigDecimal.ZERO;
+    }
+
+    public void updateServiceFee(BigDecimal additionalFee) {
+        this.serviceFee = (this.serviceFee != null ? this.serviceFee : BigDecimal.ZERO)
+                .add(additionalFee != null ? additionalFee : BigDecimal.ZERO);
+        recalculateTotal();
+    }
+
+    public void updateDamageFee(BigDecimal damageFee) {
+        this.damageFee = damageFee;
+        recalculateTotal();
+    }
+
+    public void recalculateTotal() {
+        BigDecimal base = (roomFee != null ? roomFee : BigDecimal.ZERO)
+                .add(serviceFee != null ? serviceFee : BigDecimal.ZERO)
+                .add(damageFee != null ? damageFee : BigDecimal.ZERO);
+        this.totalAmount = base.subtract(discount != null ? discount : BigDecimal.ZERO).max(BigDecimal.ZERO);
+    }
 }

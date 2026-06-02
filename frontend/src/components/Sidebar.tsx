@@ -17,6 +17,7 @@ const menuItems = [
   { path: '/import-receipts', label: 'Nhập kho', icon: 'receipt_long' },
   { path: '/damage-reports', label: 'Báo cáo HH', icon: 'report_problem' },
   { path: '/customers', label: 'Khách hàng', icon: 'people' },
+  { path: '/customer-info', label: 'Tra cứu KH', icon: 'contact_mail' },
   { path: '/membership', label: 'Hội viên', icon: 'card_membership' },
   { path: '/employees', label: 'Nhân viên', icon: 'badge' },
   { path: '/reports', label: 'Báo cáo', icon: 'analytics' },

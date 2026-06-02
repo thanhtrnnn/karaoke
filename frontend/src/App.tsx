@@ -29,6 +29,8 @@ import ProviderPage from './pages/ProviderPage';
 import ImportReceiptPage from './pages/ImportReceiptPage';
 import BranchPage from './pages/BranchPage';
 import ChainReportPage from './pages/ChainReportPage';
+import BranchReportPage from './pages/BranchReportPage';
+import CustomerInfoPage from './pages/CustomerInfoPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -115,6 +117,12 @@ function App() {
 
           {/* Chain Report (UC21 - Admin only) */}
           <Route path="/chain-report" element={<ChainReportPage />} />
+
+          {/* Branch Report (UC13) */}
+          <Route path="/reports" element={<BranchReportPage />} />
+
+          {/* Customer Info (UC14) */}
+          <Route path="/customer-info" element={<CustomerInfoPage />} />
 
           {/* Settings & Profile */}
           <Route path="/settings" element={<SettingsPage />} />

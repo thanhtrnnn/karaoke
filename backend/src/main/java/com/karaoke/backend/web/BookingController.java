@@ -155,6 +155,30 @@ public class BookingController {
         return bookings.save(booking);
     }
 
+    // UC06: Hủy đặt phòng — room → AVAILABLE
+    @PutMapping("/{id}/cancel") @Operation(summary = "Hủy đặt phòng (UC06)")
+    @Transactional
+    Booking cancelBooking(@PathVariable String id) {
+        Booking booking = bookings.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Booking not found: " + id));
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.getRoom().setStatus(RoomStatus.AVAILABLE);
+        rooms.save(booking.getRoom());
+        return bookings.save(booking);
+    }
+
+    // UC07: Danh sách đặt phòng đang chờ check-in
+    @GetMapping("/pending") @Operation(summary = "Danh sách đặt phòng chờ check-in (UC07)")
+    List<Booking> getPendingBookings(@RequestParam(required = false) String branchId) {
+        return bookings.findByStatus(BookingStatus.CONFIRMED);
+    }
+
+    // UC08: Danh sách phòng đang hoạt động (đã check-in, chưa check-out)
+    @GetMapping("/active-rooms") @Operation(summary = "Phòng đang hoạt động (UC08)")
+    List<Room> getActiveRooms() {
+        return rooms.findByStatus(RoomStatus.OCCUPIED);
+    }
+
     record CreateBookingRequest(
             @NotBlank String clientId,
             @NotBlank String roomId,

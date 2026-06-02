@@ -29,4 +29,22 @@ public class Otp {
 
     @ManyToOne
     private User user;
+
+    // account diagram: sendOTP, verifyOTP
+    public void sendOTP(String code, String type, int expiryMinutes) {
+        this.otpCode = code;
+        this.type = type;
+        this.expiresAt = java.time.LocalDateTime.now().plusMinutes(expiryMinutes);
+        this.verified = false;
+    }
+
+    public boolean verifyOTP(String code) {
+        if (this.verified) return false;
+        if (this.expiresAt != null && java.time.LocalDateTime.now().isAfter(this.expiresAt)) return false;
+        if (this.otpCode != null && this.otpCode.equals(code)) {
+            this.verified = true;
+            return true;
+        }
+        return false;
+    }
 }
