@@ -63,10 +63,10 @@ class OrderControllerTest {
     private Room createRoom(String id, Branch branch) {
         RoomType rt = new RoomType();
         rt.setId("RT-" + id);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         roomTypeRepository.save(rt);
 
         Room r = new Room();
@@ -74,7 +74,7 @@ class OrderControllerTest {
         r.setName("Room " + id);
         r.setRoomType(rt);
         r.setCapacity(10);
-        r.setHourlyPrice(new BigDecimal("100000"));
+        r.setPrice(new BigDecimal("100000"));
         r.setStatus(RoomStatus.OCCUPIED);
         r.setBranch(branch);
         r.setActive(true);
@@ -87,7 +87,7 @@ class OrderControllerTest {
         p.setName("Product " + id);
         p.setCategory("Do uong");
         p.setPrice(new BigDecimal("30000"));
-        p.setStock(stock);
+        p.setCurrentStock(stock);
         p.setActive(true);
         return productRepository.save(p);
     }
@@ -118,7 +118,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.items[0].quantity").value(3));
 
         Product updated = productRepository.findById("P1").orElseThrow();
-        org.junit.jupiter.api.Assertions.assertEquals(7, updated.getStock());
+        org.junit.jupiter.api.Assertions.assertEquals(7, updated.getCurrentStock());
     }
 
     // UC11 — Kiểm tra tồn kho: không đủ hàng → 400
@@ -157,7 +157,7 @@ class OrderControllerTest {
         order.setId("ORD-TEST1");
         order.setRoom(room);
         order.setStatus(OrderStatus.PENDING);
-        order.setOrderedAt(java.time.LocalDateTime.now());
+        order.setOrderTime(java.time.LocalDateTime.now());
         OrderDetail detail = new OrderDetail();
         detail.setOrder(order);
         detail.setProduct(product);

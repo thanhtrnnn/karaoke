@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,12 +18,11 @@ public class Facility {
     @Id
     private String id;
 
-    private String tenTaiSan;
-    private String loai;
-    private String trangThai;
-    private Integer soLuong;
-    private java.math.BigDecimal giaBuuCap;
-    private String donVi;
+    // services diagram: name, compensationPrice, unit, stock
+    private String name;
+    private BigDecimal compensationPrice;
+    private String unit;
+    private Integer stock;
 
     @ManyToOne
     private Room room;

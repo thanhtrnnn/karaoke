@@ -6,7 +6,7 @@ interface RoomData {
   name: string;
   type: string;
   capacity: number;
-  hourlyPrice: number;
+  price: number;
   status: string;
 }
 
@@ -21,7 +21,7 @@ interface Order {
   id: string;
   roomId: string;
   roomName: string;
-  orderedAt: string;
+  orderTime: string;
   status: string;
   items: OrderItem[];
 }
@@ -61,7 +61,7 @@ export default function RoomSession() {
             name: data.name,
             type: data.type,
             capacity: data.capacity,
-            hourlyPrice: data.hourlyPrice,
+            price: data.price,
             status: data.status,
           });
         }
@@ -96,7 +96,7 @@ export default function RoomSession() {
   );
 
   const serviceTotal = allItems.reduce((sum, item) => sum + item.total, 0);
-  const roomTotal = room?.hourlyPrice ? room.hourlyPrice * 2 : 0; // Estimate 2 hours
+  const roomTotal = room?.price ? room.price * 2 : 0; // Estimate 2 hours
   const grandTotal = roomTotal + serviceTotal;
 
   const handleExtend = async () => {
@@ -152,7 +152,7 @@ export default function RoomSession() {
             Sức chứa: <span className="text-white font-medium">{room.capacity} người</span>
             <span className="mx-2 text-slate-600">•</span>
             <span className="material-symbols-outlined text-sm">payments</span>
-            <span className="text-white font-medium">{room.hourlyPrice.toLocaleString()}đ/giờ</span>
+            <span className="text-white font-medium">{room.price.toLocaleString()}đ/giờ</span>
           </p>
         </div>
         <div className="flex gap-3">

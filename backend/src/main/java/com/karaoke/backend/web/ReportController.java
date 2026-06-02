@@ -81,12 +81,12 @@ public class ReportController {
             @RequestParam(required = false) String to
     ) {
         java.util.function.Predicate<Order> datePredicate = order -> {
-            if (order.getOrderedAt() == null) return true;
+            if (order.getOrderTime() == null) return true;
             if (from != null) {
-                try { if (order.getOrderedAt().toLocalDate().isBefore(java.time.LocalDate.parse(from))) return false; } catch (Exception ignored) {}
+                try { if (order.getOrderTime().toLocalDate().isBefore(java.time.LocalDate.parse(from))) return false; } catch (Exception ignored) {}
             }
             if (to != null) {
-                try { if (order.getOrderedAt().toLocalDate().isAfter(java.time.LocalDate.parse(to))) return false; } catch (Exception ignored) {}
+                try { if (order.getOrderTime().toLocalDate().isAfter(java.time.LocalDate.parse(to))) return false; } catch (Exception ignored) {}
             }
             return true;
         };
@@ -144,8 +144,8 @@ public class ReportController {
                 Map<Integer, BigDecimal> hourMap = new LinkedHashMap<>();
                 for (int h = 0; h <= 23; h++) hourMap.put(h, BigDecimal.ZERO);
                 for (Order o : allOrders) {
-                    if (o.getOrderedAt() == null) continue;
-                    ZonedDateTime ordered = o.getOrderedAt().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
+                    if (o.getOrderTime() == null) continue;
+                    ZonedDateTime ordered = o.getOrderTime().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
                     if (ordered.toLocalDate().equals(now.toLocalDate())) {
                         hourMap.merge(ordered.getHour(), orderTotal.apply(o), BigDecimal::add);
                     }
@@ -162,8 +162,8 @@ public class ReportController {
                 for (DayOfWeek d : DayOfWeek.values()) dayMap.put(d, BigDecimal.ZERO);
                 ZonedDateTime weekStart = now.with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toLocalDate().atStartOfDay(gmt7);
                 for (Order o : allOrders) {
-                    if (o.getOrderedAt() == null) continue;
-                    ZonedDateTime ordered = o.getOrderedAt().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
+                    if (o.getOrderTime() == null) continue;
+                    ZonedDateTime ordered = o.getOrderTime().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
                     if (!ordered.isBefore(weekStart) && ordered.isBefore(weekStart.plusWeeks(1))) {
                         dayMap.merge(ordered.getDayOfWeek(), orderTotal.apply(o), BigDecimal::add);
                     }
@@ -179,8 +179,8 @@ public class ReportController {
                 Map<Integer, BigDecimal> monthMap = new LinkedHashMap<>();
                 for (int m = 1; m <= 12; m++) monthMap.put(m, BigDecimal.ZERO);
                 for (Order o : allOrders) {
-                    if (o.getOrderedAt() == null) continue;
-                    ZonedDateTime ordered = o.getOrderedAt().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
+                    if (o.getOrderTime() == null) continue;
+                    ZonedDateTime ordered = o.getOrderTime().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
                     if (ordered.getYear() == now.getYear()) {
                         monthMap.merge(ordered.getMonthValue(), orderTotal.apply(o), BigDecimal::add);
                     }
@@ -193,8 +193,8 @@ public class ReportController {
             case "quarterly" -> {
                 BigDecimal[] quarters = { BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO };
                 for (Order o : allOrders) {
-                    if (o.getOrderedAt() == null) continue;
-                    ZonedDateTime ordered = o.getOrderedAt().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
+                    if (o.getOrderTime() == null) continue;
+                    ZonedDateTime ordered = o.getOrderTime().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
                     if (ordered.getYear() == now.getYear()) {
                         int q = (ordered.getMonthValue() - 1) / 3;
                         quarters[q] = quarters[q].add(orderTotal.apply(o));
@@ -214,11 +214,12 @@ public class ReportController {
         List<Map<String, String>> result = new ArrayList<>();
 
         products.findAll().stream()
-                .filter(p -> p.getStock() != null && p.getStock() <= 10 && p.isActive())
+                .filter(p -> p.getCurrentStock() != null && p.isActive()
+                        && (p.getSafetyStock() == null ? p.getCurrentStock() <= 10 : p.getCurrentStock() <= p.getSafetyStock()))
                 .forEach(p -> {
                     Map<String, String> notif = new LinkedHashMap<>();
                     notif.put("id", "stock-" + p.getId());
-                    notif.put("title", "Kho " + p.getName() + " sắp hết (" + p.getStock() + " còn lại)");
+                    notif.put("title", "Kho " + p.getName() + " sắp hết (" + p.getCurrentStock() + " còn lại)");
                     notif.put("time", "Vừa xong");
                     notif.put("type", "error");
                     result.add(notif);

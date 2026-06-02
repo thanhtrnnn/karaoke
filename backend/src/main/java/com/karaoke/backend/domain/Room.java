@@ -32,7 +32,9 @@ public class Room {
     private RoomType roomType;
 
     private Integer capacity;
-    private BigDecimal hourlyPrice;
+
+    // services/booking diagram: price (renamed from hourlyPrice)
+    private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
     private RoomStatus status;

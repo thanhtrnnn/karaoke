@@ -6,7 +6,7 @@ interface MenuItem {
   name: string;
   cat: string;
   price: number;
-  stock: number;
+  currentStock: number;
   image: string;
   active: boolean;
 }
@@ -58,7 +58,7 @@ export default function OrderPage() {
             name: item.name,
             cat: item.category,
             price: item.price,
-            stock: item.stock,
+            stock: item.currentStock,
             image: item.image || '/images/snack.png',
             active: item.active
           })));
@@ -85,13 +85,13 @@ export default function OrderPage() {
   const addToCart = (product: any) => {
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-      if (existing.qty + 1 > product.stock) {
-        alert(`Tồn kho không đủ! Chỉ còn ${product.stock} sản phẩm.`);
+      if (existing.qty + 1 > product.currentStock) {
+        alert(`Tồn kho không đủ! Chỉ còn ${product.currentStock} sản phẩm.`);
         return;
       }
       setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      if (product.stock < 1) {
+      if (product.currentStock < 1) {
         alert('Sản phẩm đã hết hàng!');
         return;
       }
@@ -103,8 +103,8 @@ export default function OrderPage() {
     setCart(cart.map(item => {
       if (item.id === id) {
         const newQty = item.qty + delta;
-        if (delta > 0 && newQty > item.stock) {
-          alert(`Tồn kho không đủ! Chỉ còn ${item.stock} sản phẩm.`);
+        if (delta > 0 && newQty > item.currentStock) {
+          alert(`Tồn kho không đủ! Chỉ còn ${item.currentStock} sản phẩm.`);
           return item;
         }
         return newQty > 0 ? { ...item, qty: newQty } : item;
@@ -216,7 +216,7 @@ export default function OrderPage() {
               <div className="flex-1 flex flex-col">
                 <h3 className="font-body-md text-white font-medium line-clamp-1">{p.name}</h3>
                 <p className="text-primary-container font-semibold mt-1">{p.price.toLocaleString()}đ</p>
-                <p className="text-slate-500 text-sm mt-1">Tồn: {p.stock}</p>
+                <p className="text-slate-500 text-sm mt-1">Tồn: {p.currentStock}</p>
                 <div className="mt-auto pt-3">
                   <button
                     onClick={() => addToCart(p)}

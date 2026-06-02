@@ -18,10 +18,11 @@ public class Promotion {
     @Id
     private String id;
 
-    private String tenKhuyenMai;
-    private String loai;
-    private BigDecimal giaTriGiam;
-    private LocalDate ngayBatDau;
-    private LocalDate ngayKetThuc;
-    private boolean trangThai = true;
+    // booking diagram: name, type, redeem, startDate, validUntil, status
+    private String name;
+    private String type;
+    private BigDecimal redeem;
+    private LocalDate startDate;
+    private LocalDate validUntil;
+    private boolean status = true;
 }

@@ -27,10 +27,10 @@ class RoomRepositoryTest {
     private RoomType createRoomType(String id) {
         RoomType rt = new RoomType();
         rt.setId(id);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         return roomTypeRepository.save(rt);
     }
 
@@ -40,7 +40,7 @@ class RoomRepositoryTest {
         r.setName("Room " + id);
         r.setRoomType(roomType);
         r.setCapacity(10);
-        r.setHourlyPrice(new BigDecimal("100000"));
+        r.setPrice(new BigDecimal("100000"));
         r.setStatus(status);
         r.setBranch(branch);
         r.setActive(true);
@@ -75,14 +75,14 @@ class RoomRepositoryTest {
     void saveWithRoomType_persists() {
         Branch branch = createBranch("B3");
         RoomType rt = createRoomType("RT3");
-        rt.setTenLoai("Deluxe");
+        rt.setNameType("Deluxe");
         roomTypeRepository.save(rt);
         createRoom("R5", branch, rt, RoomStatus.AVAILABLE);
 
         Room found = roomRepository.findById("R5").orElseThrow();
         assertNotNull(found.getRoomType());
         assertEquals("RT3", found.getRoomType().getId());
-        assertEquals("Deluxe", found.getRoomType().getTenLoai());
+        assertEquals("Deluxe", found.getRoomType().getNameType());
     }
 
     @Test

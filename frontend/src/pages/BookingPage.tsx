@@ -37,9 +37,9 @@ export default function BookingPage() {
           const data = await res.json();
           setRooms(data.map((r: any) => ({
             id: r.id,
-            type: r.roomType?.tenLoai || r.type || 'N/A',
+            type: r.roomType?.nameType || r.type || 'N/A',
             cap: `${r.capacity} người`,
-            price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
+            price: `${Number(r.price).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
             color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
             canBook: r.status === 'AVAILABLE',
@@ -113,8 +113,8 @@ export default function BookingPage() {
         if (roomsRes.ok) {
           const data = await roomsRes.json();
           setRooms(data.map((r: any) => ({
-            id: r.id, type: r.roomType?.tenLoai || r.type || 'N/A',
-            cap: `${r.capacity} người`, price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
+            id: r.id, type: r.roomType?.nameType || r.type || 'N/A',
+            cap: `${r.capacity} người`, price: `${Number(r.price).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
             color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
             canBook: r.status === 'AVAILABLE',

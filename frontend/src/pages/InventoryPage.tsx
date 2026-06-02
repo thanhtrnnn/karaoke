@@ -4,7 +4,7 @@ interface InventoryItem {
   id: string;
   name: string;
   cat: string;
-  stock: number;
+  currentStock: number;
   safetyStock: number;
   unit: string;
   price: number;
@@ -34,8 +34,8 @@ export default function InventoryPage() {
             id: p.id,
             name: p.name,
             cat: p.category,
-            stock: p.stock,
-            safetyStock: p.soLuongToiThieu ?? 15,
+            stock: p.currentStock,
+            safetyStock: p.safetyStock ?? 15,
             unit: p.unit || (p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa'),
             price: p.price,
             active: p.active,
@@ -53,7 +53,7 @@ export default function InventoryPage() {
   const filteredProducts = products.filter(p => {
     const matchCat = filterCat === 'Tất cả' || p.cat === filterCat;
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchStock = filterStock === 'Tất cả' || (filterStock === 'Sắp hết' && p.stock <= p.safetyStock);
+    const matchStock = filterStock === 'Tất cả' || (filterStock === 'Sắp hết' && p.currentStock <= p.safetyStock);
     return matchCat && matchSearch && matchStock;
   });
 
@@ -85,7 +85,7 @@ export default function InventoryPage() {
       const product = products.find(p => p.id === row.productId);
       if (!product) continue;
 
-      const newStock = product.stock + (parseInt(row.qty) || 0);
+      const newStock = product.currentStock + (parseInt(row.qty) || 0);
       try {
         const res = await fetch(`/api/products/${row.productId}`, {
           method: 'PUT',
@@ -114,7 +114,7 @@ export default function InventoryPage() {
           id: p.id,
           name: p.name,
           cat: p.category,
-          stock: p.stock,
+          stock: p.currentStock,
           unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
           price: p.price,
           active: p.active,
@@ -193,10 +193,10 @@ export default function InventoryPage() {
               <tr key={p.id} className="hover:bg-slate-900/30 transition-colors">
                 <td className="py-4 px-6 text-slate-400">{p.id}</td>
                 <td className="py-4 px-6 text-white font-medium">{p.name}</td>
-                <td className="py-4 px-6">{p.stock}</td>
+                <td className="py-4 px-6">{p.currentStock}</td>
                 <td className="py-4 px-6">{p.unit}</td>
                 <td className="py-4 px-6">
-                  {p.stock <= 15 && (
+                  {p.currentStock <= 15 && (
                     <span className="text-status-cleaning flex items-center gap-1">
                       <span className="material-symbols-outlined text-[16px]">warning</span>Sắp hết
                     </span>

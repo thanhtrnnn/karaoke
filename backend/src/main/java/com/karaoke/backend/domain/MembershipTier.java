@@ -13,10 +13,11 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "tblMembershipTier")
 public class MembershipTier {
+    // account diagram: tierName (PK), minPoints, description, discountRate
     @Id
-    private String tenHang;
+    private String tierName;
 
-    private int diemToiThieu;
-    private String moTa;
-    private String heSoUuDai;
+    private int minPoints;
+    private String description;
+    private String discountRate;
 }

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 
 interface Provider {
   id: string;
-  tenNCC: string;
-  diaChiNCC: string;
-  dienThoai: string;
+  name: string;
+  address: string;
+  tel: string;
 }
 
 export default function ProviderPage() {
@@ -12,7 +12,7 @@ export default function ProviderPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Provider | null>(null);
-  const [formData, setFormData] = useState({ id: '', tenNCC: '', diaChiNCC: '', dienThoai: '' });
+  const [formData, setFormData] = useState({ id: '', name: '', address: '', tel: '' });
 
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -27,13 +27,13 @@ export default function ProviderPage() {
 
   const openCreate = () => {
     setEditingItem(null);
-    setFormData({ id: '', tenNCC: '', diaChiNCC: '', dienThoai: '' });
+    setFormData({ id: '', name: '', address: '', tel: '' });
     setIsModalOpen(true);
   };
 
   const openEdit = (p: Provider) => {
     setEditingItem(p);
-    setFormData({ id: p.id, tenNCC: p.tenNCC, diaChiNCC: p.diaChiNCC, dienThoai: p.dienThoai });
+    setFormData({ id: p.id, name: p.name, address: p.address, tel: p.tel });
     setIsModalOpen(true);
   };
 
@@ -85,9 +85,9 @@ export default function ProviderPage() {
             {providers.map(p => (
               <tr key={p.id} className="border-t border-slate-700 hover:bg-slate-750">
                 <td className="px-4 py-3 text-slate-400 font-mono">{p.id}</td>
-                <td className="px-4 py-3 text-white font-medium">{p.tenNCC}</td>
-                <td className="px-4 py-3 text-slate-300 max-w-xs truncate">{p.diaChiNCC}</td>
-                <td className="px-4 py-3 text-slate-300">{p.dienThoai}</td>
+                <td className="px-4 py-3 text-white font-medium">{p.name}</td>
+                <td className="px-4 py-3 text-slate-300 max-w-xs truncate">{p.address}</td>
+                <td className="px-4 py-3 text-slate-300">{p.tel}</td>
                 <td className="px-4 py-3 text-center">
                   <div className="flex justify-center gap-2">
                     <button onClick={() => openEdit(p)} className="p-1 text-slate-400 hover:text-[#D4AF37]">
@@ -118,15 +118,15 @@ export default function ProviderPage() {
               )}
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Tên nhà cung cấp</label>
-                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.tenNCC} onChange={e => setFormData(p => ({ ...p, tenNCC: e.target.value }))} />
+                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Địa chỉ</label>
-                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.diaChiNCC} onChange={e => setFormData(p => ({ ...p, diaChiNCC: e.target.value }))} />
+                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} />
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Điện thoại</label>
-                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.dienThoai} onChange={e => setFormData(p => ({ ...p, dienThoai: e.target.value }))} />
+                <input className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.tel} onChange={e => setFormData(p => ({ ...p, tel: e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

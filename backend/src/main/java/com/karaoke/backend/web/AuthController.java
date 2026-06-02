@@ -71,7 +71,8 @@ public class AuthController {
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 UserRole.CLIENT,
-                true
+                true,
+                null, null, null
         );
         users.save(user);
         return AuthResponse.from(user);

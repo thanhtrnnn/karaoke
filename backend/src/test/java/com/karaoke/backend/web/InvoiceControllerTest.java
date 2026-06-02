@@ -57,10 +57,10 @@ class RoomReceiptControllerTest {
 
         RoomType rt = new RoomType();
         rt.setId("RT-" + roomId);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         roomTypeRepository.save(rt);
 
         Room room = new Room();
@@ -68,7 +68,7 @@ class RoomReceiptControllerTest {
         room.setName("Room " + roomId);
         room.setRoomType(rt);
         room.setCapacity(10);
-        room.setHourlyPrice(new BigDecimal("100000"));
+        room.setPrice(new BigDecimal("100000"));
         room.setStatus(RoomStatus.OCCUPIED);
         room.setBranch(branch);
         room.setActive(true);
@@ -79,7 +79,7 @@ class RoomReceiptControllerTest {
         product.setName("Item");
         product.setCategory("Do uong");
         product.setPrice(price);
-        product.setStock(100);
+        product.setCurrentStock(100);
         product.setActive(true);
         productRepository.save(product);
 
@@ -87,7 +87,7 @@ class RoomReceiptControllerTest {
         order.setId(orderId);
         order.setRoom(room);
         order.setStatus(OrderStatus.SERVED);
-        order.setOrderedAt(LocalDateTime.now());
+        order.setOrderTime(LocalDateTime.now());
         OrderDetail detail = new OrderDetail();
         detail.setOrder(order);
         detail.setProduct(product);
@@ -107,9 +107,9 @@ class RoomReceiptControllerTest {
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DRAFT"))
-                .andExpect(jsonPath("$.serviceTotal").value(60000))
-                .andExpect(jsonPath("$.roomTotal").value(200000))
-                .andExpect(jsonPath("$.grandTotal").value(260000));
+                .andExpect(jsonPath("$.serviceFee").value(60000))
+                .andExpect(jsonPath("$.roomFee").value(200000))
+                .andExpect(jsonPath("$.totalAmount").value(260000));
     }
 
     @Test

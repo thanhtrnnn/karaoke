@@ -43,9 +43,9 @@ class ImportReceiptControllerTest {
         if (!providerRepository.existsById("NCC-IR")) {
             Provider provider = new Provider();
             provider.setId("NCC-IR");
-            provider.setTenNCC("NCC Test");
-            provider.setDiaChiNCC("123 Test");
-            provider.setDienThoai("0900000000");
+            provider.setName("NCC Test");
+            provider.setAddress("123 Test");
+            provider.setTel("0900000000");
             providerRepository.save(provider);
         }
     }

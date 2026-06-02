@@ -8,7 +8,7 @@ interface Customer {
   fullName: string;
   phone: string;
   tier: string;
-  points: number;
+  loyaltyPoints: number;
 }
 
 export default function CustomerPage() {
@@ -37,7 +37,7 @@ export default function CustomerPage() {
             fullName: c.fullName || `${c.firstName} ${c.lastName}`,
             phone: c.phone,
             tier: c.tier || 'Đồng',
-            points: c.points || 0,
+            loyaltyPoints: c.loyaltyPoints || 0,
           }));
           setCustomers(mapped);
           if (mapped.length > 0) setSelectedCustomer(mapped[0]);
@@ -75,7 +75,7 @@ export default function CustomerPage() {
         fullName: formData.fullName,
         phone: formData.phone,
         tier: editingCustomer?.tier || 'Đồng',
-        points: editingCustomer?.points || 0,
+        loyaltyPoints: editingCustomer?.loyaltyPoints || 0,
       };
 
       if (!editingCustomer) {
@@ -103,7 +103,7 @@ export default function CustomerPage() {
             fullName: saved.fullName || formData.fullName,
             phone: saved.phone,
             tier: saved.tier || 'Đồng',
-            points: saved.points || 0,
+            loyaltyPoints: saved.loyaltyPoints || 0,
           }]);
         }
         setIsModalOpen(false);
@@ -206,7 +206,7 @@ export default function CustomerPage() {
                     {c.tier}
                   </span>
                 </td>
-                <td className="py-4 px-6 text-primary-container">{c.points.toLocaleString()}</td>
+                <td className="py-4 px-6 text-primary-container">{c.loyaltyPoints.toLocaleString()}</td>
                 <td className="py-4 px-6">
                   <div className="flex gap-2">
                     <button
@@ -248,7 +248,7 @@ export default function CustomerPage() {
             </div>
             <div>
               <p className="font-label-caps text-slate-400 uppercase mb-1">Hạng</p>
-              <p className="text-primary-container font-body-md font-semibold">{selectedCustomer.tier} ({selectedCustomer.points.toLocaleString()} điểm)</p>
+              <p className="text-primary-container font-body-md font-semibold">{selectedCustomer.tier} ({selectedCustomer.loyaltyPoints.toLocaleString()} điểm)</p>
             </div>
           </div>
         </div>

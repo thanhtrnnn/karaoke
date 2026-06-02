@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,4 +27,8 @@ public class ApplyPromotion {
 
     @ManyToOne
     private Promotion promotion;
+
+    // booking diagram additions: discount, applicationTime
+    private BigDecimal discount;
+    private LocalDateTime applicationTime;
 }

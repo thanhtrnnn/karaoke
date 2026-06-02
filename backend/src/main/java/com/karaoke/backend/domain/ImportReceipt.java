@@ -7,7 +7,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -23,9 +23,10 @@ public class ImportReceipt {
     @Id
     private String id;
 
+    // services diagram: importDate, totalCost (+ aux maPhieu, trangThai kept)
     private String maPhieu;
-    private LocalDateTime ngayNhap;
-    private BigDecimal tongTien;
+    private LocalDate importDate;
+    private BigDecimal totalCost;
     private String trangThai;
 
     @ManyToOne

@@ -137,7 +137,7 @@ class ClientController {
     @PatchMapping("/{id}/lock") @Operation(summary = "Khóa/mở khóa tài khoản khách hàng (UC17)")
     Client lock(@PathVariable String id) {
         Client client = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Client not found: " + id));
-        client.setActive(!client.isActive());
+        client.setAccountStatus(!client.isAccountStatus());
         return repository.save(client);
     }
 }
@@ -165,10 +165,10 @@ class RoomTypeController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
                     {
                       "id": "LR001",
-                      "tenLoai": "VIP",
-                      "sucChua": 15,
-                      "giaCuoc": 150000,
-                      "trangThai": true
+                      "nameType": "VIP",
+                      "capacity": 15,
+                      "price": 150000,
+                      "status": true
                     }
                     """)))
     )
@@ -267,8 +267,8 @@ class ProductController {
                       "name": "Pepsi lon",
                       "category": "Đồ uống",
                       "price": 20000,
-                      "stock": 50,
-                      "soLuongToiThieu": 5,
+                      "currentStock": 50,
+                      "safetyStock": 5,
                       "image": "/images/pepsi.png",
                       "active": true
                     }
@@ -378,12 +378,12 @@ class RoomReceiptController {
             roomRepository.save(room);
         }
 
-        // UC08: Tích lũy điểm khách hàng (grandTotal / 10,000)
+        // UC08: Tích lũy điểm khách hàng (totalAmount / 10,000)
         if (receipt.getBooking() != null && receipt.getBooking().getCustomer() != null
-                && receipt.getGrandTotal() != null) {
+                && receipt.getTotalAmount() != null) {
             Client client = receipt.getBooking().getCustomer();
-            int pointsEarned = receipt.getGrandTotal().divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
-            client.setPoints((client.getPoints() != null ? client.getPoints() : 0) + pointsEarned);
+            int pointsEarned = receipt.getTotalAmount().divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
+            client.setLoyaltyPoints((client.getLoyaltyPoints() != null ? client.getLoyaltyPoints() : 0) + pointsEarned);
             clientRepository.save(client);
         }
 
@@ -407,20 +407,20 @@ class RoomReceiptController {
         com.karaoke.backend.domain.Promotion promo = promotionRepository.findById(promoId)
                 .orElseThrow(() -> new EntityNotFoundException("Promotion not found: " + promoId));
 
-        if (!promo.isTrangThai()) {
+        if (!promo.isStatus()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã khuyến mãi đã hết hạn");
         }
 
         java.time.LocalDate today = java.time.LocalDate.now();
-        if (promo.getNgayKetThuc() != null && today.isAfter(promo.getNgayKetThuc())) {
+        if (promo.getValidUntil() != null && today.isAfter(promo.getValidUntil())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã khuyến mãi đã hết hạn");
         }
 
-        BigDecimal discount = promo.getGiaTriGiam() != null ? promo.getGiaTriGiam() : BigDecimal.ZERO;
+        BigDecimal discount = promo.getRedeem() != null ? promo.getRedeem() : BigDecimal.ZERO;
         receipt.setDiscount(discount);
-        BigDecimal base = (receipt.getRoomTotal() != null ? receipt.getRoomTotal() : BigDecimal.ZERO)
-                .add(receipt.getServiceTotal() != null ? receipt.getServiceTotal() : BigDecimal.ZERO);
-        receipt.setGrandTotal(base.subtract(discount).max(BigDecimal.ZERO));
+        BigDecimal base = (receipt.getRoomFee() != null ? receipt.getRoomFee() : BigDecimal.ZERO)
+                .add(receipt.getServiceFee() != null ? receipt.getServiceFee() : BigDecimal.ZERO);
+        receipt.setTotalAmount(base.subtract(discount).max(BigDecimal.ZERO));
         return repository.save(receipt);
     }
 
@@ -441,30 +441,30 @@ class RoomReceiptController {
         RoomReceipt receipt = existingDraft.orElse(null);
 
         if (receipt != null) {
-            // Tính roomTotal từ checkinTime thực tế
-            BigDecimal roomTotal;
+            // Tính roomFee từ checkinTime thực tế
+            BigDecimal roomFee;
             if (receipt.getCheckinTime() != null) {
                 double hours = Duration.between(receipt.getCheckinTime(), LocalDateTime.now()).toMinutes() / 60.0;
                 hours = Math.max(hours, 0.5); // tối thiểu 30 phút
-                roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(hours));
+                roomFee = room.getPrice().multiply(BigDecimal.valueOf(hours));
             } else {
-                roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
+                roomFee = room.getPrice().multiply(BigDecimal.valueOf(2));
             }
-            receipt.setRoomTotal(roomTotal);
-            receipt.setServiceTotal(serviceTotal);
+            receipt.setRoomFee(roomFee);
+            receipt.setServiceFee(serviceTotal);
             receipt.setDiscount(receipt.getDiscount() != null ? receipt.getDiscount() : BigDecimal.ZERO);
-            receipt.setGrandTotal(roomTotal.add(serviceTotal).subtract(receipt.getDiscount()));
+            receipt.setTotalAmount(roomFee.add(serviceTotal).subtract(receipt.getDiscount()));
             return repository.save(receipt);
         }
 
         // Không có draft → tạo mới
-        BigDecimal roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
+        BigDecimal roomFee = room.getPrice().multiply(BigDecimal.valueOf(2));
         RoomReceipt newReceipt = new RoomReceipt();
         newReceipt.setId("RR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        newReceipt.setRoomTotal(roomTotal);
-        newReceipt.setServiceTotal(serviceTotal);
+        newReceipt.setRoomFee(roomFee);
+        newReceipt.setServiceFee(serviceTotal);
         newReceipt.setDiscount(BigDecimal.ZERO);
-        newReceipt.setGrandTotal(roomTotal.add(serviceTotal));
+        newReceipt.setTotalAmount(roomFee.add(serviceTotal));
         newReceipt.setStatus(InvoiceStatus.DRAFT);
         return repository.save(newReceipt);
     }
@@ -485,12 +485,12 @@ class MembershipController {
     }
 
     @GetMapping("/tiers") @Operation(summary = "Danh sách hạng hội viên")
-    List<MembershipTier> listTiers() { return tierRepository.findAllByOrderByDiemToiThieuAsc(); }
+    List<MembershipTier> listTiers() { return tierRepository.findAllByOrderByMinPointsAsc(); }
 
-    @PutMapping("/tiers/{tenHang}") @Operation(summary = "Cập nhật hạng hội viên")
-    MembershipTier updateTier(@PathVariable String tenHang, @RequestBody MembershipTier tier) {
-        if (!tierRepository.existsById(tenHang)) throw new EntityNotFoundException("Tier not found: " + tenHang);
-        tier.setTenHang(tenHang);
+    @PutMapping("/tiers/{tierName}") @Operation(summary = "Cập nhật hạng hội viên")
+    MembershipTier updateTier(@PathVariable String tierName, @RequestBody MembershipTier tier) {
+        if (!tierRepository.existsById(tierName)) throw new EntityNotFoundException("Tier not found: " + tierName);
+        tier.setTierName(tierName);
         return tierRepository.save(tier);
     }
 
@@ -498,8 +498,8 @@ class MembershipController {
     java.util.Map<String, Object> stats() {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("total", clientRepository.count());
-        for (MembershipTier tier : tierRepository.findAllByOrderByDiemToiThieuAsc()) {
-            result.put(tier.getTenHang(), clientRepository.countByTier(tier.getTenHang()));
+        for (MembershipTier tier : tierRepository.findAllByOrderByMinPointsAsc()) {
+            result.put(tier.getTierName(), clientRepository.countByTier(tier.getTierName()));
         }
         return result;
     }
@@ -517,7 +517,7 @@ class PromotionController {
 
     @GetMapping @Operation(summary = "Danh sách khuyến mãi")
     List<Promotion> list(@RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
-        return activeOnly ? repository.findByTrangThaiTrue() : repository.findAll();
+        return activeOnly ? repository.findByStatusTrue() : repository.findAll();
     }
 
     @GetMapping("/{id}") @Operation(summary = "Chi tiết khuyến mãi")
@@ -611,7 +611,7 @@ class DamageReportController {
                     """)))
     )
     DamageReport create(@RequestBody DamageReport report) {
-        if (report.getNgayTao() == null) report.setNgayTao(java.time.LocalDateTime.now());
+        if (report.getReportTime() == null) report.setReportTime(java.time.LocalDateTime.now());
         return repository.save(report);
     }
 
@@ -646,9 +646,9 @@ class ProviderController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
                     {
                       "id": "NCC001",
-                      "tenNCC": "Công ty Bia Sài Gòn",
-                      "diaChiNCC": "123 Lý Thường Kiệt, TP.HCM",
-                      "dienThoai": "02812345678"
+                      "name": "Công ty Bia Sài Gòn",
+                      "address": "123 Lý Thường Kiệt, TP.HCM",
+                      "tel": "02812345678"
                     }
                     """)))
     )
@@ -689,14 +689,14 @@ class ImportReceiptController {
                     {
                       "id": "PN001",
                       "maPhieu": "PN-2026-001",
-                      "tongTien": 5000000,
+                      "totalCost": 5000000,
                       "trangThai": "Đã nhận",
                       "provider": {"id": "NCC001"}
                     }
                     """)))
     )
     ImportReceipt create(@RequestBody ImportReceipt receipt) {
-        if (receipt.getNgayNhap() == null) receipt.setNgayNhap(java.time.LocalDateTime.now());
+        if (receipt.getImportDate() == null) receipt.setImportDate(java.time.LocalDate.now());
         return repository.save(receipt);
     }
 

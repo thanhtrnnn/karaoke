@@ -27,6 +27,8 @@ public class ImportDetail {
     @ManyToOne
     private Product product;
 
-    private int soLuong;
-    private BigDecimal donGia;
+    // services diagram: quantity, unitCost, lineTotal
+    private int quantity;
+    private BigDecimal unitCost;
+    private BigDecimal lineTotal;
 }

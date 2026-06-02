@@ -21,10 +21,11 @@ public class Otp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String maOTP;
-    private String loai;
-    private LocalDateTime thoiHanHetHan;
-    private boolean daXacMinh = false;
+    // account diagram: otpCode, type, expiresAt, verified
+    private String otpCode;
+    private String type;
+    private LocalDateTime expiresAt;
+    private boolean verified = false;
 
     @ManyToOne
     private User user;

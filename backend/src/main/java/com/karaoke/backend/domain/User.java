@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -34,4 +35,12 @@ public class User {
     private UserRole role;
 
     private boolean active = true;
+
+    // account diagram: fullName, phoneNumber, createdAt
+    private String fullName;
+
+    @Column(unique = true)
+    private String phoneNumber;
+
+    private LocalDateTime createdAt;
 }

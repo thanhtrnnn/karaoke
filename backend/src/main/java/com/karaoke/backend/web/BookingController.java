@@ -138,10 +138,10 @@ public class BookingController {
             receipt.setId("RR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
             receipt.setBooking(booking);
             receipt.setCheckinTime(LocalDateTime.now());
-            receipt.setRoomTotal(BigDecimal.ZERO);
-            receipt.setServiceTotal(BigDecimal.ZERO);
+            receipt.setRoomFee(BigDecimal.ZERO);
+            receipt.setServiceFee(BigDecimal.ZERO);
             receipt.setDiscount(BigDecimal.ZERO);
-            receipt.setGrandTotal(BigDecimal.ZERO);
+            receipt.setTotalAmount(BigDecimal.ZERO);
             receipt.setStatus(InvoiceStatus.DRAFT);
             receipts.save(receipt);
         }

@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react';
 interface ImportReceipt {
   id: string;
   maPhieu: string;
-  ngayNhap: string;
-  tongTien: number;
+  importDate: string;
+  totalCost: number;
   trangThai: string;
-  provider?: { id: string; tenNCC?: string };
+  provider?: { id: string; name?: string };
 }
 
 interface Provider {
   id: string;
-  tenNCC: string;
+  name: string;
 }
 
 export default function ImportReceiptPage() {
@@ -19,7 +19,7 @@ export default function ImportReceiptPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ id: '', maPhieu: '', tongTien: 0, trangThai: 'Đã nhận', providerId: '' });
+  const [formData, setFormData] = useState({ id: '', maPhieu: '', totalCost: 0, trangThai: 'Đã nhận', providerId: '' });
 
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -38,7 +38,7 @@ export default function ImportReceiptPage() {
       const saved = await res.json();
       setReceipts(prev => [saved, ...prev]);
       setIsModalOpen(false);
-      setFormData({ id: '', maPhieu: '', tongTien: 0, trangThai: 'Đã nhận', providerId: '' });
+      setFormData({ id: '', maPhieu: '', totalCost: 0, trangThai: 'Đã nhận', providerId: '' });
     }
   };
 
@@ -48,7 +48,7 @@ export default function ImportReceiptPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white">Quản lý Nhập kho</h1>
-        <button onClick={() => { setFormData({ id: '', maPhieu: '', tongTien: 0, trangThai: 'Đã nhận', providerId: providers[0]?.id || '' }); setIsModalOpen(true); }}
+        <button onClick={() => { setFormData({ id: '', maPhieu: '', totalCost: 0, trangThai: 'Đã nhận', providerId: providers[0]?.id || '' }); setIsModalOpen(true); }}
           className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-black rounded-lg font-semibold hover:bg-yellow-400">
           <span className="material-symbols-outlined text-[18px]">add</span>
           Tạo phiếu nhập
@@ -70,9 +70,9 @@ export default function ImportReceiptPage() {
             {receipts.map(ir => (
               <tr key={ir.id} className="border-t border-slate-700">
                 <td className="px-4 py-3 text-white font-medium font-mono">{ir.maPhieu || ir.id}</td>
-                <td className="px-4 py-3 text-slate-300">{ir.provider?.tenNCC || ir.provider?.id || '—'}</td>
-                <td className="px-4 py-3 text-slate-300">{ir.ngayNhap ? new Date(ir.ngayNhap).toLocaleDateString('vi-VN') : '—'}</td>
-                <td className="px-4 py-3 text-right text-[#D4AF37]">{ir.tongTien?.toLocaleString('vi-VN')}đ</td>
+                <td className="px-4 py-3 text-slate-300">{ir.provider?.name || ir.provider?.id || '—'}</td>
+                <td className="px-4 py-3 text-slate-300">{ir.importDate ? new Date(ir.importDate).toLocaleDateString('vi-VN') : '—'}</td>
+                <td className="px-4 py-3 text-right text-[#D4AF37]">{ir.totalCost?.toLocaleString('vi-VN')}đ</td>
                 <td className="px-4 py-3 text-center">
                   <span className="px-2 py-1 rounded-full text-xs bg-green-900 text-green-300">{ir.trangThai}</span>
                 </td>
@@ -100,12 +100,12 @@ export default function ImportReceiptPage() {
                 <label className="block text-sm text-slate-400 mb-1">Nhà cung cấp</label>
                 <select className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.providerId} onChange={e => setFormData(p => ({ ...p, providerId: e.target.value }))}>
                   <option value="">-- Chọn NCC --</option>
-                  {providers.map(p => <option key={p.id} value={p.id}>{p.tenNCC}</option>)}
+                  {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Tổng tiền (đ)</label>
-                <input type="number" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.tongTien} onChange={e => setFormData(p => ({ ...p, tongTien: +e.target.value }))} />
+                <input type="number" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm" value={formData.totalCost} onChange={e => setFormData(p => ({ ...p, totalCost: +e.target.value }))} />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

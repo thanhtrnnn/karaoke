@@ -19,7 +19,7 @@ class ClientRepositoryTest {
         c.setFullName("Client " + id);
         c.setPhone(phone);
         c.setTier(tier);
-        c.setPoints(0);
+        c.setLoyaltyPoints(0);
         return repository.save(c);
     }
 

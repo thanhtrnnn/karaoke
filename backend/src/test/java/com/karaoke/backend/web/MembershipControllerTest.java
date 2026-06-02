@@ -47,31 +47,31 @@ class MembershipControllerTest {
         // Seed hạng hội viên theo tài liệu UC18
         if (!tierRepository.existsById("Dong")) {
             MembershipTier dong = new MembershipTier();
-            dong.setTenHang("Dong");
-            dong.setDiemToiThieu(0);
-            dong.setMoTa("Hạng đồng — khách mới");
-            dong.setHeSoUuDai("1.0");
+            dong.setTierName("Dong");
+            dong.setMinPoints(0);
+            dong.setDescription("Hạng đồng — khách mới");
+            dong.setDiscountRate("1.0");
             tierRepository.save(dong);
 
             MembershipTier bac = new MembershipTier();
-            bac.setTenHang("Bac");
-            bac.setDiemToiThieu(100);
-            bac.setMoTa("Hạng bạc");
-            bac.setHeSoUuDai("0.95");
+            bac.setTierName("Bac");
+            bac.setMinPoints(100);
+            bac.setDescription("Hạng bạc");
+            bac.setDiscountRate("0.95");
             tierRepository.save(bac);
 
             MembershipTier vang = new MembershipTier();
-            vang.setTenHang("Vang");
-            vang.setDiemToiThieu(500);
-            vang.setMoTa("Hạng vàng");
-            vang.setHeSoUuDai("0.90");
+            vang.setTierName("Vang");
+            vang.setMinPoints(500);
+            vang.setDescription("Hạng vàng");
+            vang.setDiscountRate("0.90");
             tierRepository.save(vang);
 
             MembershipTier kim = new MembershipTier();
-            kim.setTenHang("KimCuong");
-            kim.setDiemToiThieu(2000);
-            kim.setMoTa("Hạng kim cương");
-            kim.setHeSoUuDai("0.80");
+            kim.setTierName("KimCuong");
+            kim.setMinPoints(2000);
+            kim.setDescription("Hạng kim cương");
+            kim.setDiscountRate("0.80");
             tierRepository.save(kim);
         }
     }
@@ -117,7 +117,7 @@ class MembershipControllerTest {
         c1.setFullName("Client 1");
         c1.setPhone("0901000001");
         c1.setTier("Bac");
-        c1.setPoints(100);
+        c1.setLoyaltyPoints(100);
         clientRepository.save(c1);
 
         Client c2 = new Client();
@@ -125,7 +125,7 @@ class MembershipControllerTest {
         c2.setFullName("Client 2");
         c2.setPhone("0901000002");
         c2.setTier("Bac");
-        c2.setPoints(200);
+        c2.setLoyaltyPoints(200);
         clientRepository.save(c2);
 
         mockMvc.perform(get("/api/membership/stats").header("Authorization", ADMIN_TOKEN))

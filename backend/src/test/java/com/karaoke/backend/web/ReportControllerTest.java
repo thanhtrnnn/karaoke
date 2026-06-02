@@ -56,10 +56,10 @@ class ReportControllerTest {
 
         RoomType rt = new RoomType();
         rt.setId("RT-" + roomId);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         roomTypeRepository.save(rt);
 
         Room room = new Room();
@@ -67,7 +67,7 @@ class ReportControllerTest {
         room.setName("Room " + roomId);
         room.setRoomType(rt);
         room.setCapacity(10);
-        room.setHourlyPrice(new BigDecimal("100000"));
+        room.setPrice(new BigDecimal("100000"));
         room.setStatus(RoomStatus.OCCUPIED);
         room.setBranch(branch);
         room.setActive(true);
@@ -78,7 +78,7 @@ class ReportControllerTest {
         product.setName("Item");
         product.setCategory("Do uong");
         product.setPrice(price);
-        product.setStock(100);
+        product.setCurrentStock(100);
         product.setActive(true);
         productRepository.save(product);
 
@@ -86,7 +86,7 @@ class ReportControllerTest {
         order.setId(orderId);
         order.setRoom(room);
         order.setStatus(OrderStatus.SERVED);
-        order.setOrderedAt(LocalDateTime.now());
+        order.setOrderTime(LocalDateTime.now());
         OrderDetail detail = new OrderDetail();
         detail.setOrder(order);
         detail.setProduct(product);
@@ -158,7 +158,7 @@ class ReportControllerTest {
         lowStockProduct.setName("Sản phẩm sắp hết");
         lowStockProduct.setCategory("Do uong");
         lowStockProduct.setPrice(new BigDecimal("30000"));
-        lowStockProduct.setStock(3);
+        lowStockProduct.setCurrentStock(3);
         lowStockProduct.setActive(true);
         productRepository.save(lowStockProduct);
 

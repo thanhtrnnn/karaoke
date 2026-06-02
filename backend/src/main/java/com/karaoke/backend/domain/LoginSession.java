@@ -21,10 +21,11 @@ public class LoginSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String tokenPhien;
-    private LocalDateTime thoiGianDangNhap;
-    private LocalDateTime thoiGianHetHan;
-    private String thietBi;
+    // account diagram: sessionToken, loginTime, expiresAt, device
+    private String sessionToken;
+    private LocalDateTime loginTime;
+    private LocalDateTime expiresAt;
+    private String device;
 
     @ManyToOne
     private User user;

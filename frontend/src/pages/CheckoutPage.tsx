@@ -4,10 +4,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 interface Invoice {
   id: string;
   booking: { id: string } | null;
-  roomTotal: number;
-  serviceTotal: number;
+  roomFee: number;
+  serviceFee: number;
   discount: number;
-  grandTotal: number;
+  totalAmount: number;
   paidAt: string | null;
   status: string;
 }
@@ -160,7 +160,7 @@ export default function CheckoutPage() {
                   <p className="font-body-lg text-white">Phòng</p>
                   <p className="font-body-md text-slate-400">Tổng giờ hát</p>
                 </div>
-                <span className="font-h2 text-white">{invoice.roomTotal.toLocaleString()}đ</span>
+                <span className="font-h2 text-white">{invoice.roomFee.toLocaleString()}đ</span>
               </div>
             </div>
             <div className="border-b border-dashed border-slate-700/50 my-6"></div>
@@ -170,7 +170,7 @@ export default function CheckoutPage() {
               </h3>
               <div className="flex justify-between items-center">
                 <p className="font-body-lg text-white">Tổng dịch vụ</p>
-                <span className="font-body-lg text-white font-medium">{invoice.serviceTotal.toLocaleString()}đ</span>
+                <span className="font-body-lg text-white font-medium">{invoice.serviceFee.toLocaleString()}đ</span>
               </div>
             </div>
           </div>
@@ -183,11 +183,11 @@ export default function CheckoutPage() {
           <div className="flex flex-col gap-4 flex-1">
             <div className="flex justify-between items-center">
               <span className="font-body-lg text-slate-400">Tiền phòng</span>
-              <span className="font-body-lg text-white">{invoice.roomTotal.toLocaleString()}đ</span>
+              <span className="font-body-lg text-white">{invoice.roomFee.toLocaleString()}đ</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-body-lg text-slate-400">Tiền dịch vụ</span>
-              <span className="font-body-lg text-white">{invoice.serviceTotal.toLocaleString()}đ</span>
+              <span className="font-body-lg text-white">{invoice.serviceFee.toLocaleString()}đ</span>
             </div>
             {invoice.discount > 0 && (
               <div className="flex justify-between items-center text-status-available">
@@ -197,7 +197,7 @@ export default function CheckoutPage() {
             )}
             <div className="mt-auto pt-6 border-t border-slate-700/50 flex flex-col items-end">
               <span className="font-label-caps text-slate-400 mb-2 uppercase">Tổng cộng</span>
-              <span className="font-room-number text-primary-container">{invoice.grandTotal.toLocaleString()}đ</span>
+              <span className="font-room-number text-primary-container">{invoice.totalAmount.toLocaleString()}đ</span>
             </div>
           </div>
         </div>

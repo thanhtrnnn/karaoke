@@ -51,10 +51,10 @@ class FacilityControllerTest {
 
             RoomType rt = new RoomType();
             rt.setId("RT-FAC");
-            rt.setTenLoai("Thuong");
-            rt.setSucChua(8);
-            rt.setGiaCuoc(new BigDecimal("80000"));
-            rt.setTrangThai(true);
+            rt.setNameType("Thuong");
+            rt.setCapacity(8);
+            rt.setPrice(new BigDecimal("80000"));
+            rt.setStatus(true);
             roomTypeRepository.save(rt);
 
             Room room = new Room();
@@ -62,7 +62,7 @@ class FacilityControllerTest {
             room.setName("Room for Facility");
             room.setRoomType(rt);
             room.setCapacity(8);
-            room.setHourlyPrice(new BigDecimal("80000"));
+            room.setPrice(new BigDecimal("80000"));
             room.setStatus(RoomStatus.AVAILABLE);
             room.setBranch(branch);
             room.setActive(true);

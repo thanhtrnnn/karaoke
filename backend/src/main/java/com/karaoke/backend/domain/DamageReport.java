@@ -23,10 +23,11 @@ public class DamageReport {
     @Id
     private String id;
 
+    // services diagram: reportTime, totalFine (+ aux maBaoCao, trangThai kept)
     private String maBaoCao;
-    private LocalDateTime ngayTao;
-    private String trangThai;
+    private LocalDateTime reportTime;
     private BigDecimal totalFine;
+    private String trangThai;
 
     @ManyToOne
     private Employee employee;

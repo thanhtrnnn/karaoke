@@ -16,14 +16,14 @@ class ProductRepositoryTest {
     @Autowired
     private ProductRepository repository;
 
-    private Product createProduct(String id, String name, String category, int stock) {
+    private Product createProduct(String id, String name, String category, int currentStock) {
         Product p = new Product();
         p.setId(id);
         p.setName(name);
         p.setCategory(category);
         p.setPrice(new BigDecimal("30000"));
-        p.setStock(stock);
-        p.setSoLuongToiThieu(5);
+        p.setCurrentStock(currentStock);
+        p.setSafetyStock(5);
         p.setActive(true);
         return repository.save(p);
     }
@@ -46,13 +46,13 @@ class ProductRepositoryTest {
     }
 
     @Test
-    void findByStockLessThanEqualAndActiveTrue_filtersCorrectly() {
+    void findByCurrentStockLessThanEqualAndActiveTrue_filtersCorrectly() {
         createProduct("P5", "SapHet", "Do uong", 3);
         createProduct("P6", "ConNhieu", "Do uong", 20);
         createProduct("P7", "SapHet2", "Do an", 5);
 
-        List<Product> lowStock = repository.findByStockLessThanEqualAndActiveTrue(5);
+        List<Product> lowStock = repository.findByCurrentStockLessThanEqualAndActiveTrue(5);
         assertEquals(2, lowStock.size());
-        assertTrue(lowStock.stream().allMatch(p -> p.getStock() <= 5));
+        assertTrue(lowStock.stream().allMatch(p -> p.getCurrentStock() <= 5));
     }
 }

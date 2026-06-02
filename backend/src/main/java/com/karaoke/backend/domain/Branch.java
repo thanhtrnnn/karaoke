@@ -12,12 +12,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "tblBranch")
 public class Branch {
-    @com.fasterxml.jackson.annotation.JsonCreator
-    public Branch() {}
 
     @Id
     private String id;
@@ -32,4 +31,13 @@ public class Branch {
     @OneToMany(mappedBy = "branch")
     @JsonIgnore
     private List<Room> rooms;
+
+    // Convenience constructor without rooms
+    public Branch(String id, String name, String address, String phone, boolean active) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+        this.active = active;
+    }
 }

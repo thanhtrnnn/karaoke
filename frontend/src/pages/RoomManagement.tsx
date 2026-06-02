@@ -32,7 +32,7 @@ export default function RoomManagement() {
             name: r.name,
             type: r.type,
             capacity: `${r.capacity} người`,
-            price: `${Number(r.hourlyPrice).toLocaleString()}đ`,
+            price: `${Number(r.price).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : r.status === 'CLEANING' ? 'Đang dọn' : 'Bảo trì',
             statusRaw: r.status,
             color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
@@ -94,7 +94,7 @@ export default function RoomManagement() {
       name: formData.name,
       type: formData.type,
       capacity: parseInt(formData.capacity) || 0,
-      hourlyPrice: parseInt(formData.price.replace(/[^0-9]/g, '')) || 0,
+      price: parseInt(formData.price.replace(/[^0-9]/g, '')) || 0,
       status: formData.status,
     };
 
@@ -113,7 +113,7 @@ export default function RoomManagement() {
             name: updated.name,
             type: updated.type,
             capacity: `${updated.capacity} người`,
-            price: `${Number(updated.hourlyPrice).toLocaleString()}đ`,
+            price: `${Number(updated.price).toLocaleString()}đ`,
           } : r));
           alert('Cập nhật phòng thành công!');
         }
@@ -130,7 +130,7 @@ export default function RoomManagement() {
             name: created.name,
             type: created.type,
             capacity: `${created.capacity} người`,
-            price: `${Number(created.hourlyPrice).toLocaleString()}đ`,
+            price: `${Number(created.price).toLocaleString()}đ`,
             status: 'Trống',
             color: 'status-available',
             canBook: true,

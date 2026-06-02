@@ -63,10 +63,10 @@ class BookingControllerTest {
     private RoomType createRoomType(String id) {
         RoomType rt = new RoomType();
         rt.setId(id);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         return roomTypeRepository.save(rt);
     }
 
@@ -77,7 +77,7 @@ class BookingControllerTest {
         r.setName("Room " + id);
         r.setRoomType(rt);
         r.setCapacity(10);
-        r.setHourlyPrice(new BigDecimal("100000"));
+        r.setPrice(new BigDecimal("100000"));
         r.setStatus(status);
         r.setBranch(branch);
         r.setActive(true);
@@ -90,7 +90,7 @@ class BookingControllerTest {
         c.setFullName("Test Client");
         c.setPhone(phone);
         c.setTier("Dong");
-        c.setPoints(0);
+        c.setLoyaltyPoints(0);
         return clientRepository.save(c);
     }
 

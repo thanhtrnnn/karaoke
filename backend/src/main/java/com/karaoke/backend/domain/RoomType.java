@@ -17,8 +17,9 @@ public class RoomType {
     @Id
     private String id;
 
-    private String tenLoai;
-    private Integer sucChua;
-    private BigDecimal giaCuoc;
-    private boolean trangThai = true;
+    // core diagram UC19: nameType, capacity, price, status
+    private String nameType;
+    private Integer capacity;
+    private BigDecimal price;
+    private boolean status = true;
 }

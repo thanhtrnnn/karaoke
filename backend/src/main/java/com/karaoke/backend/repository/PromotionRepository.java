@@ -5,5 +5,5 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PromotionRepository extends JpaRepository<Promotion, String> {
-    List<Promotion> findByTrangThaiTrue();
+    List<Promotion> findByStatusTrue();
 }

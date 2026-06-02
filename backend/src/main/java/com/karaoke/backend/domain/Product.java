@@ -22,11 +22,12 @@ public class Product {
     @Id
     private String id;
 
+    // services diagram: name, category, unit, price, currentStock, safetyStock
     private String name;
     private String category;
     private BigDecimal price;
-    private Integer stock;
-    private Integer soLuongToiThieu;
+    private Integer currentStock;
+    private Integer safetyStock;
     private String unit;
     private String image;
     private boolean active = true;

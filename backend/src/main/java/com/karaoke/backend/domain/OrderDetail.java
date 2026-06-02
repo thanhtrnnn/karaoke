@@ -29,6 +29,8 @@ public class OrderDetail {
     @ManyToOne
     private Product product;
 
+    // services diagram: quantity, unitPrice, lineTotal
     private int quantity;
     private BigDecimal unitPrice;
+    private BigDecimal lineTotal;
 }

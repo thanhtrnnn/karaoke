@@ -5,7 +5,7 @@ interface MenuItem {
   name: string;
   cat: string;
   price: number;
-  stock: number;
+  currentStock: number;
   image: string;
   active: boolean;
 }
@@ -18,7 +18,7 @@ export default function MenuManagement() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', stock: '', soLuongToiThieu: '5', active: true });
+  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', active: true });
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -34,7 +34,7 @@ export default function MenuManagement() {
             name: item.name,
             cat: item.category,
             price: item.price,
-            stock: item.stock,
+            currentStock: item.currentStock,
             image: item.image || '/images/snack.png',
             active: item.active,
           })));
@@ -56,16 +56,16 @@ export default function MenuManagement() {
   const handleOpenModal = (item?: any) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), stock: item.stock.toString(), soLuongToiThieu: (item.soLuongToiThieu || 5).toString(), active: item.active });
+      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), currentStock: item.currentStock.toString(), safetyStock: (item.safetyStock || 5).toString(), active: item.active });
     } else {
       setEditingItem(null);
-      setFormData({ name: '', cat: 'Đồ uống', price: '', stock: '', soLuongToiThieu: '5', active: true });
+      setFormData({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', active: true });
     }
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.price || !formData.stock) {
+    if (!formData.name || !formData.price || !formData.currentStock) {
       alert('Vui lòng điền đủ thông tin tên món, giá và tồn kho.');
       return;
     }
@@ -74,8 +74,8 @@ export default function MenuManagement() {
       name: formData.name,
       category: formData.cat,
       price: parseInt(formData.price.replace(/,/g, '').replace('đ', '')) || 0,
-      stock: parseInt(formData.stock) || 0,
-      soLuongToiThieu: parseInt(formData.soLuongToiThieu) || 5,
+      currentStock: parseInt(formData.currentStock) || 0,
+      safetyStock: parseInt(formData.safetyStock) || 5,
       image: '/images/snack.png',
       active: formData.active,
     };
@@ -105,7 +105,7 @@ export default function MenuManagement() {
         });
         if (res.ok) {
           const created = await res.json();
-          setItems([...items, { id: created.id, name: created.name, cat: created.category, price: created.price, stock: created.stock, image: created.image || '/images/snack.png', active: created.active }]);
+          setItems([...items, { id: created.id, name: created.name, cat: created.category, price: created.price, currentStock: created.currentStock, image: created.image || '/images/snack.png', active: created.active }]);
           alert('Thêm món mới thành công!');
         }
       }
@@ -184,7 +184,7 @@ export default function MenuManagement() {
                 <span className="px-2.5 py-1 rounded-md bg-surface-secondary text-slate-300 font-label-caps border border-slate-700/50">{item.cat}</span>
               </td>
               <td className="py-4 px-6 text-primary-container">{item.price.toLocaleString()}</td>
-              <td className="py-4 px-6">{item.stock}</td>
+              <td className="py-4 px-6">{item.currentStock}</td>
               <td className="py-4 px-6">
                 {item.active ? (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-status-available/10 text-status-available border border-status-available/20 font-label-caps">
@@ -233,11 +233,11 @@ export default function MenuManagement() {
                 </div>
                 <div>
                   <label className="font-label-caps text-slate-400 uppercase block mb-1">Tồn kho ban đầu</label>
-                  <input type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="100" />
+                  <input type="number" value={formData.currentStock} onChange={e => setFormData({...formData, currentStock: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="100" />
                 </div>
                 <div>
-                  <label className="block font-label-caps text-slate-400 uppercase mb-2">Định mức an toàn (soLuongToiThieu)</label>
-                  <input type="number" value={formData.soLuongToiThieu} onChange={e => setFormData({...formData, soLuongToiThieu: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="5" />
+                  <label className="block font-label-caps text-slate-400 uppercase mb-2">Định mức an toàn (safetyStock)</label>
+                  <input type="number" value={formData.safetyStock} onChange={e => setFormData({...formData, safetyStock: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="5" />
                 </div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer mt-2 bg-surface-secondary p-3 rounded-lg border border-border-subtle hover:border-primary-container/50 transition-colors">

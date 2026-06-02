@@ -7,6 +7,6 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LoginSessionRepository extends JpaRepository<LoginSession, Long> {
-    Optional<LoginSession> findByTokenPhien(String tokenPhien);
+    Optional<LoginSession> findBySessionToken(String sessionToken);
     List<LoginSession> findByUser(User user);
 }

@@ -45,11 +45,11 @@ class RoomTypeControllerTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-VIP\",\"tenLoai\":\"VIP\",\"sucChua\":15,\"giaCuoc\":200000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-VIP\",\"nameType\":\"VIP\",\"capacity\":15,\"price\":200000,\"trangThai\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("LT-VIP"))
-                .andExpect(jsonPath("$.tenLoai").value("VIP"))
-                .andExpect(jsonPath("$.sucChua").value(15));
+                .andExpect(jsonPath("$.nameType").value("VIP"))
+                .andExpect(jsonPath("$.capacity").value(15));
 
         // List
         mockMvc.perform(get("/api/room-types").header("Authorization", ADMIN_TOKEN))
@@ -59,16 +59,16 @@ class RoomTypeControllerTest {
         // Get by ID
         mockMvc.perform(get("/api/room-types/LT-VIP").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.giaCuoc").value(200000));
+                .andExpect(jsonPath("$.price").value(200000));
 
         // Update
         mockMvc.perform(put("/api/room-types/LT-VIP")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenLoai\":\"VIP Deluxe\",\"sucChua\":20,\"giaCuoc\":300000,\"trangThai\":true}"))
+                        .content("{\"nameType\":\"VIP Deluxe\",\"capacity\":20,\"price\":300000,\"trangThai\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tenLoai").value("VIP Deluxe"))
-                .andExpect(jsonPath("$.sucChua").value(20));
+                .andExpect(jsonPath("$.nameType").value("VIP Deluxe"))
+                .andExpect(jsonPath("$.capacity").value(20));
 
         // Delete
         mockMvc.perform(delete("/api/room-types/LT-VIP").header("Authorization", ADMIN_TOKEN))
@@ -90,13 +90,13 @@ class RoomTypeControllerTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-THUONG\",\"tenLoai\":\"Thuong\",\"sucChua\":8,\"giaCuoc\":80000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-THUONG\",\"nameType\":\"Thuong\",\"capacity\":8,\"price\":80000,\"trangThai\":true}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"LT-DELUXE\",\"tenLoai\":\"Deluxe\",\"sucChua\":12,\"giaCuoc\":150000,\"trangThai\":true}"))
+                        .content("{\"id\":\"LT-DELUXE\",\"nameType\":\"Deluxe\",\"capacity\":12,\"price\":150000,\"trangThai\":true}"))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/room-types").header("Authorization", ADMIN_TOKEN))

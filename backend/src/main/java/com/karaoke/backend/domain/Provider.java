@@ -16,7 +16,8 @@ public class Provider {
     @Id
     private String id;
 
-    private String tenNCC;
-    private String diaChiNCC;
-    private String dienThoai;
+    // services diagram: name, tel, address
+    private String name;
+    private String tel;
+    private String address;
 }

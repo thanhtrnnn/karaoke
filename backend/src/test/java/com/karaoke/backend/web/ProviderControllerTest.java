@@ -45,10 +45,10 @@ class ProviderControllerTest {
         mockMvc.perform(post("/api/providers")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"NCC-TEST\",\"tenNCC\":\"Cong ty ABC\",\"diaChiNCC\":\"123 Nguyen Hue\",\"dienThoai\":\"0901234567\"}"))
+                        .content("{\"id\":\"NCC-TEST\",\"name\":\"Cong ty ABC\",\"address\":\"123 Nguyen Hue\",\"tel\":\"0901234567\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("NCC-TEST"))
-                .andExpect(jsonPath("$.tenNCC").value("Cong ty ABC"));
+                .andExpect(jsonPath("$.name").value("Cong ty ABC"));
 
         // List
         mockMvc.perform(get("/api/providers").header("Authorization", ADMIN_TOKEN))
@@ -58,15 +58,15 @@ class ProviderControllerTest {
         // Get by ID
         mockMvc.perform(get("/api/providers/NCC-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tenNCC").value("Cong ty ABC"));
+                .andExpect(jsonPath("$.name").value("Cong ty ABC"));
 
         // Update
         mockMvc.perform(put("/api/providers/NCC-TEST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenNCC\":\"Cong ty XYZ\",\"diaChiNCC\":\"456 Le Loi\",\"dienThoai\":\"0987654321\"}"))
+                        .content("{\"name\":\"Cong ty XYZ\",\"address\":\"456 Le Loi\",\"tel\":\"0987654321\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tenNCC").value("Cong ty XYZ"));
+                .andExpect(jsonPath("$.name").value("Cong ty XYZ"));
 
         // Delete
         mockMvc.perform(delete("/api/providers/NCC-TEST").header("Authorization", ADMIN_TOKEN))
@@ -88,9 +88,9 @@ class ProviderControllerTest {
         mockMvc.perform(post("/api/providers")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"NCC-002\",\"tenNCC\":\"Nha cung cap B\",\"diaChiNCC\":\"789 Tran Hung Dao\",\"dienThoai\":\"0911222333\"}"))
+                        .content("{\"id\":\"NCC-002\",\"name\":\"Nha cung cap B\",\"address\":\"789 Tran Hung Dao\",\"tel\":\"0911222333\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.diaChiNCC").value("789 Tran Hung Dao"))
-                .andExpect(jsonPath("$.dienThoai").value("0911222333"));
+                .andExpect(jsonPath("$.address").value("789 Tran Hung Dao"))
+                .andExpect(jsonPath("$.tel").value("0911222333"));
     }
 }

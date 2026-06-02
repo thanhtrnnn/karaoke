@@ -51,7 +51,7 @@ export default function ReportsPage() {
           setOrders(ordersResult.value.map((o: any) => {
             const total = o.items?.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0) || 0;
             const st = orderStatusMap[o.status] || { label: o.status, color: 'slate-400' };
-            return { id: o.id, room: o.roomName || o.roomId || 'N/A', itemCount: o.items?.length || 0, total, status: st.label, color: st.color, time: o.orderedAt ? formatTime(new Date(o.orderedAt)) : '' };
+            return { id: o.id, room: o.roomName || o.roomId || 'N/A', itemCount: o.items?.length || 0, total, status: st.label, color: st.color, time: o.orderTime ? formatTime(new Date(o.orderTime)) : '' };
           }));
         }
         if (revenueResult.status === 'fulfilled') setChartData(revenueResult.value);

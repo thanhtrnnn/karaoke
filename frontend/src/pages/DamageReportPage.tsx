@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 interface DamageReport {
   id: string;
   maBaoCao: string;
-  ngayTao: string;
+  reportTime: string;
   trangThai: string;
   employee?: { id: string; username?: string };
 }
@@ -81,7 +81,7 @@ export default function DamageReportPage() {
             {reports.map(r => (
               <tr key={r.id} className="border-t border-slate-700">
                 <td className="px-4 py-3 text-white font-medium">{r.maBaoCao || r.id}</td>
-                <td className="px-4 py-3 text-slate-300">{r.ngayTao ? new Date(r.ngayTao).toLocaleString('vi-VN') : '—'}</td>
+                <td className="px-4 py-3 text-slate-300">{r.reportTime ? new Date(r.reportTime).toLocaleString('vi-VN') : '—'}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={`px-2 py-1 rounded-full text-xs ${statusColor(r.trangThai)}`}>{r.trangThai}</span>
                 </td>

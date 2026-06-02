@@ -26,9 +26,10 @@ public class RoomReceiptDetail {
     @ManyToOne
     private RoomReceipt roomReceipt;
 
-    @ManyToOne
-    private Product product;
-
-    private int soLuong;
-    private BigDecimal donGia;
+    // booking diagram: serviceName, basePrice, quantity, duration, total
+    private String serviceName;
+    private BigDecimal basePrice;
+    private int quantity;
+    private BigDecimal duration;
+    private BigDecimal total;
 }

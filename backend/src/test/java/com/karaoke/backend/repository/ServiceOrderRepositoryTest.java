@@ -30,10 +30,10 @@ class OrderRepositoryTest {
     private RoomType createRoomType(String id) {
         RoomType rt = new RoomType();
         rt.setId(id);
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         return roomTypeRepository.save(rt);
     }
 
@@ -43,7 +43,7 @@ class OrderRepositoryTest {
         r.setName("Room " + id);
         r.setRoomType(roomType);
         r.setCapacity(10);
-        r.setHourlyPrice(new BigDecimal("100000"));
+        r.setPrice(new BigDecimal("100000"));
         r.setStatus(status);
         r.setBranch(branch);
         r.setActive(true);
@@ -56,7 +56,7 @@ class OrderRepositoryTest {
         p.setName(name);
         p.setCategory("Do uong");
         p.setPrice(new BigDecimal("30000"));
-        p.setStock(stock);
+        p.setCurrentStock(stock);
         p.setActive(true);
         return productRepository.save(p);
     }
@@ -65,7 +65,7 @@ class OrderRepositoryTest {
         Order order = new Order();
         order.setId(id);
         order.setRoom(room);
-        order.setOrderedAt(LocalDateTime.now());
+        order.setOrderTime(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         OrderDetail detail = new OrderDetail();
         detail.setOrder(order);

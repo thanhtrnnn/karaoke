@@ -116,10 +116,10 @@ class CrudControllersTest {
 
         RoomType rt = new RoomType();
         rt.setId("RT-TEST");
-        rt.setTenLoai("VIP");
-        rt.setSucChua(10);
-        rt.setGiaCuoc(new BigDecimal("100000"));
-        rt.setTrangThai(true);
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
         roomTypeRepository.save(rt);
 
         mockMvc.perform(post("/api/rooms")
@@ -146,7 +146,7 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/products")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"SP-TEST\",\"name\":\"Test Product\",\"category\":\"Do uong\",\"price\":30000,\"stock\":10,\"soLuongToiThieu\":5,\"active\":true}"))
+                        .content("{\"id\":\"SP-TEST\",\"name\":\"Test Product\",\"category\":\"Do uong\",\"price\":30000,\"stock\":10,\"safetyStock\":5,\"active\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("SP-TEST"));
 
@@ -185,10 +185,10 @@ class CrudControllersTest {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"RT-VIP\",\"tenLoai\":\"VIP\",\"sucChua\":12,\"giaCuoc\":150000,\"trangThai\":true}"))
+                        .content("{\"id\":\"RT-VIP\",\"nameType\":\"VIP\",\"capacity\":12,\"price\":150000,\"trangThai\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("RT-VIP"))
-                .andExpect(jsonPath("$.tenLoai").value("VIP"));
+                .andExpect(jsonPath("$.nameType").value("VIP"));
 
         mockMvc.perform(get("/api/room-types").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -197,9 +197,9 @@ class CrudControllersTest {
         mockMvc.perform(put("/api/room-types/RT-VIP")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tenLoai\":\"VIP Plus\",\"sucChua\":15,\"giaCuoc\":200000,\"trangThai\":true}"))
+                        .content("{\"nameType\":\"VIP Plus\",\"capacity\":15,\"price\":200000,\"trangThai\":true}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tenLoai").value("VIP Plus"));
+                .andExpect(jsonPath("$.nameType").value("VIP Plus"));
 
         mockMvc.perform(delete("/api/room-types/RT-VIP").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());

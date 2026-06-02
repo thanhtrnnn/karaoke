@@ -102,7 +102,7 @@ public class OrderController {
         Order order = new Order();
         order.setId("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setRoom(room);
-        order.setOrderedAt(LocalDateTime.now());
+        order.setOrderTime(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setItems(new ArrayList<>());
 
@@ -110,16 +110,17 @@ public class OrderController {
         for (CreateOrderItemRequest itemRequest : request.items()) {
             Product product = products.findById(itemRequest.productId())
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + itemRequest.productId()));
-            if (product.getStock() < itemRequest.quantity()) {
+            if (product.getCurrentStock() < itemRequest.quantity()) {
                 throw new IllegalArgumentException("Not enough stock for " + product.getName());
             }
-            product.setStock(product.getStock() - itemRequest.quantity());
+            product.setCurrentStock(product.getCurrentStock() - itemRequest.quantity());
             products.save(product);
 
             BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(itemRequest.quantity()));
             orderTotal = orderTotal.add(lineTotal);
 
-            OrderDetail item = new OrderDetail(null, order, product, itemRequest.quantity(), product.getPrice());
+            BigDecimal ld = product.getPrice().multiply(BigDecimal.valueOf(itemRequest.quantity()));
+            OrderDetail item = new OrderDetail(null, order, product, itemRequest.quantity(), product.getPrice(), ld);
             order.getItems().add(item);
         }
 
@@ -128,10 +129,10 @@ public class OrderController {
         // UC08: cộng dồn tiền dịch vụ vào RoomReceipt đang DRAFT
         final BigDecimal finalOrderTotal = orderTotal;
         receipts.findDraftByRoomId(request.roomId()).ifPresent(receipt -> {
-            BigDecimal current = receipt.getServiceTotal() != null ? receipt.getServiceTotal() : BigDecimal.ZERO;
-            receipt.setServiceTotal(current.add(finalOrderTotal));
-            BigDecimal roomAmt = receipt.getRoomTotal() != null ? receipt.getRoomTotal() : BigDecimal.ZERO;
-            receipt.setGrandTotal(roomAmt.add(receipt.getServiceTotal())
+            BigDecimal current = receipt.getServiceFee() != null ? receipt.getServiceFee() : BigDecimal.ZERO;
+            receipt.setServiceFee(current.add(finalOrderTotal));
+            BigDecimal roomAmt = receipt.getRoomFee() != null ? receipt.getRoomFee() : BigDecimal.ZERO;
+            receipt.setTotalAmount(roomAmt.add(receipt.getServiceFee())
                     .subtract(receipt.getDiscount() != null ? receipt.getDiscount() : BigDecimal.ZERO));
             receipts.save(receipt);
         });
@@ -150,7 +151,7 @@ public class OrderController {
         if (request.status() == OrderStatus.CANCELLED && order.getStatus() == OrderStatus.PENDING) {
             for (OrderDetail item : order.getItems()) {
                 Product product = item.getProduct();
-                product.setStock(product.getStock() + item.getQuantity());
+                product.setCurrentStock(product.getCurrentStock() + item.getQuantity());
                 products.save(product);
             }
         }
@@ -165,13 +166,13 @@ public class OrderController {
 
     record UpdateOrderStatusRequest(@NotNull OrderStatus status) {}
 
-    record OrderResponse(String id, String roomId, String roomName, LocalDateTime orderedAt, OrderStatus status, List<OrderItemResponse> items) {
+    record OrderResponse(String id, String roomId, String roomName, LocalDateTime orderTime, OrderStatus status, List<OrderItemResponse> items) {
         static OrderResponse from(Order order) {
             return new OrderResponse(
                     order.getId(),
                     order.getRoom().getId(),
                     order.getRoom().getName(),
-                    order.getOrderedAt(),
+                    order.getOrderTime(),
                     order.getStatus(),
                     order.getItems().stream().map(OrderItemResponse::from).toList()
             );

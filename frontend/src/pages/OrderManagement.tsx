@@ -39,7 +39,7 @@ export default function OrderManagement() {
           const mapped = data.map((o: any) => {
             const st = statusMap[o.status] || { label: o.status, color: 'slate-400' };
             const itemNames = (o.items || []).map((i: any) => `${i.name || 'N/A'} x${i.quantity}`).join(', ');
-            const dt = o.orderedAt ? new Date(o.orderedAt) : null;
+            const dt = o.orderTime ? new Date(o.orderTime) : null;
             const time = dt ? formatTime(dt) : '';
             const date = dt ? dt.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }) : '';
             return {

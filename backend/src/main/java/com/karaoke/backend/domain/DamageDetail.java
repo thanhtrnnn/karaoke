@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,8 @@ public class DamageDetail {
     @ManyToOne
     private Facility facility;
 
-    private int soLuong;
-    private String ghiChu;
+    // services diagram: quantity, unitFineAmount, lineTotal
+    private int quantity;
+    private BigDecimal unitFineAmount;
+    private BigDecimal lineTotal;
 }
