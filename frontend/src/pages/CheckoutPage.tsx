@@ -219,15 +219,19 @@ export default function CheckoutPage() {
                   setApplyingVoucher(true); setVoucherMsg(null);
                   const token = localStorage.getItem('token');
                   try {
-                    const res = await fetch(`/api/promotions?activeOnly=true`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const res = await fetch(`/api/room-receipts/${invoice.id}/apply-promotion`, {
+                      method: 'POST',
+                      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ voucherCode }),
+                    });
                     if (res.ok) {
-                      const promos = await res.json();
-                      const match = promos.find((p: any) => p.id === voucherCode || p.tenKhuyenMai === voucherCode);
-                      if (match) {
-                        setVoucherMsg(`✓ Áp dụng "${match.tenKhuyenMai}" — ${match.heSoUuDai || match.giaTriGiam}`);
-                      } else {
-                        setVoucherMsg('✗ Mã không hợp lệ hoặc đã hết hạn');
-                      }
+                      const updated: Invoice = await res.json();
+                      setVoucherMsg(`✓ Áp dụng thành công! Giảm: ${updated.discount?.toLocaleString() || 0}đ`);
+                      // Update invoice with discount applied
+                      setInvoices(prev => prev.map(inv => inv.id === updated.id ? updated : inv));
+                    } else {
+                      const err = await res.json().catch(() => ({}));
+                      setVoucherMsg(`✗ ${err.message || 'Mã không hợp lệ hoặc đã hết hạn'}`);
                     }
                   } catch { setVoucherMsg('✗ Lỗi kết nối'); } finally { setApplyingVoucher(false); }
                 }}

@@ -82,7 +82,7 @@ export default function LoginPage() {
                 <input className="h-4 w-4 rounded border-border-subtle bg-surface-secondary text-primary-container focus:ring-primary-container cursor-pointer" id="remember-me" name="remember-me" type="checkbox" />
                 <label className="ml-3 block font-body-md text-body-md text-text-secondary cursor-pointer" htmlFor="remember-me">Ghi nhớ đăng nhập</label>
               </div>
-              <a className="font-label-caps text-label-caps text-primary-container hover:text-primary transition-colors duration-200" href="#">Quên mật khẩu?</a>
+              <button type="button" className="font-label-caps text-label-caps text-primary-container hover:text-primary transition-colors duration-200" onClick={() => alert('Vui lòng liên hệ quản trị viên để đặt lại mật khẩu.')}>Quên mật khẩu?</button>
             </div>
             <div className="pt-4">
               <button className="w-full flex justify-center items-center py-4 px-4 bg-primary-container text-on-primary-container font-label-caps rounded-lg hover:bg-primary hover:shadow-lg hover:shadow-primary-container/20 transition-all duration-300 transform active:scale-[0.98]" type="submit">

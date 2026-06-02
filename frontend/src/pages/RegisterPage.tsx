@@ -67,25 +67,13 @@ export default function RegisterPage() {
           )}
           <form className="space-y-6" onSubmit={handleRegister}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="fullname">Họ tên</label>
-                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="fullname" name="fullname" placeholder="Nguyễn Văn A" type="text" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="phone">Số điện thoại</label>
-                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="phone" name="phone" placeholder="0901234567" type="tel" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="email">Email</label>
-                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="email" name="email" placeholder="example@domain.com" type="email" required />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="idcard">CCCD</label>
-                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="idcard" name="idcard" placeholder="Nhập số CCCD" type="text" />
-              </div>
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="reg-username">Tên đăng nhập</label>
                 <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="reg-username" name="reg-username" placeholder="Nhập tên đăng nhập" type="text" required />
+              </div>
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="email">Email</label>
+                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="email" name="email" placeholder="example@domain.com" type="email" required />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="reg-password">Mật khẩu</label>

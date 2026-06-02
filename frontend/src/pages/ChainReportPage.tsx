@@ -18,7 +18,6 @@ interface BranchStats {
 export default function ChainReportPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
-  const [period, setPeriod] = useState('monthly');
   const [loading, setLoading] = useState(true);
   const [reporting, setReporting] = useState(false);
   const [results, setResults] = useState<BranchStats[]>([]);
@@ -103,18 +102,6 @@ export default function ChainReportPage() {
 
       {/* Filter panel */}
       <div className="bg-slate-800 rounded-xl p-5 space-y-4">
-        <div>
-          <label className="block text-xs text-slate-400 mb-1 uppercase">Kỳ báo cáo</label>
-          <select value={period} onChange={e => setPeriod(e.target.value)}
-            className="w-full max-w-xs bg-slate-700 text-white rounded-lg px-3 py-2 text-sm">
-            <option value="hourly">Theo giờ (hôm nay)</option>
-            <option value="weekly">Theo tuần</option>
-            <option value="monthly">Theo tháng</option>
-            <option value="quarterly">Theo quý</option>
-            <option value="yearly">Theo năm</option>
-          </select>
-        </div>
-
         {/* Branch multi-select */}
         <div>
           <div className="flex items-center justify-between mb-2">

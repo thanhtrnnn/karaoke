@@ -4,6 +4,7 @@ import { getUserFromStorage, ROLE_ROUTES } from '../config/rbac';
 
 const menuItems = [
   { path: '/', label: 'Lễ tân', icon: 'dashboard' },
+  { path: '/manager', label: 'Dashboard', icon: 'space_dashboard' },
   { path: '/booking', label: 'Đặt phòng', icon: 'calendar_month' },
   { path: '/booking-management', label: 'QL Đặt phòng', icon: 'event_note' },
   { path: '/rooms', label: 'Quản lý phòng', icon: 'meeting_room' },
@@ -21,6 +22,7 @@ const menuItems = [
   { path: '/membership', label: 'Hội viên', icon: 'card_membership' },
   { path: '/employees', label: 'Nhân viên', icon: 'badge' },
   { path: '/reports', label: 'Báo cáo', icon: 'analytics' },
+  { path: '/branch-report', label: 'BC Chi nhánh', icon: 'assessment' },
   { path: '/branches', label: 'Chi nhánh', icon: 'store' },
   { path: '/chain-report', label: 'Báo cáo chuỗi', icon: 'bar_chart_4_bars' },
   { path: '/settings', label: 'Cài đặt', icon: 'settings' },
