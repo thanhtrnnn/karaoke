@@ -1,20 +1,21 @@
 # Module 2: Quản lý Đặt & Trả Phòng
+
 > UC05 (Đặt phòng + Hủy phòng) · UC07 (Check-in) · UC08 (Check-out)
 
 ---
 
-## PHA I — YÊU CẦU (I.1)
+* [ ] PHA I — YÊU CẦU (I.1)
 
 ### Q1. Module này có bao nhiêu UC? Liệt kê.
 
 4 chức năng, nhưng chỉ 3 UC chính (Hủy phòng là extend của UC05):
 
-| UC | Tên | Actor chính |
-|----|-----|-------------|
-| UC05 | Đặt phòng | Khách hàng (trực tuyến) / NV Lễ tân (tại quầy) |
-| UC05 ext | Hủy phòng trực tuyến | Khách hàng + NV Lễ tân |
-| UC07 | Quản lý đặt phòng (check-in) | NV Lễ tân |
-| UC08 | Quản lý trả phòng (check-out) | NV Lễ tân |
+| UC       | Tên                              | Actor chính                                           |
+| -------- | --------------------------------- | ------------------------------------------------------ |
+| UC05     | Đặt phòng                      | Khách hàng (trực tuyến) / NV Lễ tân (tại quầy) |
+| UC05 ext | Hủy phòng trực tuyến          | Khách hàng + NV Lễ tân                             |
+| UC07     | Quản lý đặt phòng (check-in) | NV Lễ tân                                            |
+| UC08     | Quản lý trả phòng (check-out) | NV Lễ tân                                            |
 
 ### Q2. Luồng đặt phòng tại quầy (NV Lễ tân) — các bước chính.
 
@@ -32,12 +33,14 @@ NV click "Đặt phòng" → SearchFreeRoomView hiện lên
 ### Q3. State machine của Room và Room_receipt.
 
 **Room status:**
+
 ```
 Trống → (đặt phòng) → Chờ nhận → (check-in) → Đang hoạt động → (check-out) → Trống
 Chờ nhận → (hủy) → Trống
 ```
 
 **Room_receipt (hóa đơn) status:**
+
 ```
 (tạo khi check-in) → Đang mở → (check-out xác nhận) → Đã thanh toán
                                 (hủy) → Đã hủy
@@ -51,16 +54,16 @@ Chờ nhận → (hủy) → Trống
 
 Từ đoạn văn xuôi mô tả module:
 
-| Lớp thực thể | Tên | Thuộc tính sơ bộ |
-|--------------|-----|-----------------|
-| Khách hàng | **Client** | hoTen, sdt, email, hangHoiVien, diemTichLuy |
-| Chi nhánh | **Branch** | tenChiNhanh, diaChi, sdt |
-| Phòng | **Room** | tenPhong, loaiPhong, sucChua, giaTheoGio, trangThai |
-| Nhân viên | **Employee** | hoTen, vaiTro, chiNhanh |
-| Hóa đơn | **Room_receipt** | ngayGio, tienPhong, tienDichVu, tongCong, phuongThucTT, trangThai |
-| Chi tiết HĐ | **Room_receipt_detail** | tenMon, soLuong, donGia, thanhTien |
-| Hạng hội viên | **MemberRanking** | tenHang, diemToiThieu, tyLeGiam |
-| Khuyến mãi | **Promotion** | maKM, moTa, tyLeGiam, ngayHetHan |
+| Lớp thực thể  | Tên                          | Thuộc tính sơ bộ                                              |
+| ---------------- | ----------------------------- | ----------------------------------------------------------------- |
+| Khách hàng     | **Client**              | hoTen, sdt, email, hangHoiVien, diemTichLuy                       |
+| Chi nhánh       | **Branch**              | tenChiNhanh, diaChi, sdt                                          |
+| Phòng           | **Room**                | tenPhong, loaiPhong, sucChua, giaTheoGio, trangThai               |
+| Nhân viên      | **Employee**            | hoTen, vaiTro, chiNhanh                                           |
+| Hóa đơn       | **Room_receipt**        | ngayGio, tienPhong, tienDichVu, tongCong, phuongThucTT, trangThai |
+| Chi tiết HĐ    | **Room_receipt_detail** | tenMon, soLuong, donGia, thanhTien                                |
+| Hạng hội viên | **MemberRanking**       | tenHang, diemToiThieu, tyLeGiam                                   |
+| Khuyến mãi     | **Promotion**           | maKM, moTa, tyLeGiam, ngayHetHan                                  |
 
 ### Q5. II.2 — Cardinality đặc biệt: quan hệ n-n nào xuất hiện?
 
@@ -68,6 +71,7 @@ Từ đoạn văn xuôi mô tả module:
 - Room_receipt – Room_receipt_detail: **1-n** (1 HĐ có nhiều chi tiết)
 
 Quan hệ khác:
+
 - Branch – Room: 1-n (composition: xóa chi nhánh → xóa phòng)
 - Branch – Employee: 1-n (aggregation: nhân viên có thể chuyển chi nhánh)
 - Client – Room_receipt: 1-n
@@ -124,38 +128,39 @@ Entity:   Client, Branch, Room, Employee, Room_receipt, Room_receipt_detail,
 
 ### Q9. III.1 — Bảng CSDL module Đặt phòng.
 
-| Bảng | Entity | Ghi chú |
-|------|--------|---------|
-| tblClient | Client | FK tblMemberRankingMa |
-| tblBranch | Branch | |
-| tblRoom | Room | FK tblBranchMa, tblRoomTypeMa |
-| tblEmployee | Employee | FK tblBranchMa |
-| tblRoom_receipt | Room_receipt (Invoice) | FK tblClientMa, tblRoomMa, tblEmployeeMa |
-| tblRoom_receipt_detail | Room_receipt_detail | FK tblRoom_receiptMa |
-| tblMemberRanking | MemberRanking | |
-| tblPromotion | Promotion | |
-| tblApply_promotion | n-n Room_receipt × Promotion | FK cả 2 |
+| Bảng                  | Entity                        | Ghi chú                                 |
+| ---------------------- | ----------------------------- | ---------------------------------------- |
+| tblClient              | Client                        | FK tblMemberRankingMa                    |
+| tblBranch              | Branch                        |                                          |
+| tblRoom                | Room                          | FK tblBranchMa, tblRoomTypeMa            |
+| tblEmployee            | Employee                      | FK tblBranchMa                           |
+| tblRoom_receipt        | Room_receipt (Invoice)        | FK tblClientMa, tblRoomMa, tblEmployeeMa |
+| tblRoom_receipt_detail | Room_receipt_detail           | FK tblRoom_receiptMa                     |
+| tblMemberRanking       | MemberRanking                 |                                          |
+| tblPromotion           | Promotion                     |                                          |
+| tblApply_promotion     | n-n Room_receipt × Promotion | FK cả 2                                 |
 
 ### Q10. III.3.2 — Bảng chữ ký hàm BookingController.
 
-| Hàm | Input | Output |
-|-----|-------|--------|
-| `searchFreeRoom()` | startTime: Date, endTime: Date, branchId: int | List\<Room\> |
-| `searchClient()` | keyword: String | List\<Client\> |
-| `createBooking()` | clientId, roomId, startTime, endTime, staffId: int | BookingResponse |
-| `updateRoomStatus()` | roomId: int, status: String | Room |
-| `getPendingBookings()` | branchId: int, date: Date | List\<BookingResponse\> |
-| `checkIn()` | bookingId: int | BookingResponse |
-| `getActiveRooms()` | branchId: int | List\<Room\> |
-| `calculateInvoice()` | bookingId: int | Room_receipt |
-| `applyPromotion()` | room_receipt_ID: int | Room_receipt |
-| `confirmPayment()` | invoiceId: int, paymentMethod: String, voucherCode: String | Room_receipt |
-| `searchBooking()` | keyword: String | List\<BookingResponse\> |
-| `cancelBooking()` | bookingId: int | BookingResponse |
+| Hàm                     | Input                                                      | Output                  |
+| ------------------------ | ---------------------------------------------------------- | ----------------------- |
+| `searchFreeRoom()`     | startTime: Date, endTime: Date, branchId: int              | List\<Room\>            |
+| `searchClient()`       | keyword: String                                            | List\<Client\>          |
+| `createBooking()`      | clientId, roomId, startTime, endTime, staffId: int         | BookingResponse         |
+| `updateRoomStatus()`   | roomId: int, status: String                                | Room                    |
+| `getPendingBookings()` | branchId: int, date: Date                                  | List\<BookingResponse\> |
+| `checkIn()`            | bookingId: int                                             | BookingResponse         |
+| `getActiveRooms()`     | branchId: int                                              | List\<Room\>            |
+| `calculateInvoice()`   | bookingId: int                                             | Room_receipt            |
+| `applyPromotion()`     | room_receipt_ID: int                                       | Room_receipt            |
+| `confirmPayment()`     | invoiceId: int, paymentMethod: String, voucherCode: String | Room_receipt            |
+| `searchBooking()`      | keyword: String                                            | List\<BookingResponse\> |
+| `cancelBooking()`      | bookingId: int                                             | BookingResponse         |
 
 ### Q11. III.4 — Kịch bản phiên bản 3 UC05 Đặt phòng (39 bước, điểm quan trọng).
 
 Chuỗi gọi hàm chính:
+
 ```
 ReceptionistHomePage.btnDatPhongClick()
 → SearchFreeRoomForm.btnSearchClick()
@@ -191,23 +196,23 @@ BookingController.confirmPayment(room_receipt_ID, paymentMethod, voucherCode):
 
 ### Q13. Danh sách test case module Đặt phòng.
 
-| TC | Chức năng | Kịch bản |
-|----|-----------|---------|
+| TC   | Chức năng  | Kịch bản                                                    |
+| ---- | ------------ | ------------------------------------------------------------- |
 | TC01 | Đặt phòng | Phòng trống, khách tìm thấy → booking tạo thành công |
-| TC02 | Đặt phòng | Không có phòng trống theo giờ yêu cầu → thông báo |
-| TC03 | Đặt phòng | Khách chưa có trong CSDL → "Đăng ký nhanh" |
-| TC04 | Đặt phòng | Đặt phòng trực tuyến (Khách hàng tự đặt) |
-| TC05 | Check-in | Phòng trạng thái "Chờ nhận" → check-in thành công |
-| TC06 | Check-in | Phòng đang dọn dẹp → không cho check-in |
-| TC07 | Check-in | Check-in phòng Super VIP |
-| TC08 | Check-out | Thanh toán tiền mặt, không voucher → thành công |
-| TC09 | Check-out | Áp dụng voucher hợp lệ → giảm đúng số tiền |
-| TC10 | Check-out | Khách hội viên Vàng → giảm đúng tỷ lệ |
-| TC11 | Check-out | Voucher không hợp lệ → thông báo lỗi |
-| TC12 | Check-out | Thanh toán chuyển khoản |
-| TC13 | Hủy phòng | Tìm booking → hủy thành công → phòng về "Trống" |
-| TC14 | Hủy phòng | Không tìm thấy booking → thông báo |
-| TC15 | Hủy phòng | Booking đã quá thời hạn hủy → thông báo |
+| TC02 | Đặt phòng | Không có phòng trống theo giờ yêu cầu → thông báo   |
+| TC03 | Đặt phòng | Khách chưa có trong CSDL → "Đăng ký nhanh"             |
+| TC04 | Đặt phòng | Đặt phòng trực tuyến (Khách hàng tự đặt)            |
+| TC05 | Check-in     | Phòng trạng thái "Chờ nhận" → check-in thành công     |
+| TC06 | Check-in     | Phòng đang dọn dẹp → không cho check-in                 |
+| TC07 | Check-in     | Check-in phòng Super VIP                                     |
+| TC08 | Check-out    | Thanh toán tiền mặt, không voucher → thành công        |
+| TC09 | Check-out    | Áp dụng voucher hợp lệ → giảm đúng số tiền          |
+| TC10 | Check-out    | Khách hội viên Vàng → giảm đúng tỷ lệ               |
+| TC11 | Check-out    | Voucher không hợp lệ → thông báo lỗi                   |
+| TC12 | Check-out    | Thanh toán chuyển khoản                                    |
+| TC13 | Hủy phòng  | Tìm booking → hủy thành công → phòng về "Trống"      |
+| TC14 | Hủy phòng  | Không tìm thấy booking → thông báo                      |
+| TC15 | Hủy phòng  | Booking đã quá thời hạn hủy → thông báo              |
 
 Tỷ lệ đạt: **15/15 = 100%**
 
@@ -227,6 +232,7 @@ Tỷ lệ đạt: **15/15 = 100%**
 ### Q14. Biểu đồ UC (I.1) — cấu trúc và UC con.
 
 4 biểu đồ UC chi tiết (1 biểu đồ/chức năng):
+
 - **Đặt phòng**: Actor NV Lễ tân + Khách hàng → UC05; include "Tìm phòng trống", "Tìm thông tin khách hàng", "Xác nhận đặt phòng"
 - **Hủy phòng**: extend từ UC05 (điều kiện: muốn hủy sau khi đặt)
 - **Check-in**: Actor NV Lễ tân → UC07; include "Xem danh sách chờ nhận"
@@ -237,6 +243,7 @@ Tỷ lệ đạt: **15/15 = 100%**
 8 lớp Entity: **Client, Branch, Room, Employee, Room_receipt, Room_receipt_detail, MemberRanking, Promotion**
 
 Quan hệ đặc biệt:
+
 ```
 Branch "1" *-- "n" Room : composition
 Branch "1" o-- "n" Employee : aggregation
@@ -263,6 +270,7 @@ Lý do nhiều: mỗi bước trong workflow đặt phòng cần 1 màn hình ri
 ### Q17. Biểu đồ tuần tự phân tích (II.4) — UC08 Check-out dài nhất.
 
 UC08 Check-out có khoảng **35 bước** trong II.4 — dài nhất module vì:
+
 - Tính tiền (Room_receipt.CalculateTotalAmount)
 - Kiểm tra hạng thành viên (MemberRanking.checkMember)
 - Áp dụng khuyến mãi nếu có (Promotion.applyPromotion)
@@ -288,6 +296,7 @@ Room_receipt_detail:
 ```
 
 Bảng ApplyPromotion (bảng trung gian n-n):
+
 ```
 ApplyPromotion:
   receipt: Room_receipt, promotion: Promotion
@@ -331,6 +340,7 @@ BookingController (@RestController):
 ### Q21. Biểu đồ tuần tự thiết kế (III.4) — UC08 Check-out: transaction cuối.
 
 Chuỗi 3 Entity được cập nhật trong confirmPayment():
+
 ```
 BookingController.confirmPayment(invoiceId, paymentMethod, voucherCode):
   1. Room_receipt.updateStatus("Đã thanh toán")

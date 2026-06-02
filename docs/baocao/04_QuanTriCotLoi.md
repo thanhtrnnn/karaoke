@@ -1,5 +1,5 @@
 # Module 4: Quản trị Cốt lõi
-> UC16 (Quản lý chi nhánh) · UC17 (Quản lý KH) · UC18 (Quản lý hạng HV) · UC19 (Quản lý phòng hát)
+> UC16 (Quản lý chi nhánh) · UC17 (Quản lý KH) · UC18 (Quản lý hạng HV) · UC19 (Quản lý danh mục loại phòng) · UC20* (Quản lý phòng hát chi nhánh)
 
 ---
 
@@ -7,25 +7,32 @@
 
 ### Q1. Module này có bao nhiêu UC? Liệt kê.
 
-4 UC chính, 2 actor:
+**5 UC**, 2 actor:
 
-| UC | Tên | Actor chính |
-|----|-----|-------------|
+| UC (trong tài liệu) | Tên | Actor chính |
+|---------------------|-----|-------------|
 | UC16 | Quản lý hệ thống chi nhánh | Chủ doanh nghiệp (Admin) |
 | UC17 | Quản lý khách hàng toàn hệ thống | Admin |
 | UC18 | Quản lý hạng hội viên | Admin |
-| UC19 | Quản lý phòng hát | Admin (danh mục loại phòng) + QL chi nhánh (phòng vật lý) |
+| UC19 | Quản lý danh mục loại phòng | Admin |
+| UC20* | Quản lý phòng hát tại chi nhánh | Quản lý chi nhánh |
 
-### Q2. UC19 có 2 luồng actor — giải thích sự phân chia.
+⚠️ **UC20 trong tài liệu core xung đột** với UC20 của tab XÁC ĐỊNH YÊU CẦU (= Quản lý tài khoản nhân viên, thuộc module account). Đây là lỗi đánh số.
 
-- **Admin / Chủ doanh nghiệp**: Quản lý **danh mục loại phòng** (RoomType: VIP, Thường, Deluxe — giá chuẩn, sức chứa chuẩn, áp dụng toàn chuỗi)
-- **Quản lý chi nhánh**: Quản lý **phòng vật lý tại chi nhánh** (tạo phòng P01, gán loại, gán chi nhánh, sức chứa thực tế, trạng thái hiện tại)
+### Q2. UC19 và UC20 trong core khác nhau thế nào?
+
+| | UC19 | UC20 (trong core) |
+|--|------|------------------|
+| Tên | Quản lý danh mục **loại** phòng | Quản lý **phòng hát** tại chi nhánh |
+| Actor | Admin (Chủ doanh nghiệp) | Quản lý chi nhánh |
+| Phạm vi | Toàn chuỗi — chuẩn hóa loại phòng | 1 chi nhánh — phòng vật lý cụ thể |
+| Thao tác | Thêm/sửa/xóa loại phòng (VIP, Thường, Deluxe, sức chứa chuẩn, giá chuẩn) | Thêm/sửa/xóa phòng P01, gán loại, đổi trạng thái |
 
 ### Q3. Lỗi UC numbering trong tài liệu gốc của module này.
 
-Tài liệu core dùng **"Use Case 16/17/18/19/20"** thay vì **"UC16/UC17/UC18/UC19"** — sai format so với chuẩn account và XÁC ĐỊNH YÊU CẦU.
+Tài liệu core dùng **"Use Case 16/17/18/19/20"** thay vì **"UC16/UC17/UC18/UC19/UC20"** — sai format so với chuẩn account và XÁC ĐỊNH YÊU CẦU.
 
-Ngoài ra, core tự đặt "Use Case 20 = Quản lý phòng hát tại chi nhánh" — **xung đột** với UC20 = Quản lý tài khoản nhân viên (của module account). Cách sửa: gộp phòng vật lý vào UC19 (2 luồng actor), xóa "Use Case 20" trong core.
+Xung đột UC20: Core gán "Use Case 20 = Quản lý phòng hát tại chi nhánh" nhưng XÁC ĐỊNH YÊU CẦU quy định UC20 = Quản lý tài khoản nhân viên (account). **Cách sửa đề xuất**: gộp UC19+UC20 của core thành UC19 duy nhất với 2 luồng actor (Admin quản lý danh mục, QL chi nhánh quản lý phòng vật lý).
 
 ---
 
@@ -71,12 +78,17 @@ Boundary: MembershipTierPage, MembershipTierForm, ManualUpgradeModal
 Control:  MembershipTierController
 Entity:   MembershipTier, Customer
 ```
-**UC19 (Phòng hát):**
+**UC19 (Danh mục loại phòng — Admin):**
 ```
-Boundary: RoomTypePage, RoomTypeForm (Admin)
-          BranchManagerHomeView, RoomPage, RoomForm (QL chi nhánh)
+Boundary: RoomTypePage, RoomTypeForm
 Control:  RoomController
-Entity:   RoomType, Room, Booking(check xóa)
+Entity:   RoomType
+```
+**UC20* (Phòng hát tại chi nhánh — QL chi nhánh):**
+```
+Boundary: BranchManagerHomeView, RoomPage, RoomForm
+Control:  RoomController
+Entity:   Room, RoomType, Booking (kiểm tra trước xóa)
 ```
 
 ### Q7. II.4 — Kịch bản phiên bản 2 UC16 Quản lý chi nhánh.
@@ -105,6 +117,20 @@ Ngoại lệ: tên chi nhánh trùng → thông báo lỗi.
 7.  CustomerDetailPanel hiển thị đầy đủ, có nút "Khóa tài khoản"
 ```
 
+### Q8b. II.4 — Kịch bản phiên bản 2 UC20* Quản lý phòng hát tại chi nhánh.
+
+```
+1.  QL chi nhánh đăng nhập → BranchManagerHomeView, click "Quản lý phòng hát"
+2.  RoomPage gọi Room.getRoomsByBranch() → danh sách phòng chi nhánh hiển thị
+3.  QL chọn "Thêm mới" → RoomForm hiển thị
+4.  QL nhập Tên = "VIP-02", chọn Loại phòng = "VIP" từ dropdown (lấy từ danh mục Admin đã tạo)
+5.  QL nhấn Lưu → Room.addRoom()
+    (Sức chứa và Giá tự động kế thừa từ RoomType)
+6.  RoomPage hiển thị danh sách mới, thông báo "Thêm phòng thành công"
+```
+Ngoại lệ: tên phòng trùng trong cùng chi nhánh → thông báo lỗi, nhập lại.
+Xóa phòng: trước khi xóa gọi Booking.checkActiveBooking() — nếu có booking đang hoạt động → từ chối.
+
 ---
 
 ## PHA III — THIẾT KẾ
@@ -123,27 +149,45 @@ Lưu ý: module này quản lý **master data** của hệ thống — các bả
 
 ### Q10. III.3.2 — Bảng chữ ký hàm Controller.
 
-| Hàm | Controller | Input | Output |
-|-----|-----------|-------|--------|
-| `searchBranch()` | BranchController | keyword: String | List\<Branch\> |
-| `addBranch()` | BranchController | branch: Branch | Branch |
-| `updateBranch()` | BranchController | branch: Branch | Branch |
-| `deleteBranch()` | BranchController | id: int | boolean |
-| `searchCustomer()` | CustomerController | keyword: String | List\<Customer\> |
-| `getCustomerDetails()` | CustomerController | customerId: int | Customer |
-| `lockAccount()` | CustomerController | customerId: int | boolean |
-| `getAllTiers()` | MembershipTierController | — | List\<MembershipTier\> |
-| `updateTier()` | MembershipTierController | tier: MembershipTier | MembershipTier |
-| `manualUpgrade()` | MembershipTierController | customerId, tierId: int | Customer |
-| `getAllRoomTypes()` | RoomController | — | List\<RoomType\> |
-| `addRoomType()` | RoomController | roomType: RoomType | RoomType |
-| `updateRoomType()` | RoomController | roomType: RoomType | RoomType |
-| `deleteRoomType()` | RoomController | id: int | boolean |
-| `getRoomsByBranch()` | RoomController | branchId: int | List\<Room\> |
-| `addRoom()` | RoomController | room: Room | Room |
-| `updateRoom()` | RoomController | room: Room | Room |
-| `deleteRoom()` | RoomController | roomId: int | boolean |
-| `checkActiveBooking()` | RoomController | roomId: int | boolean |
+**BranchController** (UC16):
+
+| Hàm | Input | Output |
+|-----|-------|--------|
+| `searchBranch()` | keyword: String | List\<Branch\> |
+| `addBranch()` | branch: Branch | Branch |
+| `updateBranch()` | branch: Branch | Branch |
+| `deleteBranch()` | id: int | boolean |
+
+**CustomerController** (UC17):
+
+| Hàm | Input | Output |
+|-----|-------|--------|
+| `searchCustomer()` | keyword: String | List\<Customer\> |
+| `getCustomerDetails()` | customerId: int | Customer |
+| `getBookingHistory()` | customerId: int | List\<Booking\> |
+| `lockAccount()` | customerId: int | boolean |
+
+**MembershipTierController** (UC18):
+
+| Hàm | Input | Output |
+|-----|-------|--------|
+| `getAllTiers()` | — | List\<MembershipTier\> |
+| `updateTier()` | tier: MembershipTier | MembershipTier |
+| `manualUpgrade()` | customerId, tierId: int | Customer |
+
+**RoomController** (UC19 + UC20*):
+
+| Hàm | UC | Input | Output |
+|-----|----|-------|--------|
+| `getAllRoomTypes()` | UC19 | — | List\<RoomType\> |
+| `addRoomType()` | UC19 | roomType: RoomType | RoomType |
+| `updateRoomType()` | UC19 | roomType: RoomType | RoomType |
+| `deleteRoomType()` | UC19 | id: int | boolean |
+| `getRoomsByBranch()` | UC20 | branchId: int | List\<Room\> |
+| `addRoom()` | UC20 | room: Room | Room |
+| `updateRoom()` | UC20 | room: Room | Room |
+| `deleteRoom()` | UC20 | roomId: int | boolean |
+| `checkActiveBooking()` | UC20 | roomId: int | boolean |
 
 ### Q11. III.3.1 — Màn hình ManualUpgradeModal (UC18 đặc biệt).
 
@@ -168,29 +212,32 @@ Admin có thể nâng hạng thủ công (bỏ qua ngưỡng điểm) — dùng 
 
 ### Q12. Các loại test case quan trọng module Core.
 
-| Nhóm | Kịch bản |
-|------|---------|
-| **Chi nhánh** | Thêm chi nhánh mới → Branch lưu thành công |
-| **Chi nhánh** | Tên chi nhánh trùng → thông báo lỗi |
-| **Chi nhánh** | Xóa chi nhánh có phòng đang hoạt động → thông báo lỗi |
-| **Khách hàng** | Tìm theo SĐT → kết quả đúng |
-| **Khách hàng** | Khóa tài khoản → user không thể đăng nhập |
-| **Hạng HV** | Sửa ngưỡng điểm hạng Bạc → áp dụng ngay |
-| **Hạng HV** | Nâng hạng thủ công → Customer.tier cập nhật |
-| **Loại phòng** | Thêm loại phòng mới → RoomType tạo thành công |
-| **Loại phòng** | Xóa loại phòng đang có phòng vật lý → thông báo lỗi |
-| **Phòng vật lý** | Thêm phòng → Room.branch + Room.roomType gán đúng |
-| **Phòng vật lý** | Xóa phòng đang OCCUPIED → checkActiveBooking() → từ chối |
+| UC | Kịch bản |
+|----|---------|
+| **UC16** | Thêm chi nhánh mới → Branch lưu thành công |
+| **UC16** | Tên chi nhánh trùng → thông báo "không thể trùng" |
+| **UC16** | Xóa chi nhánh có phòng đang hoạt động → từ chối |
+| **UC17** | Tìm KH theo SĐT → kết quả đúng toàn chuỗi |
+| **UC17** | Xem lịch sử → hiển thị đúng Booking của KH |
+| **UC17** | Khóa tài khoản → user không đăng nhập được |
+| **UC18** | Sửa ngưỡng điểm hạng Bạc → áp dụng ngay cho toàn hệ thống |
+| **UC18** | Nâng hạng thủ công → Customer.tier cập nhật đúng |
+| **UC19** | Thêm loại phòng mới "Party" → RoomType tạo thành công |
+| **UC19** | Xóa loại phòng đang có phòng vật lý → thông báo "đang được sử dụng" |
+| **UC20*** | Thêm phòng VIP-02 → Room kế thừa sức chứa+giá từ RoomType |
+| **UC20*** | Xóa phòng đang có booking CHECKED_IN → checkActiveBooking() → từ chối |
 
 ---
 
 ## ĐIỂM ĐẶC BIỆT CẦN NHỚ
 
-- **Module này quản lý master data**: Branch, RoomType, MembershipTier — các bảng này là "backbone" được FK bởi mọi module khác
-- **Customer vs Client**: core gọi là `Customer`, account gọi là `Client` — cùng 1 thực thể nghiệp vụ, không nhất quán naming
-- **UC19 = 2 luồng**: Admin quản lý loại phòng (catalogue), QL chi nhánh quản lý phòng vật lý (instance)
-- **checkActiveBooking()**: bắt buộc gọi trước khi xóa phòng — nếu có booking CHECKED_IN → không cho xóa
-- **getBookingHistory()**: UC17 gọi sang module Booking để lấy lịch sử — đây là cross-module dependency
+- **Module này có 5 UC** (UC16–UC20*), không phải 4 — dễ nhầm vì UC19+UC20 đều liên quan phòng
+- **UC19 vs UC20**: UC19 = Admin quản lý **loại phòng chuẩn** (catalogue toàn chuỗi); UC20 = QL chi nhánh quản lý **phòng vật lý cụ thể** (instance từng chi nhánh)
+- **UC20 xung đột master list**: tài liệu core gán UC20 = phòng hát, nhưng XÁC ĐỊNH YÊU CẦU gán UC20 = quản lý tài khoản NV — khi nào hỏi thì thừa nhận lỗi đánh số
+- **Module này quản lý master data**: Branch, RoomType, MembershipTier — backbone của toàn hệ thống, bị FK bởi mọi module khác
+- **Customer vs Client**: core gọi là `Customer`, account gọi là `Client` — cùng 1 entity, không nhất quán naming
+- **checkActiveBooking()**: bắt buộc gọi trước khi xóa phòng — có booking CHECKED_IN → từ chối xóa
+- **getBookingHistory()**: UC17 gọi sang module Booking để lấy lịch sử — cross-module dependency
 
 ---
 
@@ -198,12 +245,17 @@ Admin có thể nâng hạng thủ công (bỏ qua ngưỡng điểm) — dùng 
 
 ### Q13. Biểu đồ UC (I.1) — 5 biểu đồ UC chi tiết (lỗi UC numbering).
 
-Tài liệu gốc gọi là "Use Case 16/17/18/19/20" (sai format, đúng là UC16-19):
-- **UC16**: Admin → include "Tìm chi nhánh", "Thêm/Sửa/Xóa chi nhánh"
-- **UC17**: Admin → include "Tìm khách hàng", "Xem chi tiết", "Xem lịch sử booking", extend "Khóa tài khoản"
-- **UC18**: Admin → include "Xem danh sách hạng", "Sửa hạng"; extend "Nâng hạng thủ công"
-- **UC19** (loại phòng — Admin): include "Xem danh mục", "Thêm/Sửa/Xóa loại phòng"
-- **"UC20"** (phòng vật lý — QL chi nhánh): include "Xem phòng chi nhánh", "Thêm/Sửa/Xóa phòng"
+Tài liệu gốc gọi là "Use Case 16/17/18/19/20" (sai format, đúng phải là UCxx):
+
+| UC (trong tài liệu) | Actor | UC con (Include) | UC con (Extend) |
+|---------------------|-------|-----------------|----------------|
+| UC16 | Admin | Thêm/Sửa/Xóa chi nhánh | — |
+| UC17 | Admin | Tìm KH, Xem chi tiết, Xem lịch sử booking | Khóa tài khoản |
+| UC18 | Admin | Xem/Sửa cấu hình hạng | Thay đổi hạng thủ công |
+| UC19 | Admin | Thêm/Sửa/Xóa loại phòng | — |
+| UC20* | QL chi nhánh | Thêm/Sửa/Xóa phòng vật lý | — |
+
+⚠️ UC20 trong core **xung đột với master list** (XÁC ĐỊNH YÊU CẦU): UC20 = Quản lý tài khoản nhân viên (account).
 
 ### Q14. Biểu đồ thực thể (II.2) — lớp Booking là "ngoại lai".
 
