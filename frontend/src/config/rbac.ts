@@ -11,18 +11,19 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_ROUTES: Record<Role, string[]> = {
   ADMIN: ['*'],
   BRANCH_MANAGER: [
-    '/manager', '/reports', '/branch-report', '/chain-report', '/employees', '/customers', '/membership',
-    '/rooms', '/room-session', '/orders', '/order-management',
-    '/menu', '/inventory', '/checkout', '/booking-management', '/settings', '/profile',
+    '/branch-report', '/employees', '/rooms', '/room-session',
+    '/orders', '/order-management', '/menu', '/inventory',
+    '/checkout', '/booking-management', '/settings', '/profile',
     '/damage-reports', '/facilities', '/import-receipts', '/providers',
-    '/room-types', '/customer-info',
+    '/customer-info',
   ],
   RECEPTIONIST: [
     '/', '/booking', '/booking-management', '/rooms', '/room-session',
-    '/customers', '/orders', '/checkout', '/profile',
+    '/checkout', '/profile',
   ],
   SERVICE_STAFF: [
-    '/orders', '/order-management', '/menu', '/inventory', '/rooms', '/room-session', '/profile',
+    '/orders', '/order-management', '/rooms', '/room-session',
+    '/damage-reports', '/facilities', '/profile',
   ],
   CLIENT: ['/booking', '/orders', '/profile'],
 };
