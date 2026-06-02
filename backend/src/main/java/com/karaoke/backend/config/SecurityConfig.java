@@ -36,8 +36,9 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // UC13/UC21: Reports — Admin only
-                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                        // UC13: Branch reports — Admin + Branch Manager
+                        // UC21: Chain reports — Admin only (controller-level check if needed)
+                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
                         // UC20: Employees — Admin only
                         .requestMatchers("/api/employees/**").hasRole("ADMIN")
                         // UC11: HR endpoints — Admin + Branch Manager
