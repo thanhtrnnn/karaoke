@@ -503,6 +503,23 @@ class MembershipController {
         }
         return result;
     }
+
+    // UC18: Nâng hạng thủ công cho khách hàng cụ thể
+    @PatchMapping("/clients/{clientId}/tier") @Operation(summary = "Thay đổi hạng thủ công cho khách hàng (UC18)")
+    @Transactional
+    Client manualUpgrade(@PathVariable String clientId, @RequestBody java.util.Map<String, String> body) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("Client not found: " + clientId));
+        String newTier = body.get("tierName");
+        if (newTier == null || newTier.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "tierName is required");
+        }
+        if (!tierRepository.existsById(newTier)) {
+            throw new EntityNotFoundException("Tier not found: " + newTier);
+        }
+        client.setTier(newTier);
+        return clientRepository.save(client);
+    }
 }
 
 // ─── Promotion ────────────────────────────────────────────────────────────────

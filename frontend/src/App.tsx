@@ -119,7 +119,7 @@ function App() {
           <Route path="/chain-report" element={<ChainReportPage />} />
 
           {/* Branch Report (UC13) */}
-          <Route path="/reports" element={<BranchReportPage />} />
+          <Route path="/branch-report" element={<BranchReportPage />} />
 
           {/* Customer Info (UC14) */}
           <Route path="/customer-info" element={<CustomerInfoPage />} />

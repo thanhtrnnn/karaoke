@@ -18,6 +18,15 @@ export default function MembershipPage() {
   const [editingTier, setEditingTier] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ minPoints: 0, discount: '' });
 
+  // UC18: Manual tier upgrade state
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [newTier, setNewTier] = useState('');
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeMsg, setUpgradeMsg] = useState('');
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     Promise.all([
@@ -50,6 +59,53 @@ export default function MembershipPage() {
         setEditingTier(null);
       })
       .catch(console.error);
+  };
+
+  // UC18: Search customer for manual tier change
+  const handleSearch = async () => {
+    if (!searchKeyword.trim()) return;
+    setSearching(true);
+    setSelectedClient(null);
+    setSearchResults([]);
+    setUpgradeMsg('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/clients?keyword=${encodeURIComponent(searchKeyword)}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) setSearchResults(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setSearching(false); }
+  };
+
+  const selectClient = (c: any) => {
+    setSelectedClient(c);
+    setNewTier(c.tier || '');
+    setUpgradeMsg('');
+  };
+
+  const handleUpgrade = async () => {
+    if (!selectedClient || !newTier) return;
+    setUpgrading(true);
+    setUpgradeMsg('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/membership/clients/${selectedClient.id}/tier`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ tierName: newTier }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUpgradeMsg(`✅ Đã đổi hạng ${updated.fullName} → ${newTier}`);
+        setSelectedClient(updated);
+        setSearchResults(prev => prev.map(c => c.id === updated.id ? updated : c));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setUpgradeMsg(`❌ ${err.message || 'Lỗi khi đổi hạng'}`);
+      }
+    } catch (e) { setUpgradeMsg('❌ Lỗi kết nối'); }
+    finally { setUpgrading(false); }
   };
 
   if (loading) {
@@ -116,6 +172,100 @@ export default function MembershipPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* UC18: Manual tier upgrade */}
+      <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
+        <h2 className="font-h2 text-white mb-4">Thay đổi hạng thủ công</h2>
+        <p className="text-slate-400 text-sm mb-4">Tìm khách hàng và đổi hạng trực tiếp (bỏ qua ngưỡng điểm tự động).</p>
+
+        {/* Search */}
+        <div className="flex gap-3 mb-4">
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={e => setSearchKeyword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Nhập tên hoặc SĐT khách hàng..."
+            className="flex-1 bg-surface-secondary border border-slate-700/50 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-primary-container"
+          />
+          <button onClick={handleSearch} disabled={searching}
+            className="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-semibold hover:bg-primary transition-colors disabled:opacity-50">
+            {searching ? 'Đang tìm...' : 'Tìm kiếm'}
+          </button>
+        </div>
+
+        {/* Search results */}
+        {searchResults.length > 0 && (
+          <div className="mb-4 bg-surface-container-high rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-700 text-slate-300">
+                <tr>
+                  <th className="px-4 py-2 text-left">Họ tên</th>
+                  <th className="px-4 py-2 text-left">SĐT</th>
+                  <th className="px-4 py-2 text-left">Hạng hiện tại</th>
+                  <th className="px-4 py-2 text-left">Điểm</th>
+                  <th className="px-4 py-2 text-left">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {searchResults.map((c: any) => (
+                  <tr key={c.id} className={`hover:bg-slate-800 transition-colors ${selectedClient?.id === c.id ? 'bg-slate-800' : ''}`}>
+                    <td className="px-4 py-2 text-white">{c.fullName}</td>
+                    <td className="px-4 py-2 text-slate-300">{c.phone}</td>
+                    <td className="px-4 py-2 text-primary-container">{c.tier || '—'}</td>
+                    <td className="px-4 py-2 text-slate-300">{c.loyaltyPoints?.toLocaleString() ?? 0}</td>
+                    <td className="px-4 py-2">
+                      <button onClick={() => selectClient(c)}
+                        className="px-3 py-1 bg-surface-secondary border border-border-subtle rounded text-xs text-slate-300 hover:border-primary-container hover:text-primary-container transition-colors">
+                        Chọn
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Upgrade form */}
+        {selectedClient && (
+          <div className="bg-surface-container-high rounded-lg p-5 border border-slate-700/50">
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <span className="text-slate-400 text-xs uppercase">Khách hàng</span>
+                <p className="text-white font-medium">{selectedClient.fullName} ({selectedClient.phone})</p>
+              </div>
+              <div>
+                <span className="text-slate-400 text-xs uppercase">Hạng hiện tại</span>
+                <p className="text-primary-container font-medium">{selectedClient.tier || '—'}</p>
+              </div>
+              <div>
+                <span className="text-slate-400 text-xs uppercase">Hạng mới</span>
+                <select
+                  value={newTier}
+                  onChange={e => setNewTier(e.target.value)}
+                  className="bg-surface-secondary border border-slate-700/50 rounded px-3 py-1.5 text-white text-sm focus:outline-none focus:border-primary-container"
+                >
+                  <option value="">-- Chọn hạng --</option>
+                  {tiers.map(t => (
+                    <option key={t.tierName} value={t.tierName}>{t.tierName}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleUpgrade}
+                disabled={upgrading || !newTier || newTier === selectedClient.tier}
+                className="px-5 py-2 bg-primary-container text-on-primary-container rounded-lg font-semibold hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {upgrading ? 'Đang xử lý...' : 'Xác nhận đổi hạng'}
+              </button>
+            </div>
+            {upgradeMsg && (
+              <p className={`mt-3 text-sm ${upgradeMsg.startsWith('✅') ? 'text-green-400' : 'text-red-400'}`}>{upgradeMsg}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
