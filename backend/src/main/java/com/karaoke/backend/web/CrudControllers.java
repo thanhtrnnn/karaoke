@@ -39,9 +39,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.server.ResponseStatusException;
+import com.karaoke.backend.repository.BookingRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,8 +65,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Branches", description = "Quản lý chi nhánh")
 class BranchController {
     private final BranchRepository repository;
+    private final RoomRepository roomRepository;
 
-    BranchController(BranchRepository repository) { this.repository = repository; }
+    BranchController(BranchRepository repository, RoomRepository roomRepository) {
+        this.repository = repository;
+        this.roomRepository = roomRepository;
+    }
 
     @GetMapping @Operation(summary = "Danh sách chi nhánh")
     List<Branch> list() { return repository.findAll(); }
@@ -81,7 +91,13 @@ class BranchController {
     }
 
     @DeleteMapping("/{id}") @Operation(summary = "Xóa chi nhánh")
-    void delete(@PathVariable String id) { repository.deleteById(id); }
+    void delete(@PathVariable String id) {
+        // UC16: không xóa chi nhánh còn phòng
+        if (roomRepository.existsByBranchId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chi nhánh còn phòng, không thể xóa");
+        }
+        repository.deleteById(id);
+    }
 }
 
 // ─── Client ───────────────────────────────────────────────────────────────────
@@ -94,8 +110,11 @@ class ClientController {
 
     ClientController(ClientRepository repository) { this.repository = repository; }
 
-    @GetMapping @Operation(summary = "Danh sách khách hàng")
-    List<Client> list() { return repository.findAll(); }
+    @GetMapping @Operation(summary = "Danh sách khách hàng — hỗ trợ keyword search (UC14, UC17)")
+    List<Client> list(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isBlank()) return repository.searchByKeyword(keyword);
+        return repository.findAll();
+    }
 
     @GetMapping("/{id}") @Operation(summary = "Chi tiết khách hàng")
     Client get(@PathVariable String id) {
@@ -114,6 +133,13 @@ class ClientController {
 
     @DeleteMapping("/{id}") @Operation(summary = "Xóa khách hàng")
     void delete(@PathVariable String id) { repository.deleteById(id); }
+
+    @PatchMapping("/{id}/lock") @Operation(summary = "Khóa/mở khóa tài khoản khách hàng (UC17)")
+    Client lock(@PathVariable String id) {
+        Client client = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Client not found: " + id));
+        client.setActive(!client.isActive());
+        return repository.save(client);
+    }
 }
 
 // ─── RoomType ─────────────────────────────────────────────────────────────────
@@ -166,12 +192,19 @@ class RoomTypeController {
 @Tag(name = "Rooms", description = "Quản lý phòng hát")
 class RoomController {
     private final RoomRepository repository;
+    private final BookingRepository bookingRepository;
 
-    RoomController(RoomRepository repository) { this.repository = repository; }
+    RoomController(RoomRepository repository, BookingRepository bookingRepository) {
+        this.repository = repository;
+        this.bookingRepository = bookingRepository;
+    }
 
-    @GetMapping @Operation(summary = "Danh sách phòng")
-    List<Room> list(@RequestParam(required = false) RoomStatus status) {
-        return status == null ? repository.findAll() : repository.findByStatus(status);
+    @GetMapping @Operation(summary = "Danh sách phòng — lọc theo status hoặc branchId (UC20)")
+    List<Room> list(@RequestParam(required = false) RoomStatus status,
+                    @RequestParam(required = false) String branchId) {
+        List<Room> all = status == null ? repository.findAll() : repository.findByStatus(status);
+        if (branchId != null) all = all.stream().filter(r -> r.getBranch() != null && branchId.equals(r.getBranch().getId())).toList();
+        return all;
     }
 
     @GetMapping("/{id}") @Operation(summary = "Chi tiết phòng")
@@ -197,7 +230,13 @@ class RoomController {
     }
 
     @DeleteMapping("/{id}") @Operation(summary = "Xóa phòng")
-    void delete(@PathVariable String id) { repository.deleteById(id); }
+    void delete(@PathVariable String id) {
+        // UC20: không xóa phòng đang có đặt chỗ active
+        if (bookingRepository.existsActiveByRoomId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phòng đang có đặt chỗ, không thể xóa");
+        }
+        repository.deleteById(id);
+    }
 }
 
 // ─── Product ──────────────────────────────────────────────────────────────────
@@ -258,8 +297,15 @@ class EmployeeController {
 
     EmployeeController(EmployeeRepository repository) { this.repository = repository; }
 
-    @GetMapping @Operation(summary = "Danh sách nhân viên")
-    List<Employee> list() { return repository.findAll(); }
+    @GetMapping @Operation(summary = "Danh sách nhân viên — lọc theo branchId (UC11)")
+    List<Employee> list(@RequestParam(required = false) String branchId) {
+        return branchId != null ? repository.findByBranchId(branchId) : repository.findAll();
+    }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết nhân viên")
+    Employee get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Employee not found: " + id));
+    }
 
     @PostMapping @Operation(summary = "Tạo nhân viên")
     Employee create(@RequestBody Employee employee) { return repository.save(employee); }
@@ -284,15 +330,24 @@ class RoomReceiptController {
     private final RoomReceiptRepository repository;
     private final OrderRepository orderRepository;
     private final RoomRepository roomRepository;
+    private final ClientRepository clientRepository;
+    private final PromotionRepository promotionRepository;
 
-    RoomReceiptController(RoomReceiptRepository repository, OrderRepository orderRepository, RoomRepository roomRepository) {
+    RoomReceiptController(RoomReceiptRepository repository, OrderRepository orderRepository,
+                          RoomRepository roomRepository, ClientRepository clientRepository,
+                          PromotionRepository promotionRepository) {
         this.repository = repository;
         this.orderRepository = orderRepository;
         this.roomRepository = roomRepository;
+        this.clientRepository = clientRepository;
+        this.promotionRepository = promotionRepository;
     }
 
-    @GetMapping @Operation(summary = "Danh sách hóa đơn phòng")
-    List<RoomReceipt> list() { return repository.findAll(); }
+    @GetMapping @Operation(summary = "Danh sách hóa đơn phòng — hỗ trợ filter clientId (UC14)")
+    List<RoomReceipt> list(@RequestParam(required = false) String clientId) {
+        if (clientId != null) return repository.findByBooking_Customer_Id(clientId);
+        return repository.findAll();
+    }
 
     @PostMapping @Operation(summary = "Tạo hóa đơn phòng")
     RoomReceipt create(@RequestBody RoomReceipt receipt) { return repository.save(receipt); }
@@ -302,17 +357,37 @@ class RoomReceiptController {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("RoomReceipt not found: " + id));
     }
 
-    @PutMapping("/{id}/pay") @Operation(summary = "Thanh toán hóa đơn")
+    // UC08: Thanh toán — cập nhật room status + tích lũy điểm khách hàng
+    @PutMapping("/{id}/pay") @Operation(summary = "Thanh toán hóa đơn (UC08)")
+    @Transactional
     RoomReceipt pay(@PathVariable String id, @RequestBody(required = false) java.util.Map<String, String> body) {
         RoomReceipt receipt = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("RoomReceipt not found: " + id));
         receipt.setStatus(InvoiceStatus.PAID);
-        receipt.setPaidAt(java.time.LocalDateTime.now());
+        receipt.setPaidAt(LocalDateTime.now());
         if (body != null && body.containsKey("paymentMethod")) {
             try { receipt.setPaymentMethod(PaymentMethod.valueOf(body.get("paymentMethod"))); }
             catch (IllegalArgumentException ignored) {}
         }
-        return repository.save(receipt);
+        RoomReceipt saved = repository.save(receipt);
+
+        // Cập nhật Room → AVAILABLE sau thanh toán
+        if (receipt.getBooking() != null && receipt.getBooking().getRoom() != null) {
+            Room room = receipt.getBooking().getRoom();
+            room.setStatus(RoomStatus.AVAILABLE);
+            roomRepository.save(room);
+        }
+
+        // UC08: Tích lũy điểm khách hàng (grandTotal / 10,000)
+        if (receipt.getBooking() != null && receipt.getBooking().getCustomer() != null
+                && receipt.getGrandTotal() != null) {
+            Client client = receipt.getBooking().getCustomer();
+            int pointsEarned = receipt.getGrandTotal().divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
+            client.setPoints((client.getPoints() != null ? client.getPoints() : 0) + pointsEarned);
+            clientRepository.save(client);
+        }
+
+        return saved;
     }
 
     @PutMapping("/{id}") @Operation(summary = "Cập nhật hóa đơn")
@@ -322,7 +397,36 @@ class RoomReceiptController {
         return repository.save(receipt);
     }
 
-    @PostMapping("/generate") @Operation(summary = "Tạo hóa đơn từ order của phòng")
+    // UC08: Áp dụng khuyến mãi / voucher
+    @PostMapping("/{id}/apply-promotion") @Operation(summary = "Áp dụng mã khuyến mãi vào hóa đơn (UC08)")
+    @Transactional
+    RoomReceipt applyPromotion(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
+        RoomReceipt receipt = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("RoomReceipt not found: " + id));
+        String promoId = body.get("voucherCode");
+        com.karaoke.backend.domain.Promotion promo = promotionRepository.findById(promoId)
+                .orElseThrow(() -> new EntityNotFoundException("Promotion not found: " + promoId));
+
+        if (!promo.isTrangThai()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã khuyến mãi đã hết hạn");
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        if (promo.getNgayKetThuc() != null && today.isAfter(promo.getNgayKetThuc())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã khuyến mãi đã hết hạn");
+        }
+
+        BigDecimal discount = promo.getGiaTriGiam() != null ? promo.getGiaTriGiam() : BigDecimal.ZERO;
+        receipt.setDiscount(discount);
+        BigDecimal base = (receipt.getRoomTotal() != null ? receipt.getRoomTotal() : BigDecimal.ZERO)
+                .add(receipt.getServiceTotal() != null ? receipt.getServiceTotal() : BigDecimal.ZERO);
+        receipt.setGrandTotal(base.subtract(discount).max(BigDecimal.ZERO));
+        return repository.save(receipt);
+    }
+
+    // UC08: Tính hóa đơn từ check-in thực tế
+    @PostMapping("/generate") @Operation(summary = "Tính hóa đơn từ order + giờ thực tế (UC08)")
+    @Transactional
     RoomReceipt generate(@RequestParam String roomId) {
         BigDecimal serviceTotal = orderRepository.findByRoomId(roomId).stream()
                 .flatMap(o -> o.getItems().stream())
@@ -331,16 +435,38 @@ class RoomReceiptController {
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
-        BigDecimal roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
 
-        RoomReceipt receipt = new RoomReceipt();
-        receipt.setId("RR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        receipt.setRoomTotal(roomTotal);
-        receipt.setServiceTotal(serviceTotal);
-        receipt.setDiscount(BigDecimal.ZERO);
-        receipt.setGrandTotal(roomTotal.add(serviceTotal));
-        receipt.setStatus(InvoiceStatus.DRAFT);
-        return repository.save(receipt);
+        // Tìm RoomReceipt DRAFT đang mở (tạo từ check-in)
+        java.util.Optional<RoomReceipt> existingDraft = repository.findDraftByRoomId(roomId);
+        RoomReceipt receipt = existingDraft.orElse(null);
+
+        if (receipt != null) {
+            // Tính roomTotal từ checkinTime thực tế
+            BigDecimal roomTotal;
+            if (receipt.getCheckinTime() != null) {
+                double hours = Duration.between(receipt.getCheckinTime(), LocalDateTime.now()).toMinutes() / 60.0;
+                hours = Math.max(hours, 0.5); // tối thiểu 30 phút
+                roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(hours));
+            } else {
+                roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
+            }
+            receipt.setRoomTotal(roomTotal);
+            receipt.setServiceTotal(serviceTotal);
+            receipt.setDiscount(receipt.getDiscount() != null ? receipt.getDiscount() : BigDecimal.ZERO);
+            receipt.setGrandTotal(roomTotal.add(serviceTotal).subtract(receipt.getDiscount()));
+            return repository.save(receipt);
+        }
+
+        // Không có draft → tạo mới
+        BigDecimal roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
+        RoomReceipt newReceipt = new RoomReceipt();
+        newReceipt.setId("RR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        newReceipt.setRoomTotal(roomTotal);
+        newReceipt.setServiceTotal(serviceTotal);
+        newReceipt.setDiscount(BigDecimal.ZERO);
+        newReceipt.setGrandTotal(roomTotal.add(serviceTotal));
+        newReceipt.setStatus(InvoiceStatus.DRAFT);
+        return repository.save(newReceipt);
     }
 }
 

@@ -75,28 +75,51 @@ public class ReportController {
                             }
                             """)))
     )
-    Map<String, Object> summary() {
-        BigDecimal revenue = orders.findAll().stream()
+    Map<String, Object> summary(
+            @RequestParam(required = false) String branchId,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+        java.util.function.Predicate<Order> datePredicate = order -> {
+            if (order.getOrderedAt() == null) return true;
+            if (from != null) {
+                try { if (order.getOrderedAt().toLocalDate().isBefore(java.time.LocalDate.parse(from))) return false; } catch (Exception ignored) {}
+            }
+            if (to != null) {
+                try { if (order.getOrderedAt().toLocalDate().isAfter(java.time.LocalDate.parse(to))) return false; } catch (Exception ignored) {}
+            }
+            return true;
+        };
+
+        java.util.List<Order> filteredOrders = orders.findAll().stream().filter(datePredicate).toList();
+
+        BigDecimal revenueFnB = filteredOrders.stream()
                 .map(order -> order.getItems() == null ? BigDecimal.ZERO :
                         order.getItems().stream()
                                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                                 .reduce(BigDecimal.ZERO, BigDecimal::add))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        long occupiedRooms = rooms.findAll().stream()
-                .filter(room -> room.getStatus() == RoomStatus.OCCUPIED)
-                .count();
+        java.util.List<com.karaoke.backend.domain.Room> allRooms = branchId != null
+                ? rooms.findAll().stream().filter(r -> r.getBranch() != null && branchId.equals(r.getBranch().getId())).toList()
+                : rooms.findAll();
 
-        return Map.of(
-                "rooms", rooms.count(),
-                "occupiedRooms", occupiedRooms,
-                "clients", clients.count(),
-                "products", products.count(),
-                "bookings", bookings.count(),
-                "orders", orders.count(),
-                "employees", employees.count(),
-                "revenue", revenue
-        );
+        long totalRooms = allRooms.size();
+        long occupiedRooms = allRooms.stream().filter(room -> room.getStatus() == RoomStatus.OCCUPIED).count();
+        long occupancyRate = totalRooms > 0 ? (occupiedRooms * 100 / totalRooms) : 0;
+
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("rooms", totalRooms);
+        result.put("occupiedRooms", occupiedRooms);
+        result.put("occupancyRate", occupancyRate);
+        result.put("clients", clients.count());
+        result.put("products", products.count());
+        result.put("bookings", bookings.count());
+        result.put("orders", filteredOrders.size());
+        result.put("employees", employees.count());
+        result.put("revenue", revenueFnB);
+        result.put("revenueFnB", revenueFnB);
+        return result;
     }
 
     @GetMapping("/revenue")
@@ -164,6 +187,21 @@ public class ReportController {
                 }
                 for (int m = 1; m <= 12; m++) {
                     result.add(Map.of("label", "Th" + m, "value", monthMap.get(m).longValue()));
+                }
+            }
+            // UC21: quarterly period (Quý 1–4)
+            case "quarterly" -> {
+                BigDecimal[] quarters = { BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO };
+                for (Order o : allOrders) {
+                    if (o.getOrderedAt() == null) continue;
+                    ZonedDateTime ordered = o.getOrderedAt().atZone(ZoneId.systemDefault()).withZoneSameInstant(gmt7);
+                    if (ordered.getYear() == now.getYear()) {
+                        int q = (ordered.getMonthValue() - 1) / 3;
+                        quarters[q] = quarters[q].add(orderTotal.apply(o));
+                    }
+                }
+                for (int q = 0; q < 4; q++) {
+                    result.add(Map.of("label", "Q" + (q + 1), "value", quarters[q].longValue()));
                 }
             }
         }

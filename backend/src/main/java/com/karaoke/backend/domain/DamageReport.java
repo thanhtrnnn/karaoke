@@ -1,10 +1,15 @@
 package com.karaoke.backend.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +26,14 @@ public class DamageReport {
     private String maBaoCao;
     private LocalDateTime ngayTao;
     private String trangThai;
+    private BigDecimal totalFine;
 
     @ManyToOne
-    private User employee;
+    private Employee employee;
+
+    @ManyToOne
+    private RoomReceipt roomReceipt;
+
+    @OneToMany(mappedBy = "damageReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DamageDetail> details = new ArrayList<>();
 }

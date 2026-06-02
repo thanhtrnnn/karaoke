@@ -29,6 +29,7 @@ public class RoomReceipt {
     @ManyToOne
     private Booking booking;
 
+    private LocalDateTime checkinTime;
     private BigDecimal roomTotal;
     private BigDecimal serviceTotal;
     private BigDecimal discount;

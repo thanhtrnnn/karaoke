@@ -20,6 +20,9 @@ public class Facility {
     private String tenTaiSan;
     private String loai;
     private String trangThai;
+    private Integer soLuong;
+    private java.math.BigDecimal giaBuuCap;
+    private String donVi;
 
     @ManyToOne
     private Room room;

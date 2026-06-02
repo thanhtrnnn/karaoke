@@ -31,4 +31,5 @@ public class Employee {
     private Branch branch;
 
     private boolean active = true;
+    private String status = "Working";
 }

@@ -27,6 +27,7 @@ public class Product {
     private BigDecimal price;
     private Integer stock;
     private Integer soLuongToiThieu;
+    private String unit;
     private String image;
     private boolean active = true;
 }

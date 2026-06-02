@@ -71,10 +71,10 @@ public class DataSeeder {
             RoomType rtDeluxe = roomTypes.save(new RoomType("LR003", "Deluxe", 20, new BigDecimal("200000"), true));
 
             clients.saveAll(List.of(
-                    new Client("KH001", "Anh", "Tuấn", "Nguyễn Văn", "Nguyễn Văn Tuấn", "0901234567", "Vàng", 1250),
-                    new Client("KH002", "Chị", "Lan", "Trần Thị", "Trần Thị Lan", "0912345678", "Bạc", 450),
-                    new Client("KH003", "Anh", "Hoàng", "Lê", "Lê Hoàng", "0923456789", "Đồng", 120),
-                    new Client("KH004", "Chị", "Minh", "Phạm", "Phạm Minh", "0934567890", "Kim cương", 5200)
+                    new Client("KH001", "Anh", "Tuấn", "Nguyễn Văn", "Nguyễn Văn Tuấn", "0901234567", "Vàng", 1250, true),
+                    new Client("KH002", "Chị", "Lan", "Trần Thị", "Trần Thị Lan", "0912345678", "Bạc", 450, true),
+                    new Client("KH003", "Anh", "Hoàng", "Lê", "Lê Hoàng", "0923456789", "Đồng", 120, true),
+                    new Client("KH004", "Chị", "Minh", "Phạm", "Phạm Minh", "0934567890", "Kim cương", 5200, true)
             ));
 
             tiers.saveAll(List.of(
@@ -96,23 +96,23 @@ public class DataSeeder {
             Room r04 = rooms.save(new Room("P04", "Deluxe 01", rtDeluxe, 20, new BigDecimal("200000"), RoomStatus.AVAILABLE, mainBranch, true));
             Room r05 = rooms.save(new Room("P05", "P.05", rtThuong, 8, new BigDecimal("80000"), RoomStatus.AVAILABLE, mainBranch, true));
 
-            Product sp01 = products.save(new Product("SP001", "Bia Tiger", "Đồ uống", new BigDecimal("30000"), 45, 10, "/images/beer.png", true));
+            Product sp01 = products.save(new Product("SP001", "Bia Tiger", "Đồ uống", new BigDecimal("30000"), 45, 10, "Lon", "/images/beer.png", true));
             products.saveAll(List.of(
-                    new Product("SP002", "Bia Heineken", "Đồ uống", new BigDecimal("35000"), 32, 8, "/images/beer.png", true),
-                    new Product("SP003", "Nước cam", "Đồ uống", new BigDecimal("25000"), 20, 5, "/images/fruit.png", true),
-                    new Product("SP004", "Sinh tố bơ", "Đồ uống", new BigDecimal("40000"), 15, 5, "/images/fruit.png", true),
-                    new Product("SP005", "Chivas 18", "Đồ uống", new BigDecimal("2500000"), 5, 1, "/images/beer.png", true),
-                    new Product("SP006", "Khô mực nướng", "Đồ ăn", new BigDecimal("120000"), 15, 3, "/images/snack.png", true),
-                    new Product("SP007", "Mì xào hải sản", "Đồ ăn", new BigDecimal("85000"), 20, 5, "/images/snack.png", true),
-                    new Product("SP008", "Khoai tây chiên", "Đồ ăn", new BigDecimal("50000"), 30, 5, "/images/snack.png", true),
-                    new Product("SP009", "Bò lúc lắc", "Đồ ăn", new BigDecimal("150000"), 10, 2, "/images/snack.png", true),
-                    new Product("SP010", "Trái cây dĩa", "Trái cây", new BigDecimal("120000"), 12, 3, "/images/fruit.png", true)
+                    new Product("SP002", "Bia Heineken", "Đồ uống", new BigDecimal("35000"), 32, 8, "Lon", "/images/beer.png", true),
+                    new Product("SP003", "Nước cam", "Đồ uống", new BigDecimal("25000"), 20, 5, "Ly", "/images/fruit.png", true),
+                    new Product("SP004", "Sinh tố bơ", "Đồ uống", new BigDecimal("40000"), 15, 5, "Ly", "/images/fruit.png", true),
+                    new Product("SP005", "Chivas 18", "Đồ uống", new BigDecimal("2500000"), 5, 1, "Chai", "/images/beer.png", true),
+                    new Product("SP006", "Khô mực nướng", "Đồ ăn", new BigDecimal("120000"), 15, 3, "Đĩa", "/images/snack.png", true),
+                    new Product("SP007", "Mì xào hải sản", "Đồ ăn", new BigDecimal("85000"), 20, 5, "Đĩa", "/images/snack.png", true),
+                    new Product("SP008", "Khoai tây chiên", "Đồ ăn", new BigDecimal("50000"), 30, 5, "Đĩa", "/images/snack.png", true),
+                    new Product("SP009", "Bò lúc lắc", "Đồ ăn", new BigDecimal("150000"), 10, 2, "Đĩa", "/images/snack.png", true),
+                    new Product("SP010", "Trái cây dĩa", "Trái cây", new BigDecimal("120000"), 12, 3, "Đĩa", "/images/fruit.png", true)
             ));
 
             employees.saveAll(List.of(
-                    new Employee("NV001", "Nguyễn Thị Lễ Tân", "0981000001", UserRole.RECEPTIONIST, mainBranch, true),
-                    new Employee("NV002", "Trần Văn Phục Vụ", "0981000002", UserRole.SERVICE_STAFF, mainBranch, true),
-                    new Employee("NV003", "Lê Minh Quản Lý", "0981000003", UserRole.BRANCH_MANAGER, mainBranch, true)
+                    new Employee("NV001", "Nguyễn Thị Lễ Tân", "0981000001", UserRole.RECEPTIONIST, mainBranch, true, "Working"),
+                    new Employee("NV002", "Trần Văn Phục Vụ", "0981000002", UserRole.SERVICE_STAFF, mainBranch, true, "Working"),
+                    new Employee("NV003", "Lê Minh Quản Lý", "0981000003", UserRole.BRANCH_MANAGER, mainBranch, true, "Working")
             ));
 
             Client cust1 = clients.findById("KH001").orElseThrow();
@@ -141,9 +141,9 @@ public class DataSeeder {
 
             // Facility seed
             facilities.saveAll(List.of(
-                    new Facility("TS001", "Micro karaoke", "Thiết bị âm thanh", "Bình thường", r01),
-                    new Facility("TS002", "Loa JBL", "Thiết bị âm thanh", "Bình thường", r01),
-                    new Facility("TS003", "Micro karaoke", "Thiết bị âm thanh", "Bình thường", r02)
+                    new Facility("TS001", "Micro karaoke", "Thiết bị âm thanh", "Bình thường", 5, new BigDecimal("500000"), "Cái", r01),
+                    new Facility("TS002", "Loa JBL", "Thiết bị âm thanh", "Bình thường", 2, new BigDecimal("2000000"), "Cái", r01),
+                    new Facility("TS003", "Micro karaoke", "Thiết bị âm thanh", "Bình thường", 5, new BigDecimal("500000"), "Cái", r02)
             ));
 
             createSeedOrder(orders, r01, sp01, products.findById("SP010").orElseThrow(), "ORD001", OrderStatus.PENDING);

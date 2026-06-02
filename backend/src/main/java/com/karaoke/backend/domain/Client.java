@@ -29,4 +29,5 @@ public class Client {
 
     private String tier;
     private Integer points;
+    private boolean active = true;
 }
