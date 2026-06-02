@@ -82,7 +82,7 @@ export default function BookingPage() {
     try {
       const token = localStorage.getItem('token');
       // Look up customer by phone
-      const custRes = await fetch('/api/customers', { headers: { 'Authorization': `Bearer ${token}` } });
+      const custRes = await fetch('/api/clients', { headers: { 'Authorization': `Bearer ${token}` } });
       if (!custRes.ok) { alert('Không thể tải danh sách khách hàng!'); setBooking(false); return; }
       const customers = await custRes.json();
       const customer = customers.find((c: any) => c.phone === customerPhone);
@@ -95,7 +95,7 @@ export default function BookingPage() {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerId: customer.id,
+          clientId: customer.id,
           roomId: selectedRoom.id,
           startTime: `${bookingDate}T${startTime}:00`,
           endTime: `${bookingDate}T${endTime}:00`,

@@ -27,7 +27,10 @@ public class Room {
     private String id;
 
     private String name;
-    private String type;
+
+    @ManyToOne
+    private RoomType roomType;
+
     private Integer capacity;
     private BigDecimal hourlyPrice;
 

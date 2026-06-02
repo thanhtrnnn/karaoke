@@ -26,7 +26,7 @@ public class Booking {
     private String id;
 
     @ManyToOne
-    private Customer customer;
+    private Client customer;
 
     @ManyToOne
     private Room room;

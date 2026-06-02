@@ -1,8 +1,8 @@
 package com.karaoke.backend.web;
 
-import com.karaoke.backend.domain.UserAccount;
+import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
-import com.karaoke.backend.repository.UserAccountRepository;
+import com.karaoke.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -24,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Đăng nhập, đăng ký và đổi mật khẩu")
 public class AuthController {
-    private final UserAccountRepository users;
+    private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserAccountRepository users, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository users, PasswordEncoder passwordEncoder) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
     }
@@ -65,7 +65,7 @@ public class AuthController {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        UserAccount user = new UserAccount(
+        User user = new User(
                 "USR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(),
                 request.username(),
                 request.email(),
@@ -101,7 +101,7 @@ public class AuthController {
                             """)))
     )
     AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        UserAccount user = users.findByUsername(request.usernameOrEmail())
+        User user = users.findByUsername(request.usernameOrEmail())
                 .or(() -> users.findByEmail(request.usernameOrEmail()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
@@ -131,7 +131,7 @@ public class AuthController {
                             """)))
     )
     Map<String, Object> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
-        UserAccount user = users.findByUsername(request.username())
+        User user = users.findByUsername(request.username())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
@@ -146,23 +146,20 @@ public class AuthController {
             @Email String email,
             @NotBlank @Size(min = 8) String password,
             UserRole role
-    ) {
-    }
+    ) {}
 
-    record LoginRequest(@NotBlank String usernameOrEmail, @NotBlank String password) {
-    }
+    record LoginRequest(@NotBlank String usernameOrEmail, @NotBlank String password) {}
 
     record ChangePasswordRequest(
             @NotBlank String username,
             @NotBlank String currentPassword,
             @NotBlank @Size(min = 8) String newPassword
-    ) {
-    }
+    ) {}
 
     record AuthResponse(String id, String username, String email, UserRole role, String token) {
-        static AuthResponse from(UserAccount user) {
-            String token = "dev-token-" + user.getId();
-            return new AuthResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole(), token);
+        static AuthResponse from(User user) {
+            return new AuthResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole(),
+                    "dev-token-" + user.getId());
         }
     }
 }

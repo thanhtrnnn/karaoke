@@ -1,25 +1,36 @@
 package com.karaoke.backend.web;
 
 import com.karaoke.backend.domain.Branch;
-import com.karaoke.backend.domain.Customer;
+import com.karaoke.backend.domain.Client;
+import com.karaoke.backend.domain.DamageReport;
 import com.karaoke.backend.domain.Employee;
-import com.karaoke.backend.domain.Invoice;
+import com.karaoke.backend.domain.Facility;
+import com.karaoke.backend.domain.ImportReceipt;
 import com.karaoke.backend.domain.InvoiceStatus;
+import com.karaoke.backend.domain.MembershipTier;
 import com.karaoke.backend.domain.PaymentMethod;
-import com.karaoke.backend.domain.MembershipTierConfig;
-import com.karaoke.backend.domain.MenuItem;
+import com.karaoke.backend.domain.Product;
+import com.karaoke.backend.domain.Promotion;
+import com.karaoke.backend.domain.Provider;
 import com.karaoke.backend.domain.Room;
+import com.karaoke.backend.domain.RoomReceipt;
 import com.karaoke.backend.domain.RoomStatus;
-import com.karaoke.backend.domain.ServiceOrder;
+import com.karaoke.backend.domain.RoomType;
 import com.karaoke.backend.domain.SystemConfig;
 import com.karaoke.backend.repository.BranchRepository;
-import com.karaoke.backend.repository.CustomerRepository;
+import com.karaoke.backend.repository.ClientRepository;
+import com.karaoke.backend.repository.DamageReportRepository;
 import com.karaoke.backend.repository.EmployeeRepository;
-import com.karaoke.backend.repository.InvoiceRepository;
-import com.karaoke.backend.repository.MenuItemRepository;
-import com.karaoke.backend.repository.MembershipTierConfigRepository;
+import com.karaoke.backend.repository.FacilityRepository;
+import com.karaoke.backend.repository.ImportReceiptRepository;
+import com.karaoke.backend.repository.MembershipTierRepository;
+import com.karaoke.backend.repository.OrderRepository;
+import com.karaoke.backend.repository.ProductRepository;
+import com.karaoke.backend.repository.PromotionRepository;
+import com.karaoke.backend.repository.ProviderRepository;
+import com.karaoke.backend.repository.RoomReceiptRepository;
 import com.karaoke.backend.repository.RoomRepository;
-import com.karaoke.backend.repository.ServiceOrderRepository;
+import com.karaoke.backend.repository.RoomTypeRepository;
 import com.karaoke.backend.repository.SystemConfigRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,157 +52,114 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+// ─── Branch ───────────────────────────────────────────────────────────────────
+
 @RestController
 @RequestMapping("/api/branches")
 @Tag(name = "Branches", description = "Quản lý chi nhánh")
 class BranchController {
     private final BranchRepository repository;
 
-    BranchController(BranchRepository repository) {
-        this.repository = repository;
-    }
+    BranchController(BranchRepository repository) { this.repository = repository; }
 
-    @GetMapping
-    @Operation(summary = "Danh sách chi nhánh")
-    List<Branch> list() {
-        return repository.findAll();
-    }
+    @GetMapping @Operation(summary = "Danh sách chi nhánh")
+    List<Branch> list() { return repository.findAll(); }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết chi nhánh")
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết chi nhánh")
     Branch get(@PathVariable String id) {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Branch not found: " + id));
     }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo chi nhánh",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "CN002",
-                      "name": "Midnight Elegance Quận 3",
-                      "address": "20 Võ Văn Tần, Quận 3, TP.HCM",
-                      "phone": "02887654321",
-                      "active": true
-                    }
-                    """))),
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "CN002",
-                      "name": "Midnight Elegance Quận 3",
-                      "address": "20 Võ Văn Tần, Quận 3, TP.HCM",
-                      "phone": "02887654321",
-                      "active": true
-                    }
-                    """)))
-    )
-    Branch create(@RequestBody Branch branch) {
-        return repository.save(branch);
-    }
+    @PostMapping @Operation(summary = "Tạo chi nhánh")
+    Branch create(@RequestBody Branch branch) { return repository.save(branch); }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật chi nhánh")
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật chi nhánh")
     Branch update(@PathVariable String id, @RequestBody Branch branch) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Branch not found: " + id);
-        }
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Branch not found: " + id);
         branch.setId(id);
         return repository.save(branch);
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa chi nhánh")
-    void delete(@PathVariable String id) {
-        repository.deleteById(id);
-    }
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa chi nhánh")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
 }
+
+// ─── Client ───────────────────────────────────────────────────────────────────
 
 @RestController
-@RequestMapping("/api/customers")
-@Tag(name = "Customers", description = "Quản lý khách hàng và hội viên")
-class CustomerController {
-    private final CustomerRepository repository;
+@RequestMapping("/api/clients")
+@Tag(name = "Clients", description = "Quản lý khách hàng và hội viên")
+class ClientController {
+    private final ClientRepository repository;
 
-    CustomerController(CustomerRepository repository) {
-        this.repository = repository;
+    ClientController(ClientRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách khách hàng")
+    List<Client> list() { return repository.findAll(); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết khách hàng")
+    Client get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Client not found: " + id));
     }
 
-    @GetMapping
-    @Operation(
-            summary = "Danh sách khách hàng",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": "KH001",
-                        "salutation": "Anh",
-                        "firstName": "Tuấn",
-                        "lastName": "Nguyễn Văn",
-                        "fullName": "Nguyễn Văn Tuấn",
-                        "phone": "0901234567",
-                        "tier": "Vàng",
-                        "points": 1250
-                      }
-                    ]
-                    """)))
-    )
-    List<Customer> list() {
-        return repository.findAll();
+    @PostMapping @Operation(summary = "Tạo khách hàng")
+    Client create(@RequestBody Client client) { return repository.save(client); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật khách hàng")
+    Client update(@PathVariable String id, @RequestBody Client client) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Client not found: " + id);
+        client.setId(id);
+        return repository.save(client);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết khách hàng")
-    Customer get(@PathVariable String id) {
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Customer not found: " + id));
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa khách hàng")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
+}
+
+// ─── RoomType ─────────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/room-types")
+@Tag(name = "Room Types", description = "Quản lý loại phòng")
+class RoomTypeController {
+    private final RoomTypeRepository repository;
+
+    RoomTypeController(RoomTypeRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách loại phòng")
+    List<RoomType> list() { return repository.findAll(); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết loại phòng")
+    RoomType get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("RoomType not found: " + id));
     }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo khách hàng",
+    @PostMapping @Operation(
+            summary = "Tạo loại phòng",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
                     {
-                      "id": "KH005",
-                      "salutation": "Chị",
-                      "firstName": "Mai",
-                      "lastName": "Đặng Thị",
-                      "fullName": "Đặng Thị Mai",
-                      "phone": "0945678901",
-                      "tier": "Đồng",
-                      "points": 0
-                    }
-                    """))),
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "KH005",
-                      "salutation": "Chị",
-                      "firstName": "Mai",
-                      "lastName": "Đặng Thị",
-                      "fullName": "Đặng Thị Mai",
-                      "phone": "0945678901",
-                      "tier": "Đồng",
-                      "points": 0
+                      "id": "LR001",
+                      "tenLoai": "VIP",
+                      "sucChua": 15,
+                      "giaCuoc": 150000,
+                      "trangThai": true
                     }
                     """)))
     )
-    Customer create(@RequestBody Customer customer) {
-        return repository.save(customer);
+    RoomType create(@RequestBody RoomType roomType) { return repository.save(roomType); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật loại phòng")
+    RoomType update(@PathVariable String id, @RequestBody RoomType roomType) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("RoomType not found: " + id);
+        roomType.setId(id);
+        return repository.save(roomType);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật khách hàng")
-    Customer update(@PathVariable String id, @RequestBody Customer customer) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Customer not found: " + id);
-        }
-        customer.setId(id);
-        return repository.save(customer);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa khách hàng")
-    void delete(@PathVariable String id) {
-        repository.deleteById(id);
-    }
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa loại phòng")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
 }
+
+// ─── Room ─────────────────────────────────────────────────────────────────────
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -199,139 +167,61 @@ class CustomerController {
 class RoomController {
     private final RoomRepository repository;
 
-    RoomController(RoomRepository repository) {
-        this.repository = repository;
-    }
+    RoomController(RoomRepository repository) { this.repository = repository; }
 
-    @GetMapping
-    @Operation(
-            summary = "Danh sách phòng",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": "P01",
-                        "name": "VIP 01",
-                        "type": "VIP",
-                        "capacity": 15,
-                        "hourlyPrice": 150000.00,
-                        "status": "AVAILABLE",
-                        "active": true
-                      }
-                    ]
-                    """)))
-    )
+    @GetMapping @Operation(summary = "Danh sách phòng")
     List<Room> list(@RequestParam(required = false) RoomStatus status) {
         return status == null ? repository.findAll() : repository.findByStatus(status);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết phòng")
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết phòng")
     Room get(@PathVariable String id) {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Room not found: " + id));
     }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo phòng",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "P06",
-                      "name": "Deluxe 02",
-                      "type": "Deluxe",
-                      "capacity": 18,
-                      "hourlyPrice": 180000,
-                      "status": "AVAILABLE",
-                      "branch": {"id": "CN001"},
-                      "active": true
-                    }
-                    """)))
-    )
-    Room create(@RequestBody Room room) {
-        return repository.save(room);
-    }
+    @PostMapping @Operation(summary = "Tạo phòng")
+    Room create(@RequestBody Room room) { return repository.save(room); }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật phòng",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "name": "VIP 01",
-                      "type": "VIP",
-                      "capacity": 15,
-                      "hourlyPrice": 150000,
-                      "status": "AVAILABLE",
-                      "branch": {"id": "CN001"},
-                      "active": true
-                    }
-                    """))))
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật phòng")
     Room update(@PathVariable String id, @RequestBody Room room) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Room not found: " + id);
-        }
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Room not found: " + id);
         room.setId(id);
         return repository.save(room);
     }
 
-    @PatchMapping("/{id}/status")
-    @Operation(summary = "Cập nhật trạng thái phòng",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "status": "OCCUPIED"
-                    }
-                    """))))
+    @PatchMapping("/{id}/status") @Operation(summary = "Cập nhật trạng thái phòng")
     Room updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
-        Room room = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Room not found: " + id));
+        Room room = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Room not found: " + id));
         room.setStatus(RoomStatus.valueOf(body.get("status")));
         return repository.save(room);
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa phòng")
-    void delete(@PathVariable String id) {
-        repository.deleteById(id);
-    }
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa phòng")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
 }
 
+// ─── Product ──────────────────────────────────────────────────────────────────
+
 @RestController
-@RequestMapping("/api/menu-items")
-@Tag(name = "Menu Items", description = "Quản lý danh mục món và tồn kho nhanh")
-class MenuItemController {
-    private final MenuItemRepository repository;
+@RequestMapping("/api/products")
+@Tag(name = "Products", description = "Quản lý danh mục sản phẩm và tồn kho")
+class ProductController {
+    private final ProductRepository repository;
 
-    MenuItemController(MenuItemRepository repository) {
-        this.repository = repository;
-    }
+    ProductController(ProductRepository repository) { this.repository = repository; }
 
-    @GetMapping
-    @Operation(
-            summary = "Danh sách món",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": "SP001",
-                        "name": "Bia Tiger",
-                        "category": "Đồ uống",
-                        "price": 30000.00,
-                        "stock": 45,
-                        "image": "/images/beer.png",
-                        "active": true
-                      }
-                    ]
-                    """)))
-    )
-    List<MenuItem> list(@RequestParam(required = false) String category) {
+    @GetMapping @Operation(summary = "Danh sách sản phẩm")
+    List<Product> list(@RequestParam(required = false) String category) {
         return category == null ? repository.findAll() : repository.findByCategoryIgnoreCase(category);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết món")
-    MenuItem get(@PathVariable String id) {
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Menu item not found: " + id));
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết sản phẩm")
+    Product get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
     }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo món",
+    @PostMapping @Operation(
+            summary = "Tạo sản phẩm",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
                     {
                       "id": "SP011",
@@ -339,41 +229,26 @@ class MenuItemController {
                       "category": "Đồ uống",
                       "price": 20000,
                       "stock": 50,
-                      "image": "/images/beer.png",
+                      "soLuongToiThieu": 5,
+                      "image": "/images/pepsi.png",
                       "active": true
                     }
                     """)))
     )
-    MenuItem create(@RequestBody MenuItem item) {
-        return repository.save(item);
+    Product create(@RequestBody Product product) { return repository.save(product); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật sản phẩm")
+    Product update(@PathVariable String id, @RequestBody Product product) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Product not found: " + id);
+        product.setId(id);
+        return repository.save(product);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật món",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "name": "Bia Tiger",
-                      "category": "Đồ uống",
-                      "price": 35000,
-                      "stock": 50,
-                      "image": "/images/beer.png",
-                      "active": true
-                    }
-                    """))))
-    MenuItem update(@PathVariable String id, @RequestBody MenuItem item) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Menu item not found: " + id);
-        }
-        item.setId(id);
-        return repository.save(item);
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa món")
-    void delete(@PathVariable String id) {
-        repository.deleteById(id);
-    }
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa sản phẩm")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
 }
+
+// ─── Employee ─────────────────────────────────────────────────────────────────
 
 @RestController
 @RequestMapping("/api/employees")
@@ -381,190 +256,75 @@ class MenuItemController {
 class EmployeeController {
     private final EmployeeRepository repository;
 
-    EmployeeController(EmployeeRepository repository) {
-        this.repository = repository;
-    }
+    EmployeeController(EmployeeRepository repository) { this.repository = repository; }
 
-    @GetMapping
-    @Operation(
-            summary = "Danh sách nhân viên",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": "NV001",
-                        "fullName": "Nguyễn Thị Lễ Tân",
-                        "phone": "0981000001",
-                        "role": "RECEPTIONIST",
-                        "branch": {"id": "CN001"},
-                        "active": true
-                      }
-                    ]
-                    """))))
-    List<Employee> list() {
-        return repository.findAll();
-    }
+    @GetMapping @Operation(summary = "Danh sách nhân viên")
+    List<Employee> list() { return repository.findAll(); }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo nhân viên",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "NV004",
-                      "fullName": "Phạm Văn Phục Vụ",
-                      "phone": "0981000004",
-                      "role": "SERVICE_STAFF",
-                      "branch": {"id": "CN001"},
-                      "active": true
-                    }
-                    """)))
-    )
-    Employee create(@RequestBody Employee employee) {
-        return repository.save(employee);
-    }
+    @PostMapping @Operation(summary = "Tạo nhân viên")
+    Employee create(@RequestBody Employee employee) { return repository.save(employee); }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật nhân viên",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "fullName": "Nguyễn Thị Lễ Tân",
-                      "phone": "0981000001",
-                      "role": "RECEPTIONIST",
-                      "branch": {"id": "CN001"},
-                      "active": true
-                    }
-                    """))))
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật nhân viên")
     Employee update(@PathVariable String id, @RequestBody Employee employee) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Employee not found: " + id);
-        }
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Employee not found: " + id);
         employee.setId(id);
         return repository.save(employee);
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Xóa nhân viên")
-    void delete(@PathVariable String id) {
-        repository.deleteById(id);
-    }
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa nhân viên")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
 }
 
+// ─── RoomReceipt ──────────────────────────────────────────────────────────────
+
 @RestController
-@RequestMapping("/api/invoices")
-@Tag(name = "Invoices", description = "Hóa đơn thanh toán")
-class InvoiceController {
-    private final InvoiceRepository repository;
-    private final ServiceOrderRepository orderRepository;
+@RequestMapping("/api/room-receipts")
+@Tag(name = "Room Receipts", description = "Hóa đơn phòng")
+class RoomReceiptController {
+    private final RoomReceiptRepository repository;
+    private final OrderRepository orderRepository;
     private final RoomRepository roomRepository;
 
-    InvoiceController(InvoiceRepository repository, ServiceOrderRepository orderRepository, RoomRepository roomRepository) {
+    RoomReceiptController(RoomReceiptRepository repository, OrderRepository orderRepository, RoomRepository roomRepository) {
         this.repository = repository;
         this.orderRepository = orderRepository;
         this.roomRepository = roomRepository;
     }
 
-    @GetMapping
-    @Operation(
-            summary = "Danh sách hóa đơn",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {
-                        "id": "INV001",
-                        "booking": {"id": "BK-A1B2C3D4"},
-                        "roomTotal": 300000,
-                        "serviceTotal": 210000,
-                        "discount": 0,
-                        "grandTotal": 510000,
-                        "paidAt": null,
-                        "status": "DRAFT"
-                      }
-                    ]
-                    """))))
-    List<Invoice> list() {
-        return repository.findAll();
+    @GetMapping @Operation(summary = "Danh sách hóa đơn phòng")
+    List<RoomReceipt> list() { return repository.findAll(); }
+
+    @PostMapping @Operation(summary = "Tạo hóa đơn phòng")
+    RoomReceipt create(@RequestBody RoomReceipt receipt) { return repository.save(receipt); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết hóa đơn phòng")
+    RoomReceipt get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("RoomReceipt not found: " + id));
     }
 
-    @PostMapping
-    @Operation(
-            summary = "Tạo hóa đơn",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "INV001",
-                      "booking": {"id": "BK-A1B2C3D4"},
-                      "roomTotal": 300000,
-                      "serviceTotal": 210000,
-                      "discount": 0,
-                      "grandTotal": 510000,
-                      "status": "DRAFT"
-                    }
-                    """))),
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "id": "INV001",
-                      "booking": {"id": "BK-A1B2C3D4"},
-                      "roomTotal": 300000,
-                      "serviceTotal": 210000,
-                      "discount": 0,
-                      "grandTotal": 510000,
-                      "paidAt": null,
-                      "status": "DRAFT"
-                    }
-                    """)))
-    )
-    Invoice create(@RequestBody Invoice invoice) {
-        return repository.save(invoice);
-    }
-
-    @GetMapping("/{id}")
-    @Operation(summary = "Chi tiết hóa đơn")
-    Invoice get(@PathVariable String id) {
-        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Invoice not found: " + id));
-    }
-
-    @PutMapping("/{id}/pay")
-    @Operation(
-            summary = "Thanh toán hóa đơn",
-            responses = @ApiResponse(responseCode = "200", description = "Hóa đơn đã thanh toán",
-                    content = @Content(examples = @ExampleObject(value = """
-                            {
-                              "id": "INV001",
-                              "booking": {"id": "BK-A1B2C3D4"},
-                              "roomTotal": 300000,
-                              "serviceTotal": 210000,
-                              "discount": 0,
-                              "grandTotal": 510000,
-                              "paidAt": "2026-05-14T21:10:00",
-                              "status": "PAID"
-                            }
-                            """))))
-    Invoice pay(@PathVariable String id, @RequestBody(required = false) java.util.Map<String, String> body) {
-        Invoice invoice = repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice not found: " + id));
-        invoice.setStatus(InvoiceStatus.PAID);
-        invoice.setPaidAt(java.time.LocalDateTime.now());
+    @PutMapping("/{id}/pay") @Operation(summary = "Thanh toán hóa đơn")
+    RoomReceipt pay(@PathVariable String id, @RequestBody(required = false) java.util.Map<String, String> body) {
+        RoomReceipt receipt = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("RoomReceipt not found: " + id));
+        receipt.setStatus(InvoiceStatus.PAID);
+        receipt.setPaidAt(java.time.LocalDateTime.now());
         if (body != null && body.containsKey("paymentMethod")) {
-            try {
-                invoice.setPaymentMethod(PaymentMethod.valueOf(body.get("paymentMethod")));
-            } catch (IllegalArgumentException ignored) {}
+            try { receipt.setPaymentMethod(PaymentMethod.valueOf(body.get("paymentMethod"))); }
+            catch (IllegalArgumentException ignored) {}
         }
-        return repository.save(invoice);
+        return repository.save(receipt);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Cập nhật hóa đơn")
-    Invoice update(@PathVariable String id, @RequestBody Invoice invoice) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Invoice not found: " + id);
-        }
-        invoice.setId(id);
-        return repository.save(invoice);
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật hóa đơn")
+    RoomReceipt update(@PathVariable String id, @RequestBody RoomReceipt receipt) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("RoomReceipt not found: " + id);
+        receipt.setId(id);
+        return repository.save(receipt);
     }
 
-    @PostMapping("/generate")
-    @Operation(summary = "Tạo hóa đơn từ order của phòng")
-    Invoice generate(@RequestParam String roomId) {
-        List<ServiceOrder> roomOrders = orderRepository.findByRoomId(roomId);
-
-        BigDecimal serviceTotal = roomOrders.stream()
+    @PostMapping("/generate") @Operation(summary = "Tạo hóa đơn từ order của phòng")
+    RoomReceipt generate(@RequestParam String roomId) {
+        BigDecimal serviceTotal = orderRepository.findByRoomId(roomId).stream()
                 .flatMap(o -> o.getItems().stream())
                 .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -573,91 +333,256 @@ class InvoiceController {
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
         BigDecimal roomTotal = room.getHourlyPrice().multiply(BigDecimal.valueOf(2));
 
-        Invoice invoice = new Invoice();
-        invoice.setId("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        invoice.setRoomTotal(roomTotal);
-        invoice.setServiceTotal(serviceTotal);
-        invoice.setDiscount(BigDecimal.ZERO);
-        invoice.setGrandTotal(roomTotal.add(serviceTotal));
-        invoice.setStatus(InvoiceStatus.DRAFT);
-        return repository.save(invoice);
+        RoomReceipt receipt = new RoomReceipt();
+        receipt.setId("RR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        receipt.setRoomTotal(roomTotal);
+        receipt.setServiceTotal(serviceTotal);
+        receipt.setDiscount(BigDecimal.ZERO);
+        receipt.setGrandTotal(roomTotal.add(serviceTotal));
+        receipt.setStatus(InvoiceStatus.DRAFT);
+        return repository.save(receipt);
     }
 }
+
+// ─── Membership ───────────────────────────────────────────────────────────────
 
 @RestController
 @RequestMapping("/api/membership")
 @Tag(name = "Membership", description = "Quản lý hạng hội viên")
 class MembershipController {
-    private final MembershipTierConfigRepository tierRepository;
-    private final CustomerRepository customerRepository;
+    private final MembershipTierRepository tierRepository;
+    private final ClientRepository clientRepository;
 
-    MembershipController(MembershipTierConfigRepository tierRepository, CustomerRepository customerRepository) {
+    MembershipController(MembershipTierRepository tierRepository, ClientRepository clientRepository) {
         this.tierRepository = tierRepository;
-        this.customerRepository = customerRepository;
+        this.clientRepository = clientRepository;
     }
 
-    @GetMapping("/tiers")
-    @Operation(
-            summary = "Danh sách cấu hình hạng",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    [
-                      {"tierName": "Đồng", "minPoints": 0, "discount": "Giảm 0%"},
-                      {"tierName": "Bạc", "minPoints": 300, "discount": "Giảm 5%"},
-                      {"tierName": "Vàng", "minPoints": 1000, "discount": "Giảm 10%"},
-                      {"tierName": "Kim cương", "minPoints": 5000, "discount": "Giảm 15% + Ưu tiên"}
-                    ]
-                    """))))
-    List<MembershipTierConfig> listTiers() {
-        return tierRepository.findAllByOrderByMinPointsAsc();
+    @GetMapping("/tiers") @Operation(summary = "Danh sách hạng hội viên")
+    List<MembershipTier> listTiers() { return tierRepository.findAllByOrderByDiemToiThieuAsc(); }
+
+    @PutMapping("/tiers/{tenHang}") @Operation(summary = "Cập nhật hạng hội viên")
+    MembershipTier updateTier(@PathVariable String tenHang, @RequestBody MembershipTier tier) {
+        if (!tierRepository.existsById(tenHang)) throw new EntityNotFoundException("Tier not found: " + tenHang);
+        tier.setTenHang(tenHang);
+        return tierRepository.save(tier);
     }
 
-    @PutMapping("/tiers/{tierName}")
-    @Operation(
-            summary = "Cập nhật cấu hình hạng",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "minPoints": 1500,
-                      "discount": "Giảm 12%"
-                    }
-                    """))),
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "tierName": "Vàng",
-                      "minPoints": 1500,
-                      "discount": "Giảm 12%"
-                    }
-                    """))))
-    MembershipTierConfig updateTier(@PathVariable String tierName, @RequestBody MembershipTierConfig config) {
-        if (!tierRepository.existsById(tierName)) {
-            throw new EntityNotFoundException("Tier not found: " + tierName);
-        }
-        config.setTierName(tierName);
-        return tierRepository.save(config);
-    }
-
-    @GetMapping("/stats")
-    @Operation(
-            summary = "Thống kê hội viên theo hạng",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "total": 4,
-                      "Đồng": 2,
-                      "Bạc": 1,
-                      "Vàng": 1,
-                      "Kim cương": 0
-                    }
-                    """)))
-    )
+    @GetMapping("/stats") @Operation(summary = "Thống kê hội viên theo hạng")
     java.util.Map<String, Object> stats() {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
-        long total = customerRepository.count();
-        result.put("total", total);
-        for (MembershipTierConfig tier : tierRepository.findAllByOrderByMinPointsAsc()) {
-            result.put(tier.getTierName(), customerRepository.countByTier(tier.getTierName()));
+        result.put("total", clientRepository.count());
+        for (MembershipTier tier : tierRepository.findAllByOrderByDiemToiThieuAsc()) {
+            result.put(tier.getTenHang(), clientRepository.countByTier(tier.getTenHang()));
         }
         return result;
     }
 }
+
+// ─── Promotion ────────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/promotions")
+@Tag(name = "Promotions", description = "Quản lý khuyến mãi")
+class PromotionController {
+    private final PromotionRepository repository;
+
+    PromotionController(PromotionRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách khuyến mãi")
+    List<Promotion> list(@RequestParam(required = false, defaultValue = "false") boolean activeOnly) {
+        return activeOnly ? repository.findByTrangThaiTrue() : repository.findAll();
+    }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết khuyến mãi")
+    Promotion get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Promotion not found: " + id));
+    }
+
+    @PostMapping @Operation(summary = "Tạo khuyến mãi")
+    Promotion create(@RequestBody Promotion promotion) { return repository.save(promotion); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật khuyến mãi")
+    Promotion update(@PathVariable String id, @RequestBody Promotion promotion) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Promotion not found: " + id);
+        promotion.setId(id);
+        return repository.save(promotion);
+    }
+
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa khuyến mãi")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
+}
+
+// ─── Facility ─────────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/facilities")
+@Tag(name = "Facilities", description = "Quản lý tài sản phòng")
+class FacilityController {
+    private final FacilityRepository repository;
+
+    FacilityController(FacilityRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách tài sản")
+    List<Facility> list() { return repository.findAll(); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết tài sản")
+    Facility get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Facility not found: " + id));
+    }
+
+    @PostMapping @Operation(
+            summary = "Tạo tài sản",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "id": "TS001",
+                      "tenTaiSan": "Micro karaoke",
+                      "loai": "Thiết bị âm thanh",
+                      "trangThai": "Bình thường",
+                      "room": {"id": "P01"}
+                    }
+                    """)))
+    )
+    Facility create(@RequestBody Facility facility) { return repository.save(facility); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật tài sản")
+    Facility update(@PathVariable String id, @RequestBody Facility facility) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Facility not found: " + id);
+        facility.setId(id);
+        return repository.save(facility);
+    }
+}
+
+// ─── DamageReport ─────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/damage-reports")
+@Tag(name = "Damage Reports", description = "Báo cáo hư hỏng tài sản")
+class DamageReportController {
+    private final DamageReportRepository repository;
+
+    DamageReportController(DamageReportRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách báo cáo hư hỏng")
+    List<DamageReport> list(@RequestParam(required = false) String trangThai) {
+        return trangThai == null ? repository.findAll() : repository.findByTrangThai(trangThai);
+    }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết báo cáo")
+    DamageReport get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("DamageReport not found: " + id));
+    }
+
+    @PostMapping @Operation(
+            summary = "Tạo báo cáo hư hỏng",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "id": "BC001",
+                      "maBaoCao": "BC-2026-001",
+                      "trangThai": "Chờ xử lý",
+                      "employee": {"id": "USR002"}
+                    }
+                    """)))
+    )
+    DamageReport create(@RequestBody DamageReport report) {
+        if (report.getNgayTao() == null) report.setNgayTao(java.time.LocalDateTime.now());
+        return repository.save(report);
+    }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật báo cáo")
+    DamageReport update(@PathVariable String id, @RequestBody DamageReport report) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("DamageReport not found: " + id);
+        report.setId(id);
+        return repository.save(report);
+    }
+}
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/providers")
+@Tag(name = "Providers", description = "Quản lý nhà cung cấp")
+class ProviderController {
+    private final ProviderRepository repository;
+
+    ProviderController(ProviderRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách nhà cung cấp")
+    List<Provider> list() { return repository.findAll(); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết nhà cung cấp")
+    Provider get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Provider not found: " + id));
+    }
+
+    @PostMapping @Operation(
+            summary = "Tạo nhà cung cấp",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "id": "NCC001",
+                      "tenNCC": "Công ty Bia Sài Gòn",
+                      "diaChiNCC": "123 Lý Thường Kiệt, TP.HCM",
+                      "dienThoai": "02812345678"
+                    }
+                    """)))
+    )
+    Provider create(@RequestBody Provider provider) { return repository.save(provider); }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật nhà cung cấp")
+    Provider update(@PathVariable String id, @RequestBody Provider provider) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("Provider not found: " + id);
+        provider.setId(id);
+        return repository.save(provider);
+    }
+
+    @DeleteMapping("/{id}") @Operation(summary = "Xóa nhà cung cấp")
+    void delete(@PathVariable String id) { repository.deleteById(id); }
+}
+
+// ─── ImportReceipt ────────────────────────────────────────────────────────────
+
+@RestController
+@RequestMapping("/api/import-receipts")
+@Tag(name = "Import Receipts", description = "Quản lý nhập kho")
+class ImportReceiptController {
+    private final ImportReceiptRepository repository;
+
+    ImportReceiptController(ImportReceiptRepository repository) { this.repository = repository; }
+
+    @GetMapping @Operation(summary = "Danh sách phiếu nhập kho")
+    List<ImportReceipt> list() { return repository.findAll(); }
+
+    @GetMapping("/{id}") @Operation(summary = "Chi tiết phiếu nhập")
+    ImportReceipt get(@PathVariable String id) {
+        return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("ImportReceipt not found: " + id));
+    }
+
+    @PostMapping @Operation(
+            summary = "Tạo phiếu nhập kho",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "id": "PN001",
+                      "maPhieu": "PN-2026-001",
+                      "tongTien": 5000000,
+                      "trangThai": "Đã nhận",
+                      "provider": {"id": "NCC001"}
+                    }
+                    """)))
+    )
+    ImportReceipt create(@RequestBody ImportReceipt receipt) {
+        if (receipt.getNgayNhap() == null) receipt.setNgayNhap(java.time.LocalDateTime.now());
+        return repository.save(receipt);
+    }
+
+    @PutMapping("/{id}") @Operation(summary = "Cập nhật phiếu nhập")
+    ImportReceipt update(@PathVariable String id, @RequestBody ImportReceipt receipt) {
+        if (!repository.existsById(id)) throw new EntityNotFoundException("ImportReceipt not found: " + id);
+        receipt.setId(id);
+        return repository.save(receipt);
+    }
+}
+
+// ─── System Config ────────────────────────────────────────────────────────────
 
 @RestController
 @RequestMapping("/api/system-config")
@@ -665,44 +590,16 @@ class MembershipController {
 class SystemConfigController {
     private final SystemConfigRepository repository;
 
-    SystemConfigController(SystemConfigRepository repository) {
-        this.repository = repository;
-    }
+    SystemConfigController(SystemConfigRepository repository) { this.repository = repository; }
 
-    @GetMapping
-    @Operation(
-            summary = "Lấy tất cả cấu hình",
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "brand.name": "Famtaoke",
-                      "brand.slogan": "Hát hay nhận quà mê",
-                      "branch.default": "CN001",
-                      "app.version": "1.0.0"
-                    }
-                    """))))
+    @GetMapping @Operation(summary = "Lấy tất cả cấu hình")
     java.util.Map<String, String> getAll() {
         java.util.Map<String, String> result = new java.util.HashMap<>();
         repository.findAll().forEach(config -> result.put(config.getConfigKey(), config.getConfigValue()));
         return result;
     }
 
-    @PutMapping
-    @Operation(
-            summary = "Cập nhật cấu hình",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "brand.name": "Famtaoke Premium",
-                      "brand.slogan": "Hát hay nhận quà mê"
-                    }
-                    """))),
-            responses = @ApiResponse(responseCode = "200", content = @Content(examples = @ExampleObject(value = """
-                    {
-                      "brand.name": "Famtaoke Premium",
-                      "brand.slogan": "Hát hay nhận quà mê",
-                      "branch.default": "CN001",
-                      "app.version": "1.0.0"
-                    }
-                    """))))
+    @PutMapping @Operation(summary = "Cập nhật cấu hình")
     java.util.Map<String, String> updateAll(@RequestBody java.util.Map<String, String> configs) {
         configs.forEach((key, value) -> {
             SystemConfig config = repository.findById(key).orElse(new SystemConfig(key, value));

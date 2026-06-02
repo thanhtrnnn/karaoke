@@ -24,7 +24,7 @@ export default function InventoryPage() {
     const fetchMenu = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/menu-items', {
+        const res = await fetch('/api/products', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -85,7 +85,7 @@ export default function InventoryPage() {
 
       const newStock = product.stock + (parseInt(row.qty) || 0);
       try {
-        const res = await fetch(`/api/menu-items/${row.productId}`, {
+        const res = await fetch(`/api/products/${row.productId}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -105,7 +105,7 @@ export default function InventoryPage() {
 
     if (successCount > 0) {
       const token2 = localStorage.getItem('token');
-      const res = await fetch('/api/menu-items', { headers: { 'Authorization': `Bearer ${token2}` } });
+      const res = await fetch('/api/products', { headers: { 'Authorization': `Bearer ${token2}` } });
       if (res.ok) {
         const data = await res.json();
         setProducts(data.map((p: any) => ({

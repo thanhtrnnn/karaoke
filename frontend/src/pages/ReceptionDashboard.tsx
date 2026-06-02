@@ -46,7 +46,7 @@ export default function ReceptionDashboard() {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/customers', {
+      const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({

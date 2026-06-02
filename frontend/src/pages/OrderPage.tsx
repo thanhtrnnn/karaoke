@@ -48,7 +48,7 @@ export default function OrderPage() {
     const fetchMenu = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/menu-items', {
+        const res = await fetch('/api/products', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -135,7 +135,7 @@ export default function OrderPage() {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: selectedRoom,
-          items: cart.map(item => ({ menuItemId: item.id, quantity: item.qty })),
+          items: cart.map(item => ({ productId: item.id, quantity: item.qty })),
         }),
       });
       if (res.ok) {

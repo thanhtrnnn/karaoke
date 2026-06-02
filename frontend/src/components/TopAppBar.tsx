@@ -44,7 +44,7 @@ export default function TopAppBar() {
     const fetchCustomers = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/customers', {
+        const res = await fetch('/api/clients', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {

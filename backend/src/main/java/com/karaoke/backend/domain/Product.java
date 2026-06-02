@@ -7,18 +7,17 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @Entity
 @Table(name = "tblProduct", indexes = {
-    @Index(name = "idx_menuitem_category", columnList = "category"),
-    @Index(name = "idx_menuitem_active", columnList = "active")
+    @Index(name = "idx_product_category", columnList = "category"),
+    @Index(name = "idx_product_active", columnList = "active")
 })
-public class MenuItem {
+public class Product {
     @com.fasterxml.jackson.annotation.JsonCreator
-    public MenuItem() {}
+    public Product() {}
 
     @Id
     private String id;
@@ -27,6 +26,7 @@ public class MenuItem {
     private String category;
     private BigDecimal price;
     private Integer stock;
+    private Integer soLuongToiThieu;
     private String image;
     private boolean active = true;
 }

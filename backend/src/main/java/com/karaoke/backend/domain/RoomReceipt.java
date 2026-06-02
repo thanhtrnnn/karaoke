@@ -17,12 +17,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tblInvoice", indexes = {
-    @Index(name = "idx_invoice_status", columnList = "status"),
-    @Index(name = "idx_invoice_booking", columnList = "booking_id"),
-    @Index(name = "idx_invoice_paidat", columnList = "paidAt")
+@Table(name = "tblRoomReceipt", indexes = {
+    @Index(name = "idx_roomreceipt_status", columnList = "status"),
+    @Index(name = "idx_roomreceipt_booking", columnList = "booking_id"),
+    @Index(name = "idx_roomreceipt_paidat", columnList = "paidAt")
 })
-public class Invoice {
+public class RoomReceipt {
     @Id
     private String id;
 

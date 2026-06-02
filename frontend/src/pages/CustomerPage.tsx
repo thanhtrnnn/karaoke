@@ -24,7 +24,7 @@ export default function CustomerPage() {
     const fetchCustomers = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/customers', {
+        const res = await fetch('/api/clients', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -82,7 +82,7 @@ export default function CustomerPage() {
         body.id = `KH${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       }
 
-      const url = editingCustomer ? `/api/customers/${editingCustomer.id}` : '/api/customers';
+      const url = editingCustomer ? `/api/clients/${editingCustomer.id}` : '/api/clients';
       const method = editingCustomer ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -119,7 +119,7 @@ export default function CustomerPage() {
     if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/customers/${id}`, {
+      const res = await fetch(`/api/clients/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

@@ -2,6 +2,7 @@ package com.karaoke.backend.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,11 +12,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tblMembershipTierConfig")
-public class MembershipTierConfig {
+@Table(name = "tblFacility")
+public class Facility {
     @Id
-    private String tierName;
+    private String id;
 
-    private int minPoints;
-    private String discount;
+    private String tenTaiSan;
+    private String loai;
+    private String trangThai;
+
+    @ManyToOne
+    private Room room;
 }

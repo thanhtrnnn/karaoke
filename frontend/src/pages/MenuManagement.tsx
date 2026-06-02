@@ -24,7 +24,7 @@ export default function MenuManagement() {
     const fetchMenu = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/menu-items', {
+        const res = await fetch('/api/products', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -86,7 +86,7 @@ export default function MenuManagement() {
     try {
       const token = localStorage.getItem('token');
       if (editingItem) {
-        const res = await fetch(`/api/menu-items/${editingItem.id}`, {
+        const res = await fetch(`/api/products/${editingItem.id}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -97,7 +97,7 @@ export default function MenuManagement() {
           alert('Cập nhật món thành công!');
         }
       } else {
-        const res = await fetch('/api/menu-items', {
+        const res = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -118,7 +118,7 @@ export default function MenuManagement() {
     if (confirm('Bạn có chắc chắn muốn xóa món này khỏi Menu?')) {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/menu-items/${id}`, {
+        const res = await fetch(`/api/products/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });

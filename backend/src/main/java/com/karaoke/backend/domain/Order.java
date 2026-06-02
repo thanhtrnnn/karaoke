@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 @Table(name = "tblOrder")
-public class ServiceOrder {
+public class Order {
     @Id
     private String id;
 
@@ -28,7 +28,7 @@ public class ServiceOrder {
     private Room room;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ServiceOrderItem> items = new ArrayList<>();
+    private List<OrderDetail> items = new ArrayList<>();
 
     private LocalDateTime orderedAt;
 

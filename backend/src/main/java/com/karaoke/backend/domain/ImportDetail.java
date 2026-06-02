@@ -1,6 +1,5 @@
 package com.karaoke.backend.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,19 +15,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tblOrderItem")
-public class ServiceOrderItem {
+@Table(name = "tblImportDetail")
+public class ImportDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore
     @ManyToOne
-    private ServiceOrder order;
+    private ImportReceipt importReceipt;
 
     @ManyToOne
-    private MenuItem menuItem;
+    private Product product;
 
-    private int quantity;
-    private BigDecimal unitPrice;
+    private int soLuong;
+    private BigDecimal donGia;
 }

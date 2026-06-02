@@ -22,6 +22,11 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
 import ManagerDashboard from './pages/ManagerDashboard';
+import RoomTypePage from './pages/RoomTypePage';
+import FacilityPage from './pages/FacilityPage';
+import DamageReportPage from './pages/DamageReportPage';
+import ProviderPage from './pages/ProviderPage';
+import ImportReceiptPage from './pages/ImportReceiptPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -91,6 +96,17 @@ function App() {
 
           {/* Reports */}
           <Route path="/reports" element={<ReportsPage />} />
+
+          {/* Room Types & Facilities */}
+          <Route path="/room-types" element={<RoomTypePage />} />
+          <Route path="/facilities" element={<FacilityPage />} />
+
+          {/* Warehouse & Suppliers */}
+          <Route path="/providers" element={<ProviderPage />} />
+          <Route path="/import-receipts" element={<ImportReceiptPage />} />
+
+          {/* Damage Reports */}
+          <Route path="/damage-reports" element={<DamageReportPage />} />
 
           {/* Settings & Profile */}
           <Route path="/settings" element={<SettingsPage />} />

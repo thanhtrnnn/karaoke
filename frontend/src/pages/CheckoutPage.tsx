@@ -31,7 +31,7 @@ export default function CheckoutPage() {
       try {
         // If room param exists, generate invoice from orders
         if (roomFromUrl) {
-          const genRes = await fetch(`/api/invoices/generate?roomId=${roomFromUrl}`, {
+          const genRes = await fetch(`/api/room-receipts/generate?roomId=${roomFromUrl}`, {
             method: 'POST',
             headers,
           });
@@ -43,7 +43,7 @@ export default function CheckoutPage() {
           }
         }
         // Fallback: fetch all invoices
-        const res = await fetch('/api/invoices', { headers });
+        const res = await fetch('/api/room-receipts', { headers });
         if (res.ok) {
           const data: Invoice[] = await res.json();
           setInvoices(data);
@@ -67,7 +67,7 @@ export default function CheckoutPage() {
     setPaying(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/invoices/${invoice.id}/pay`, {
+      const res = await fetch(`/api/room-receipts/${invoice.id}/pay`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentMethod }),

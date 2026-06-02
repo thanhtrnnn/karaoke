@@ -1,7 +1,7 @@
 package com.karaoke.backend.config;
 
-import com.karaoke.backend.domain.UserAccount;
-import com.karaoke.backend.repository.UserAccountRepository;
+import com.karaoke.backend.domain.User;
+import com.karaoke.backend.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,9 +19,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-    private final UserAccountRepository userRepository;
+    private final UserRepository userRepository;
 
-    public TokenAuthenticationFilter(UserAccountRepository userRepository) {
+    public TokenAuthenticationFilter(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -43,7 +43,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context", ex);
         }
-
         filterChain.doFilter(request, response);
     }
 

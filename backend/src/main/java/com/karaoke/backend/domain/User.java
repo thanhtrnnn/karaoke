@@ -8,15 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @Entity
 @Table(name = "tblUser")
-public class UserAccount {
+public class User {
     @com.fasterxml.jackson.annotation.JsonCreator
-    public UserAccount() {}
+    public User() {}
 
     @Id
     private String id;

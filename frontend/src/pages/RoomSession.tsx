@@ -11,7 +11,7 @@ interface RoomData {
 }
 
 interface OrderItem {
-  menuItemId: string;
+  productId: string;
   name: string;
   quantity: number;
   unitPrice: number;
@@ -87,7 +87,7 @@ export default function RoomSession() {
   const allItems = orders.flatMap(o =>
     o.items.map(item => ({
       orderId: o.id,
-      menuItemId: item.menuItemId,
+      productId: item.productId,
       name: item.name,
       qty: item.quantity,
       unitPrice: item.unitPrice,
@@ -193,7 +193,7 @@ export default function RoomSession() {
                 </thead>
                 <tbody className="font-body-md divide-y divide-slate-800/50">
                   {allItems.map((item, i) => (
-                    <tr key={`${item.orderId}-${item.menuItemId}-${i}`} className="hover:bg-slate-900/30 transition-colors">
+                    <tr key={`${item.orderId}-${item.productId}-${i}`} className="hover:bg-slate-900/30 transition-colors">
                       <td className="py-4 px-4 text-white">{item.name}</td>
                       <td className="py-4 px-4 text-center">{item.qty}</td>
                       <td className="py-4 px-4 text-right text-text-secondary">{item.unitPrice.toLocaleString()}đ</td>
