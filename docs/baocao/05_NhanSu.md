@@ -324,3 +324,74 @@ ChainReportPage.btnTongHopClick(startDate, endDate)
 ```
 
 Đây là **query phức tạp nhất** trong hệ thống — loop qua tất cả chi nhánh, aggregate theo kỳ.
+
+---
+
+## CODEBASE AUDIT
+
+### Q21. Code có implement đầy đủ không? So sánh tài liệu ↔ code.
+
+**Backend — Entity:**
+
+| Entity code | Tên bảng DB | Khớp tài liệu? | Ghi chú |
+|-------------|-------------|----------------|---------|
+| `Employee` (fullName, dob, tel, email, role, status, username, password, branch) | tblEmployee | ⚠️ Khác naming | Tài liệu: hoTen, vaiTro, chiNhanh, trangThai. Code có thêm dob, email, username, password |
+| `CaLamViec` (ngayLam, gioBatDau, gioKetThuc, loaiCa, employee) | tbl_ca_lam_viec | ✅ | Khác tên field (gioBatDau vs gioVao) |
+| `ChamCong` (gioVaoThuc, gioRaThuc, trangThai, caLamViec) | tbl_cham_cong | ✅ | Thiếu field `ngay` (lấy từ CaLamViec.ngayLam) |
+| `DanhGia` (kyDanhGia, diem, nhanXet, ngayDanhGia, employee) | tbl_danh_gia | ✅ | Tên class khác (DanhGiaNhanVien → DanhGia) |
+| `QuyetDinh` (loai, noiDung, ngayQuyetDinh, danhGia) | tbl_quyet_dinh | ⚠️ FK khác | Tài liệu: FK → Employee. Code: FK → DanhGia |
+| `BaoCao` | — | ❌ Không có | Entity báo cáo không tồn tại trong code |
+
+**Backend — Controller (HRControllers.java):**
+
+| Controller | Endpoint | Chức năng |
+|-----------|----------|-----------|
+| `ShiftController` | `POST /api/shifts` | UC11 Phân ca — kiểm tra trùng ca |
+| `TimekeepingController` | `POST /api/timekeeping` | UC11 Chấm công |
+| `EvaluationController` | `POST /api/evaluations` | UC11 Đánh giá (0–10 điểm) |
+| `DecisionController` | `POST /api/decisions` | UC11 Khen thưởng/Kỷ luật |
+| `ReportController` | `GET /api/reports/summary` | UC13 + UC21 Tổng hợp số liệu |
+| `ReportController` | `GET /api/reports/revenue` | UC13 Doanh thu theo kỳ (hourly/weekly/monthly/quarterly) |
+| `ReportController` | `GET /api/reports/notifications` | Dashboard cảnh báo (stock, order, room) |
+
+**Frontend pages:**
+
+| Page | Route | UC | Trạng thái |
+|------|-------|-----|-----------|
+| `EmployeeManagement.tsx` | `/employees` | UC11 | ✅ CRUD NV, ❌ thiếu UI chấm công/đánh giá/quyết định |
+| `BranchReportPage.tsx` | `/reports` | UC13 | ✅ Có, CSV export |
+| `ChainReportPage.tsx` | `/chain-report` | UC21 | ✅ Có, bảng xếp hạng |
+| `CustomerInfoPage.tsx` | `/customer-info` | UC14 | ✅ Tìm + lịch sử |
+
+### Q22. Bug và lỗ hổng trong code.
+
+| # | Bug | Mức độ | Chi tiết |
+|---|-----|--------|---------|
+| 1 | **ChamCong KHÔNG auto-create khi phân ca** | 🔴 Critical | Tài liệu nói "khởi tạo ChamCong khi phân ca". Code ShiftController.create() chỉ tạo CaLamViec, KHÔNG tạo ChamCong |
+| 2 | **Employee.checkLogin() bỏ qua password** | 🔴 Critical | `return this.username.equals(username)` — password param bị ignore. Password lưu plain text |
+| 3 | **HR endpoints không restrict role** | 🔴 Critical | `/api/shifts/**`, `/api/evaluations/**`, `/api/decisions/**` chỉ cần authenticated — CLIENT cũng gọi được |
+| 4 | **Frontend phone vs tel mismatch** | 🔴 Critical | EmployeeManagement.tsx đọc `e.phone` nhưng Entity dùng field `tel` → luôn undefined |
+| 5 | **QuyetDinh FK DanhGia** | 🟡 Medium | Tài liệu: quyết định gắn NV trực tiếp. Code: bắt buộc có đánh giá trước |
+| 6 | **ChamCong status không tự tính** | 🟡 Medium | Client phải gửi trangThai, server không so sánh giờ thực tế vs giờ ca |
+| 7 | **UC14 không filter chi nhánh** | 🟢 Low | CustomerInfoPage tìm toàn chuỗi, tài liệu nói "khách hàng trong chi nhánh mình" |
+
+### Q23. Thiếu sót: tài liệu có, code chưa có.
+
+| Feature | Mô tả | Mức độ |
+|---------|-------|--------|
+| BaoCao entity | UC13/UC21 lưu báo cáo vào CSDL → chưa có | 🟡 Medium |
+| Export server-side | "Hệ thống sinh file" → hiện tại CSV client-side | 🟡 Medium |
+| EvaluationForm UI | UC11 đánh giá hiệu suất → không có UI riêng | 🟡 Medium |
+| ComparisonPanel UI | UC21 biểu đồ so sánh → chỉ có bảng xếp hạng | 🟡 Medium |
+| Kiểm tra kỳ đánh giá | "Chưa đến kỳ → từ chối" → không có logic check | 🟢 Low |
+| Notifications HR events | Không có cảnh báo HR (NV nghỉ, ca trống) | 🟢 Low |
+
+### Q24. Nếu thầy hỏi về bug trong code — trả lời thế nào?
+
+Nếu thầy hỏi: *"Tại sao ChamCong không được tạo khi phân ca?"*
+
+Trả lời: "Đây là bug em đã phát hiện trong audit: ShiftController.create() chỉ tạo CaLamViec mà không tạo ChamCong tương ứng. Theo thiết kế II.4 bước 7, khi phân ca thành công hệ thống phải đồng thời khởi tạo bản ghi Chấm Công. Cách sửa: thêm `chamCongRepo.save(new ChamCong(shift, null, null, "ChoChamCong"))` trong ShiftController.create().
+
+Nếu thầy hỏi: *"Security config có vấn đề gì?"*
+
+Trả lời: "Các endpoint HR (`/api/shifts/**`, `/api/evaluations/**`, `/api/decisions/**`) không bị restrict theo role — bất kỳ user nào đã đăng nhập đều gọi được. Cần thêm `.hasAnyRole("ADMIN", "BRANCH_MANAGER")` trong SecurityConfig."

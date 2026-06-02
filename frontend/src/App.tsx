@@ -16,7 +16,7 @@ import EmployeeManagement from './pages/EmployeeManagement';
 import MenuManagement from './pages/MenuManagement';
 import InventoryPage from './pages/InventoryPage';
 import CheckoutPage from './pages/CheckoutPage';
-import CustomerPage from './pages/CustomerPage';
+import ClientPage from './pages/ClientPage';
 import MembershipPage from './pages/MembershipPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -92,7 +92,7 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
 
           {/* Customer & Membership */}
-          <Route path="/customers" element={<CustomerPage />} />
+          <Route path="/customers" element={<ClientPage />} />
           <Route path="/membership" element={<MembershipPage />} />
 
           {/* Employees */}

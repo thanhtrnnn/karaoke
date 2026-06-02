@@ -11,7 +11,7 @@ interface Customer {
   loyaltyPoints: number;
 }
 
-export default function CustomerPage() {
+export default function ClientPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
