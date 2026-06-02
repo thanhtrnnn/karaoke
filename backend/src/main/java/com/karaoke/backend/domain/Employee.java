@@ -34,7 +34,7 @@ public class Employee {
     private UserRole role;
 
     private String status = "Working";
-    private boolean active = true;
+    private Boolean active = true;
 
     private String username;
 

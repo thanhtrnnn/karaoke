@@ -25,7 +25,7 @@ public class Otp {
     private String otpCode;
     private String type;
     private LocalDateTime expiresAt;
-    private boolean verified = false;
+    private Boolean verified = false;
 
     @ManyToOne
     private User user;

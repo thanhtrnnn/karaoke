@@ -21,5 +21,5 @@ public class RoomType {
     private String nameType;
     private Integer capacity;
     private BigDecimal price;
-    private boolean status = true;
+    private Boolean status = true;
 }

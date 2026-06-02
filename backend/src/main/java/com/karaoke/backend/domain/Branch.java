@@ -26,7 +26,7 @@ public class Branch {
 
     private String address;
     private String phone;
-    private boolean active = true;
+    private Boolean active = true;
 
     @OneToMany(mappedBy = "branch")
     @JsonIgnore

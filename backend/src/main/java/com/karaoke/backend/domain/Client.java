@@ -31,7 +31,7 @@ public class Client {
     // account diagram: loyaltyPoints, joinedAt, accountStatus
     private String tier;
     private Integer loyaltyPoints;
-    private boolean accountStatus = true;
+    private Boolean accountStatus = true;
     private LocalDateTime joinedAt;
 
     // account diagram: addPoints, lockAccount

@@ -30,7 +30,7 @@ public class Product {
     private Integer safetyStock;
     private String unit;
     private String image;
-    private boolean active = true;
+    private Boolean active = true;
 
     // services diagram: updateQuantity, searchProduct
     public void updateQuantity(int addedQuantity) {

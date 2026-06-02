@@ -24,5 +24,5 @@ public class Promotion {
     private BigDecimal redeem;
     private LocalDate startDate;
     private LocalDate validUntil;
-    private boolean status = true;
+    private Boolean status = true;
 }

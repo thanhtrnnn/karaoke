@@ -42,5 +42,5 @@ public class Room {
     @ManyToOne
     private Branch branch;
 
-    private boolean active = true;
+    private Boolean active = true;
 }

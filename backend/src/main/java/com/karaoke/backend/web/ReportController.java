@@ -214,7 +214,7 @@ public class ReportController {
         List<Map<String, String>> result = new ArrayList<>();
 
         products.findAll().stream()
-                .filter(p -> p.getCurrentStock() != null && p.isActive()
+                .filter(p -> p.getCurrentStock() != null && p.getActive()
                         && (p.getSafetyStock() == null ? p.getCurrentStock() <= 10 : p.getCurrentStock() <= p.getSafetyStock()))
                 .forEach(p -> {
                     Map<String, String> notif = new LinkedHashMap<>();

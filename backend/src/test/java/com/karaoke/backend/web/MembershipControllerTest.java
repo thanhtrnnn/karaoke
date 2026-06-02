@@ -83,7 +83,7 @@ class MembershipControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(4)))
-                .andExpect(jsonPath("$[0].tierName").value("Dong"))
+                .andExpect(jsonPath("$[0].tierName").value("Đồng"))
                 .andExpect(jsonPath("$[0].minPoints").value(0));
     }
 

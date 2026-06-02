@@ -46,7 +46,7 @@ class DamageReportControllerTest {
             Employee emp = new Employee();
             emp.setId("EMP-DR");
             emp.setFullName("Test Employee");
-            emp.setRole(UserRole.STAFF);
+            emp.setRole(UserRole.SERVICE_STAFF);
             employeeRepository.save(emp);
         }
     }

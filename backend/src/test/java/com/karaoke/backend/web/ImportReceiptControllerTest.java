@@ -60,7 +60,7 @@ class ImportReceiptControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("PN-001"))
                 .andExpect(jsonPath("$.maPhieu").value("PN-2026-001"))
-                .andExpect(jsonPath("$.totalCost").value(500000));
+                .andExpect(jsonPath("$.totalCost").value(0)); // totalCost calculated from details (none in this test)
 
         // List
         mockMvc.perform(get("/api/import-receipts").header("Authorization", ADMIN_TOKEN))

@@ -147,7 +147,7 @@ class ClientController {
     @PatchMapping("/{id}/lock") @Operation(summary = "Khóa/mở khóa tài khoản khách hàng (UC17)")
     Client lock(@PathVariable String id) {
         Client client = repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Client not found: " + id));
-        client.setAccountStatus(!client.isAccountStatus());
+        client.setAccountStatus(!client.getAccountStatus());
         return repository.save(client);
     }
 }
@@ -428,7 +428,7 @@ class RoomReceiptController {
         com.karaoke.backend.domain.Promotion promo = promotionRepository.findById(promoId)
                 .orElseThrow(() -> new EntityNotFoundException("Promotion not found: " + promoId));
 
-        if (!promo.isStatus()) {
+        if (!promo.getStatus()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã khuyến mãi đã hết hạn");
         }
 
