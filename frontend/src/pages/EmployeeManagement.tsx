@@ -49,7 +49,7 @@ export default function EmployeeManagement() {
             id: e.id,
             name: e.fullName,
             role: roleMap[e.role] || e.role,
-            phone: e.phone,
+            phone: e.tel || e.phone || '',
             branch: e.branch?.name || 'N/A',
             branchId: e.branch?.id || '',
             status: e.status || 'Working',
@@ -100,7 +100,7 @@ export default function EmployeeManagement() {
 
     const body: Record<string, unknown> = {
       fullName: formData.name,
-      phone: formData.phone,
+      tel: formData.phone,
       role: reverseRoleMap[formData.role] || formData.role,
       status: formData.status,
       username: formData.username || undefined,
@@ -134,7 +134,7 @@ export default function EmployeeManagement() {
             id: created.id,
             name: created.fullName,
             role: roleMap[created.role] || created.role,
-            phone: created.phone,
+            phone: created.tel || created.phone || '',
             branch: created.branch?.name || 'N/A',
             branchId: created.branch?.id || '',
             status: created.status || 'Working',

@@ -44,8 +44,6 @@ public class Employee {
     @ManyToOne
     private Branch branch;
 
-    // services diagram: checkLogin, getAllStaff, addStaff, updateStaff, deleteStaff
-    public boolean checkLogin(String username, String password) {
-        return this.username != null && this.username.equals(username);
-    }
+    // services diagram: getAllStaff, addStaff, updateStaff, deleteStaff
+    // Note: Employee auth is handled via User entity + AuthController, not this class
 }

@@ -81,11 +81,21 @@ class BranchController {
     }
 
     @PostMapping @Operation(summary = "Tạo chi nhánh")
-    Branch create(@RequestBody Branch branch) { return repository.save(branch); }
+    Branch create(@RequestBody Branch branch) {
+        // UC16: Tên chi nhánh không được trùng
+        if (branch.getName() != null && repository.existsByNameIgnoreCase(branch.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tên chi nhánh đã tồn tại");
+        }
+        return repository.save(branch);
+    }
 
     @PutMapping("/{id}") @Operation(summary = "Cập nhật chi nhánh")
     Branch update(@PathVariable String id, @RequestBody Branch branch) {
         if (!repository.existsById(id)) throw new EntityNotFoundException("Branch not found: " + id);
+        // UC16: Tên chi nhánh không được trùng (trừ chính nó)
+        if (branch.getName() != null && repository.existsByNameIgnoreCaseAndIdNot(branch.getName(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tên chi nhánh đã tồn tại");
+        }
         branch.setId(id);
         return repository.save(branch);
     }
@@ -149,8 +159,12 @@ class ClientController {
 @Tag(name = "Room Types", description = "Quản lý loại phòng")
 class RoomTypeController {
     private final RoomTypeRepository repository;
+    private final RoomRepository roomRepository;
 
-    RoomTypeController(RoomTypeRepository repository) { this.repository = repository; }
+    RoomTypeController(RoomTypeRepository repository, RoomRepository roomRepository) {
+        this.repository = repository;
+        this.roomRepository = roomRepository;
+    }
 
     @GetMapping @Operation(summary = "Danh sách loại phòng")
     List<RoomType> list() { return repository.findAll(); }
@@ -182,7 +196,14 @@ class RoomTypeController {
     }
 
     @DeleteMapping("/{id}") @Operation(summary = "Xóa loại phòng")
-    void delete(@PathVariable String id) { repository.deleteById(id); }
+    void delete(@PathVariable String id) {
+        // UC19: Không xóa loại phòng đang có phòng vật lý sử dụng
+        if (roomRepository.existsByRoomTypeId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Loại phòng đang được sử dụng tại các chi nhánh, không thể xóa");
+        }
+        repository.deleteById(id);
+    }
 }
 
 // ─── Room ─────────────────────────────────────────────────────────────────────

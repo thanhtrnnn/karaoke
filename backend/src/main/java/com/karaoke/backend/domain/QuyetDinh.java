@@ -22,7 +22,7 @@ public class QuyetDinh {
     private Long id;
 
     @ManyToOne
-    private DanhGia danhGia;
+    private Employee employee;
 
     private String loai;
     private String noiDung;

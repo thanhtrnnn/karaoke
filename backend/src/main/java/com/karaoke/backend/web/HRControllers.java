@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -40,10 +41,12 @@ import org.springframework.web.server.ResponseStatusException;
 class ShiftController {
     private final CaLamViecRepository repository;
     private final EmployeeRepository employees;
+    private final ChamCongRepository chamCongRepository;
 
-    ShiftController(CaLamViecRepository repository, EmployeeRepository employees) {
+    ShiftController(CaLamViecRepository repository, EmployeeRepository employees, ChamCongRepository chamCongRepository) {
         this.repository = repository;
         this.employees = employees;
+        this.chamCongRepository = chamCongRepository;
     }
 
     @GetMapping @Operation(summary = "Danh sách ca làm việc — lọc theo employeeId hoặc branchId")
@@ -73,7 +76,15 @@ class ShiftController {
         shift.setGioBatDau(request.gioBatDau());
         shift.setGioKetThuc(request.gioKetThuc());
         shift.setLoaiCa(request.loaiCa());
-        return repository.save(shift);
+        CaLamViec saved = repository.save(shift);
+
+        // UC11: Tự động tạo bản ghi Chấm Công khi phân ca
+        ChamCong cc = new ChamCong();
+        cc.setCaLamViec(saved);
+        cc.setTrangThai("ChoChamCong");
+        chamCongRepository.save(cc);
+
+        return saved;
     }
 
     record CreateShiftRequest(
@@ -117,7 +128,19 @@ class TimekeepingController {
         cc.setCaLamViec(shift);
         cc.setGioVaoThuc(request.gioVaoThuc());
         cc.setGioRaThuc(request.gioRaThuc());
-        cc.setTrangThai(request.trangThai() != null ? request.trangThai() : "DungGio");
+
+        // UC11: Tự động tính trạng thái chấm công
+        if (request.trangThai() != null) {
+            cc.setTrangThai(request.trangThai());
+        } else if (request.gioVaoThuc() == null) {
+            cc.setTrangThai("Vang");
+        } else if (shift.getGioBatDau() != null
+                && request.gioVaoThuc().toLocalTime().isAfter(shift.getGioBatDau().plusMinutes(15))) {
+            cc.setTrangThai("Muon");
+        } else {
+            cc.setTrangThai("DungGio");
+        }
+
         return repository.save(cc);
     }
 
@@ -178,25 +201,25 @@ class EvaluationController {
 @Tag(name = "Decisions", description = "Khen thưởng / kỷ luật nhân viên (UC11)")
 class DecisionController {
     private final QuyetDinhRepository repository;
-    private final DanhGiaRepository evaluations;
+    private final EmployeeRepository employees;
 
-    DecisionController(QuyetDinhRepository repository, DanhGiaRepository evaluations) {
+    DecisionController(QuyetDinhRepository repository, EmployeeRepository employees) {
         this.repository = repository;
-        this.evaluations = evaluations;
+        this.employees = employees;
     }
 
-    @GetMapping @Operation(summary = "Danh sách quyết định — lọc theo danhGiaId")
-    List<QuyetDinh> list(@RequestParam(required = false) Long danhGiaId) {
-        return danhGiaId != null ? repository.findByDanhGia_Id(danhGiaId) : repository.findAll();
+    @GetMapping @Operation(summary = "Danh sách quyết định — lọc theo employeeId")
+    List<QuyetDinh> list(@RequestParam(required = false) String employeeId) {
+        return employeeId != null ? repository.findByEmployee_Id(employeeId) : repository.findAll();
     }
 
     @PostMapping @Operation(summary = "Tạo quyết định khen thưởng/kỷ luật (UC11)")
     @Transactional
     QuyetDinh create(@Valid @RequestBody CreateDecisionRequest request) {
-        DanhGia evaluation = evaluations.findById(request.danhGiaId())
-                .orElseThrow(() -> new EntityNotFoundException("DanhGia not found: " + request.danhGiaId()));
+        Employee employee = employees.findById(request.employeeId())
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found: " + request.employeeId()));
         QuyetDinh qd = new QuyetDinh();
-        qd.setDanhGia(evaluation);
+        qd.setEmployee(employee);
         qd.setLoai(request.loai());
         qd.setNoiDung(request.noiDung());
         qd.setNgayQuyetDinh(request.ngayQuyetDinh() != null ? request.ngayQuyetDinh() : LocalDate.now());
@@ -204,7 +227,7 @@ class DecisionController {
     }
 
     record CreateDecisionRequest(
-            @NotNull Long danhGiaId,
+            @NotBlank String employeeId,
             @NotBlank String loai,
             @NotBlank String noiDung,
             LocalDate ngayQuyetDinh

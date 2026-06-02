@@ -5,5 +5,5 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface QuyetDinhRepository extends JpaRepository<QuyetDinh, Long> {
-    List<QuyetDinh> findByDanhGia_Id(Long danhGiaId);
+    List<QuyetDinh> findByEmployee_Id(String employeeId);
 }
