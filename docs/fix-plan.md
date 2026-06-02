@@ -3,6 +3,15 @@
 
 ---
 
+## ✅ ĐÃ FIX
+
+| # | Fix | File | Ngày |
+|---|-----|------|------|
+| — | Duplicate route /reports → /branch-report | App.tsx, rbac.ts | 03/06 |
+| — | Manual tier upgrade endpoint (UC18) | CrudControllers.java, MembershipPage.tsx | 03/06 |
+
+---
+
 ## PHASE 1: FIX BUG NGHIÊM TRỌNG (🔴 Critical)
 
 ### Fix 1.1 — ChamCong auto-create khi phân ca
