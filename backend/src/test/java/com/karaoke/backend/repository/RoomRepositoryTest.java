@@ -13,10 +13,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 class RoomRepositoryTest {
 
-    @Autowired
-    private RoomRepository roomRepository;
-    @Autowired
-    private BranchRepository branchRepository;
+    @Autowired private RoomRepository roomRepository;
+    @Autowired private BranchRepository branchRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
 
     private Branch createBranch(String id) {
         Branch b = new Branch();
@@ -25,11 +24,21 @@ class RoomRepositoryTest {
         return branchRepository.save(b);
     }
 
-    private Room createRoom(String id, Branch branch, RoomStatus status) {
+    private RoomType createRoomType(String id) {
+        RoomType rt = new RoomType();
+        rt.setId(id);
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        return roomTypeRepository.save(rt);
+    }
+
+    private Room createRoom(String id, Branch branch, RoomType roomType, RoomStatus status) {
         Room r = new Room();
         r.setId(id);
         r.setName("Room " + id);
-        r.setType("VIP");
+        r.setRoomType(roomType);
         r.setCapacity(10);
         r.setHourlyPrice(new BigDecimal("100000"));
         r.setStatus(status);
@@ -41,9 +50,10 @@ class RoomRepositoryTest {
     @Test
     void findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B1");
-        createRoom("R1", branch, RoomStatus.AVAILABLE);
-        createRoom("R2", branch, RoomStatus.OCCUPIED);
-        createRoom("R3", branch, RoomStatus.AVAILABLE);
+        RoomType rt = createRoomType("RT1");
+        createRoom("R1", branch, rt, RoomStatus.AVAILABLE);
+        createRoom("R2", branch, rt, RoomStatus.OCCUPIED);
+        createRoom("R3", branch, rt, RoomStatus.AVAILABLE);
 
         List<Room> available = roomRepository.findByStatus(RoomStatus.AVAILABLE);
         assertEquals(2, available.size());
@@ -53,10 +63,38 @@ class RoomRepositoryTest {
     @Test
     void saveWithBranch_persists() {
         Branch branch = createBranch("B2");
-        Room room = createRoom("R4", branch, RoomStatus.AVAILABLE);
+        RoomType rt = createRoomType("RT2");
+        createRoom("R4", branch, rt, RoomStatus.AVAILABLE);
 
         Room found = roomRepository.findById("R4").orElseThrow();
         assertNotNull(found.getBranch());
         assertEquals("B2", found.getBranch().getId());
+    }
+
+    @Test
+    void saveWithRoomType_persists() {
+        Branch branch = createBranch("B3");
+        RoomType rt = createRoomType("RT3");
+        rt.setTenLoai("Deluxe");
+        roomTypeRepository.save(rt);
+        createRoom("R5", branch, rt, RoomStatus.AVAILABLE);
+
+        Room found = roomRepository.findById("R5").orElseThrow();
+        assertNotNull(found.getRoomType());
+        assertEquals("RT3", found.getRoomType().getId());
+        assertEquals("Deluxe", found.getRoomType().getTenLoai());
+    }
+
+    @Test
+    void findByStatus_occupied_returnsOnlyOccupied() {
+        Branch branch = createBranch("B4");
+        RoomType rt = createRoomType("RT4");
+        createRoom("R6", branch, rt, RoomStatus.OCCUPIED);
+        createRoom("R7", branch, rt, RoomStatus.AVAILABLE);
+        createRoom("R8", branch, rt, RoomStatus.RESERVED);
+
+        List<Room> occupied = roomRepository.findByStatus(RoomStatus.OCCUPIED);
+        assertEquals(1, occupied.size());
+        assertEquals("R6", occupied.get(0).getId());
     }
 }

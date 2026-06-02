@@ -12,16 +12,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-class ServiceOrderRepositoryTest {
+class OrderRepositoryTest {
 
-    @Autowired
-    private ServiceOrderRepository orderRepository;
-    @Autowired
-    private RoomRepository roomRepository;
-    @Autowired
-    private BranchRepository branchRepository;
-    @Autowired
-    private MenuItemRepository menuItemRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private RoomRepository roomRepository;
+    @Autowired private BranchRepository branchRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
 
     private Branch createBranch(String id) {
         Branch b = new Branch();
@@ -30,11 +27,21 @@ class ServiceOrderRepositoryTest {
         return branchRepository.save(b);
     }
 
-    private Room createRoom(String id, Branch branch, RoomStatus status) {
+    private RoomType createRoomType(String id) {
+        RoomType rt = new RoomType();
+        rt.setId(id);
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        return roomTypeRepository.save(rt);
+    }
+
+    private Room createRoom(String id, Branch branch, RoomType roomType, RoomStatus status) {
         Room r = new Room();
         r.setId(id);
         r.setName("Room " + id);
-        r.setType("VIP");
+        r.setRoomType(roomType);
         r.setCapacity(10);
         r.setHourlyPrice(new BigDecimal("100000"));
         r.setStatus(status);
@@ -43,73 +50,76 @@ class ServiceOrderRepositoryTest {
         return roomRepository.save(r);
     }
 
-    private MenuItem createMenuItem(String id, String name, int stock) {
-        MenuItem m = new MenuItem();
-        m.setId(id);
-        m.setName(name);
-        m.setCategory("Do uong");
-        m.setPrice(new BigDecimal("30000"));
-        m.setStock(stock);
-        m.setActive(true);
-        return menuItemRepository.save(m);
+    private Product createProduct(String id, String name, int stock) {
+        Product p = new Product();
+        p.setId(id);
+        p.setName(name);
+        p.setCategory("Do uong");
+        p.setPrice(new BigDecimal("30000"));
+        p.setStock(stock);
+        p.setActive(true);
+        return productRepository.save(p);
     }
 
-    private ServiceOrder createOrder(String id, Room room, MenuItem item, int qty) {
-        ServiceOrder order = new ServiceOrder();
+    private Order createOrder(String id, Room room, Product product, int qty) {
+        Order order = new Order();
         order.setId(id);
         order.setRoom(room);
         order.setOrderedAt(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-        ServiceOrderItem soi = new ServiceOrderItem();
-        soi.setOrder(order);
-        soi.setMenuItem(item);
-        soi.setQuantity(qty);
-        soi.setUnitPrice(item.getPrice());
-        order.setItems(List.of(soi));
+        OrderDetail detail = new OrderDetail();
+        detail.setOrder(order);
+        detail.setProduct(product);
+        detail.setQuantity(qty);
+        detail.setUnitPrice(product.getPrice());
+        order.setItems(List.of(detail));
         return orderRepository.save(order);
     }
 
     @Test
     void findAll_returnsEagerlyLoadedRelations() {
         Branch branch = createBranch("B1");
-        Room room = createRoom("R1", branch, RoomStatus.AVAILABLE);
-        MenuItem item = createMenuItem("M1", "Bia", 10);
-        createOrder("O1", room, item, 2);
+        RoomType rt = createRoomType("RT1");
+        Room room = createRoom("R1", branch, rt, RoomStatus.AVAILABLE);
+        Product product = createProduct("P1", "Bia", 10);
+        createOrder("O1", room, product, 2);
 
-        List<ServiceOrder> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll();
         assertFalse(orders.isEmpty());
-        ServiceOrder o = orders.get(0);
+        Order o = orders.get(0);
         assertNotNull(o.getRoom());
         assertNotNull(o.getRoom().getBranch());
         assertFalse(o.getItems().isEmpty());
-        assertNotNull(o.getItems().get(0).getMenuItem());
+        assertNotNull(o.getItems().get(0).getProduct());
     }
 
     @Test
     void findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B2");
-        Room room = createRoom("R2", branch, RoomStatus.AVAILABLE);
-        MenuItem item = createMenuItem("M2", "Nuoc", 10);
-        createOrder("O2", room, item, 1);
+        RoomType rt = createRoomType("RT2");
+        Room room = createRoom("R2", branch, rt, RoomStatus.AVAILABLE);
+        Product product = createProduct("P2", "Nuoc", 10);
+        createOrder("O2", room, product, 1);
 
-        List<ServiceOrder> pending = orderRepository.findByStatus(OrderStatus.PENDING);
+        List<Order> pending = orderRepository.findByStatus(OrderStatus.PENDING);
         assertFalse(pending.isEmpty());
         pending.forEach(o -> assertEquals(OrderStatus.PENDING, o.getStatus()));
 
-        List<ServiceOrder> served = orderRepository.findByStatus(OrderStatus.SERVED);
+        List<Order> served = orderRepository.findByStatus(OrderStatus.SERVED);
         served.forEach(o -> assertEquals(OrderStatus.SERVED, o.getStatus()));
     }
 
     @Test
     void findByRoomId_returnsOnlyThatRoomsOrders() {
         Branch branch = createBranch("B3");
-        Room room1 = createRoom("R3", branch, RoomStatus.AVAILABLE);
-        Room room2 = createRoom("R4", branch, RoomStatus.AVAILABLE);
-        MenuItem item = createMenuItem("M3", "Trai cay", 10);
-        createOrder("O3", room1, item, 1);
-        createOrder("O4", room2, item, 1);
+        RoomType rt = createRoomType("RT3");
+        Room room1 = createRoom("R3", branch, rt, RoomStatus.AVAILABLE);
+        Room room2 = createRoom("R4", branch, rt, RoomStatus.AVAILABLE);
+        Product product = createProduct("P3", "Trai cay", 10);
+        createOrder("O3", room1, product, 1);
+        createOrder("O4", room2, product, 1);
 
-        List<ServiceOrder> room1Orders = orderRepository.findByRoomId("R3");
+        List<Order> room1Orders = orderRepository.findByRoomId("R3");
         assertEquals(1, room1Orders.size());
         assertEquals("R3", room1Orders.get(0).getRoom().getId());
     }

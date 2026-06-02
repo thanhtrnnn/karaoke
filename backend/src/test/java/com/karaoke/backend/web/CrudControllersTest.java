@@ -1,7 +1,6 @@
 package com.karaoke.backend.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +26,11 @@ class CrudControllersTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired private BranchRepository branchRepository;
     @Autowired private RoomRepository roomRepository;
-    @Autowired private CustomerRepository customerRepository;
-    @Autowired private MenuItemRepository menuItemRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
+    @Autowired private ClientRepository clientRepository;
+    @Autowired private ProductRepository productRepository;
     @Autowired private EmployeeRepository employeeRepository;
-    @Autowired private UserAccountRepository userRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final String ADMIN_TOKEN = "Bearer dev-token-TESTADMIN";
@@ -38,7 +38,7 @@ class CrudControllersTest {
     @BeforeEach
     void setup() {
         if (!userRepository.existsById("TESTADMIN")) {
-            UserAccount admin = new UserAccount();
+            User admin = new User();
             admin.setId("TESTADMIN");
             admin.setUsername("testadmin");
             admin.setEmail("testadmin@test.com");
@@ -52,7 +52,6 @@ class CrudControllersTest {
     // --- Branch CRUD ---
     @Test
     void branch_crud() throws Exception {
-        // Create
         mockMvc.perform(post("/api/branches")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -61,17 +60,14 @@ class CrudControllersTest {
                 .andExpect(jsonPath("$.id").value("BR-TEST"))
                 .andExpect(jsonPath("$.name").value("Test Branch"));
 
-        // List
         mockMvc.perform(get("/api/branches").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
 
-        // Get
         mockMvc.perform(get("/api/branches/BR-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test Branch"));
 
-        // Update
         mockMvc.perform(put("/api/branches/BR-TEST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,40 +75,38 @@ class CrudControllersTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated Branch"));
 
-        // Delete
         mockMvc.perform(delete("/api/branches/BR-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
 
-        // Verify 404
         mockMvc.perform(get("/api/branches/BR-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isNotFound());
     }
 
-    // --- Customer CRUD ---
+    // --- Client CRUD (was Customer) ---
     @Test
-    void customer_crud() throws Exception {
-        mockMvc.perform(post("/api/customers")
+    void client_crud() throws Exception {
+        mockMvc.perform(post("/api/clients")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"KH-TEST\",\"fullName\":\"Test Customer\",\"phone\":\"0909999999\",\"tier\":\"Dong\",\"points\":0}"))
+                        .content("{\"id\":\"KH-TEST\",\"fullName\":\"Test Client\",\"phone\":\"0909999999\",\"tier\":\"Dong\",\"points\":0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("KH-TEST"));
 
-        mockMvc.perform(get("/api/customers").header("Authorization", ADMIN_TOKEN))
+        mockMvc.perform(get("/api/clients").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(put("/api/customers/KH-TEST")
+        mockMvc.perform(put("/api/clients/KH-TEST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"fullName\":\"Updated Customer\",\"phone\":\"0909999999\",\"tier\":\"Bac\",\"points\":100}"))
+                        .content("{\"fullName\":\"Updated Client\",\"phone\":\"0909999999\",\"tier\":\"Bac\",\"points\":100}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.fullName").value("Updated Customer"));
+                .andExpect(jsonPath("$.fullName").value("Updated Client"));
 
-        mockMvc.perform(delete("/api/customers/KH-TEST").header("Authorization", ADMIN_TOKEN))
+        mockMvc.perform(delete("/api/clients/KH-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
     }
 
-    // --- Room CRUD + PATCH status ---
+    // --- Room CRUD + PATCH status (room needs RoomType) ---
     @Test
     void room_crudAndPatchStatus() throws Exception {
         Branch branch = new Branch();
@@ -120,10 +114,18 @@ class CrudControllersTest {
         branch.setName("Branch for Room");
         branchRepository.save(branch);
 
+        RoomType rt = new RoomType();
+        rt.setId("RT-TEST");
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        roomTypeRepository.save(rt);
+
         mockMvc.perform(post("/api/rooms")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"RM-TEST\",\"name\":\"Test Room\",\"type\":\"VIP\",\"capacity\":10,\"hourlyPrice\":100000,\"status\":\"AVAILABLE\",\"branch\":{\"id\":\"BR-ROOM\"}}"))
+                        .content("{\"id\":\"RM-TEST\",\"name\":\"Test Room\",\"roomType\":{\"id\":\"RT-TEST\"},\"capacity\":10,\"hourlyPrice\":100000,\"status\":\"AVAILABLE\",\"branch\":{\"id\":\"BR-ROOM\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("AVAILABLE"));
 
@@ -138,20 +140,20 @@ class CrudControllersTest {
                 .andExpect(status().isOk());
     }
 
-    // --- MenuItem CRUD ---
+    // --- Product CRUD (was MenuItem at /api/menu-items) ---
     @Test
-    void menuItem_crud() throws Exception {
-        mockMvc.perform(post("/api/menu-items")
+    void product_crud() throws Exception {
+        mockMvc.perform(post("/api/products")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"SP-TEST\",\"name\":\"Test Item\",\"category\":\"Do uong\",\"price\":30000,\"stock\":10,\"active\":true}"))
+                        .content("{\"id\":\"SP-TEST\",\"name\":\"Test Product\",\"category\":\"Do uong\",\"price\":30000,\"stock\":10,\"soLuongToiThieu\":5,\"active\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("SP-TEST"));
 
-        mockMvc.perform(get("/api/menu-items?category=Do uong").header("Authorization", ADMIN_TOKEN))
+        mockMvc.perform(get("/api/products?category=Do uong").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(delete("/api/menu-items/SP-TEST").header("Authorization", ADMIN_TOKEN))
+        mockMvc.perform(delete("/api/products/SP-TEST").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
     }
 
@@ -177,16 +179,58 @@ class CrudControllersTest {
                 .andExpect(status().isOk());
     }
 
-    // --- Protected endpoint without token ---
+    // --- RoomType CRUD ---
     @Test
-    void protectedEndpoint_withoutToken_returns401() throws Exception {
-        mockMvc.perform(get("/api/branches"))
-                .andExpect(status().isForbidden());
+    void roomType_crud() throws Exception {
+        mockMvc.perform(post("/api/room-types")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"RT-VIP\",\"tenLoai\":\"VIP\",\"sucChua\":12,\"giaCuoc\":150000,\"trangThai\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("RT-VIP"))
+                .andExpect(jsonPath("$.tenLoai").value("VIP"));
 
-        mockMvc.perform(get("/api/customers"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/room-types").header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
 
-        mockMvc.perform(get("/api/rooms"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/room-types/RT-VIP")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tenLoai\":\"VIP Plus\",\"sucChua\":15,\"giaCuoc\":200000,\"trangThai\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tenLoai").value("VIP Plus"));
+
+        mockMvc.perform(delete("/api/room-types/RT-VIP").header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk());
+    }
+
+    // --- Promotion CRUD ---
+    @Test
+    void promotion_crud() throws Exception {
+        mockMvc.perform(post("/api/promotions")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"KM-001\",\"tenKhuyenMai\":\"Giam 10%\",\"loai\":\"PhanTram\",\"giaTriGiam\":10,\"ngayBatDau\":\"2026-01-01\",\"ngayKetThuc\":\"2026-12-31\",\"trangThai\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("KM-001"))
+                .andExpect(jsonPath("$.tenKhuyenMai").value("Giam 10%"));
+
+        mockMvc.perform(get("/api/promotions").header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+
+        mockMvc.perform(delete("/api/promotions/KM-001").header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk());
+    }
+
+    // --- Protected endpoints without token return 403 ---
+    @Test
+    void protectedEndpoints_withoutToken_returns403() throws Exception {
+        mockMvc.perform(get("/api/branches")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/clients")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/rooms")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/room-types")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/promotions")).andExpect(status().isForbidden());
     }
 }

@@ -1,6 +1,6 @@
 package com.karaoke.backend.repository;
 
-import com.karaoke.backend.domain.Customer;
+import com.karaoke.backend.domain.Client;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -8,15 +8,15 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-class CustomerRepositoryTest {
+class ClientRepositoryTest {
 
     @Autowired
-    private CustomerRepository repository;
+    private ClientRepository repository;
 
-    private Customer createCustomer(String id, String phone, String tier) {
-        Customer c = new Customer();
+    private Client createClient(String id, String phone, String tier) {
+        Client c = new Client();
         c.setId(id);
-        c.setFullName("Customer " + id);
+        c.setFullName("Client " + id);
         c.setPhone(phone);
         c.setTier(tier);
         c.setPoints(0);
@@ -25,7 +25,7 @@ class CustomerRepositoryTest {
 
     @Test
     void existsByPhone_true() {
-        createCustomer("C1", "0901234567", "Dong");
+        createClient("C1", "0901234567", "Dong");
         assertTrue(repository.existsByPhone("0901234567"));
     }
 
@@ -36,9 +36,9 @@ class CustomerRepositoryTest {
 
     @Test
     void countByTier_returnsCorrectCounts() {
-        createCustomer("C2", "0901111111", "Vang");
-        createCustomer("C3", "0902222222", "Vang");
-        createCustomer("C4", "0903333333", "Bac");
+        createClient("C2", "0901111111", "Vang");
+        createClient("C3", "0902222222", "Vang");
+        createClient("C4", "0903333333", "Bac");
 
         assertEquals(2, repository.countByTier("Vang"));
         assertEquals(1, repository.countByTier("Bac"));

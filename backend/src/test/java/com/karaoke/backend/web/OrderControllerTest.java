@@ -1,7 +1,6 @@
 package com.karaoke.backend.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +13,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Module 4 — Dịch vụ & Sản phẩm (UC08 – Tạo order, UC11 – Quản lý kho)
+ * Tests: order creation, stock deduction, insufficient stock, status transitions, unit price
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -27,9 +31,10 @@ class OrderControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired private BranchRepository branchRepository;
     @Autowired private RoomRepository roomRepository;
-    @Autowired private MenuItemRepository menuItemRepository;
-    @Autowired private ServiceOrderRepository orderRepository;
-    @Autowired private UserAccountRepository userRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final String ADMIN_TOKEN = "Bearer dev-token-TESTADMIN";
@@ -37,7 +42,7 @@ class OrderControllerTest {
     @BeforeEach
     void setup() {
         if (!userRepository.existsById("TESTADMIN")) {
-            UserAccount admin = new UserAccount();
+            User admin = new User();
             admin.setId("TESTADMIN");
             admin.setUsername("testadmin");
             admin.setEmail("testadmin@test.com");
@@ -56,10 +61,18 @@ class OrderControllerTest {
     }
 
     private Room createRoom(String id, Branch branch) {
+        RoomType rt = new RoomType();
+        rt.setId("RT-" + id);
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        roomTypeRepository.save(rt);
+
         Room r = new Room();
         r.setId(id);
         r.setName("Room " + id);
-        r.setType("VIP");
+        r.setRoomType(rt);
         r.setCapacity(10);
         r.setHourlyPrice(new BigDecimal("100000"));
         r.setStatus(RoomStatus.OCCUPIED);
@@ -68,22 +81,23 @@ class OrderControllerTest {
         return roomRepository.save(r);
     }
 
-    private MenuItem createMenuItem(String id, int stock) {
-        MenuItem m = new MenuItem();
-        m.setId(id);
-        m.setName("Item " + id);
-        m.setCategory("Do uong");
-        m.setPrice(new BigDecimal("30000"));
-        m.setStock(stock);
-        m.setActive(true);
-        return menuItemRepository.save(m);
+    private Product createProduct(String id, int stock) {
+        Product p = new Product();
+        p.setId(id);
+        p.setName("Product " + id);
+        p.setCategory("Do uong");
+        p.setPrice(new BigDecimal("30000"));
+        p.setStock(stock);
+        p.setActive(true);
+        return productRepository.save(p);
     }
 
+    // UC08 — Gọi món: stock giảm sau khi order
     @Test
     void create_decrementsStock() throws Exception {
         Branch branch = createBranch("B1");
         Room room = createRoom("R1", branch);
-        MenuItem item = createMenuItem("M1", 10);
+        createProduct("P1", 10);
 
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", ADMIN_TOKEN)
@@ -93,7 +107,7 @@ class OrderControllerTest {
                                     public final String roomId = "R1";
                                     public final Object[] items = new Object[]{
                                             new Object() {
-                                                public final String menuItemId = "M1";
+                                                public final String productId = "P1";
                                                 public final int quantity = 3;
                                             }
                                     };
@@ -103,15 +117,16 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.items[0].quantity").value(3));
 
-        MenuItem updated = menuItemRepository.findById("M1").orElseThrow();
+        Product updated = productRepository.findById("P1").orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(7, updated.getStock());
     }
 
+    // UC11 — Kiểm tra tồn kho: không đủ hàng → 400
     @Test
     void create_insufficientStock_returns400() throws Exception {
         Branch branch = createBranch("B2");
         Room room = createRoom("R2", branch);
-        MenuItem item = createMenuItem("M2", 2);
+        createProduct("P2", 2);
 
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", ADMIN_TOKEN)
@@ -121,7 +136,7 @@ class OrderControllerTest {
                                     public final String roomId = "R2";
                                     public final Object[] items = new Object[]{
                                             new Object() {
-                                                public final String menuItemId = "M2";
+                                                public final String productId = "P2";
                                                 public final int quantity = 5;
                                             }
                                     };
@@ -131,23 +146,24 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Not enough stock")));
     }
 
+    // UC08 — Chuyển trạng thái order: PENDING → PREPARING → SERVED
     @Test
     void updateStatus_transitions() throws Exception {
         Branch branch = createBranch("B3");
         Room room = createRoom("R3", branch);
-        MenuItem item = createMenuItem("M3", 10);
+        Product product = createProduct("P3", 10);
 
-        ServiceOrder order = new ServiceOrder();
+        Order order = new Order();
         order.setId("ORD-TEST1");
         order.setRoom(room);
         order.setStatus(OrderStatus.PENDING);
         order.setOrderedAt(java.time.LocalDateTime.now());
-        ServiceOrderItem soi = new ServiceOrderItem();
-        soi.setOrder(order);
-        soi.setMenuItem(item);
-        soi.setQuantity(1);
-        soi.setUnitPrice(item.getPrice());
-        order.setItems(java.util.List.of(soi));
+        OrderDetail detail = new OrderDetail();
+        detail.setOrder(order);
+        detail.setProduct(product);
+        detail.setQuantity(1);
+        detail.setUnitPrice(product.getPrice());
+        order.setItems(List.of(detail));
         orderRepository.save(order);
 
         mockMvc.perform(put("/api/orders/ORD-TEST1/status")
@@ -165,13 +181,14 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.status").value("SERVED"));
     }
 
+    // Giá đơn vị ghi nhận đúng tại thời điểm order
     @Test
     void create_setsCorrectUnitPrice() throws Exception {
         Branch branch = createBranch("B4");
         Room room = createRoom("R4", branch);
-        MenuItem item = createMenuItem("M4", 10);
-        item.setPrice(new BigDecimal("50000"));
-        menuItemRepository.save(item);
+        Product product = createProduct("P4", 10);
+        product.setPrice(new BigDecimal("50000"));
+        productRepository.save(product);
 
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", ADMIN_TOKEN)
@@ -181,7 +198,7 @@ class OrderControllerTest {
                                     public final String roomId = "R4";
                                     public final Object[] items = new Object[]{
                                             new Object() {
-                                                public final String menuItemId = "M4";
+                                                public final String productId = "P4";
                                                 public final int quantity = 2;
                                             }
                                     };
@@ -189,5 +206,22 @@ class OrderControllerTest {
                         )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].unitPrice").value(50000));
+    }
+
+    // Không có token → 403
+    @Test
+    void create_withoutToken_returns403() throws Exception {
+        mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roomId\":\"R1\",\"items\":[]}"))
+                .andExpect(status().isForbidden());
+    }
+
+    // Danh sách order
+    @Test
+    void list_returnsArray() throws Exception {
+        mockMvc.perform(get("/api/orders").header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
     }
 }

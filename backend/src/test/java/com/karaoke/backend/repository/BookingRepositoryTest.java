@@ -14,14 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 class BookingRepositoryTest {
 
-    @Autowired
-    private BookingRepository bookingRepository;
-    @Autowired
-    private RoomRepository roomRepository;
-    @Autowired
-    private BranchRepository branchRepository;
-    @Autowired
-    private CustomerRepository customerRepository;
+    @Autowired private BookingRepository bookingRepository;
+    @Autowired private RoomRepository roomRepository;
+    @Autowired private BranchRepository branchRepository;
+    @Autowired private ClientRepository clientRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
 
     private Branch createBranch(String id) {
         Branch b = new Branch();
@@ -30,11 +27,22 @@ class BookingRepositoryTest {
         return branchRepository.save(b);
     }
 
+    private RoomType createRoomType(String id) {
+        RoomType rt = new RoomType();
+        rt.setId(id);
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        return roomTypeRepository.save(rt);
+    }
+
     private Room createRoom(String id, Branch branch) {
+        RoomType rt = createRoomType("RT-" + id);
         Room r = new Room();
         r.setId(id);
         r.setName("Room " + id);
-        r.setType("VIP");
+        r.setRoomType(rt);
         r.setCapacity(10);
         r.setHourlyPrice(new BigDecimal("100000"));
         r.setStatus(RoomStatus.AVAILABLE);
@@ -43,20 +51,20 @@ class BookingRepositoryTest {
         return roomRepository.save(r);
     }
 
-    private Customer createCustomer(String id, String phone) {
-        Customer c = new Customer();
+    private Client createClient(String id, String phone) {
+        Client c = new Client();
         c.setId(id);
-        c.setFullName("Test Customer");
+        c.setFullName("Test Client");
         c.setPhone(phone);
         c.setTier("Dong");
         c.setPoints(0);
-        return customerRepository.save(c);
+        return clientRepository.save(c);
     }
 
-    private Booking createBooking(String id, Customer customer, Room room, BookingStatus status) {
+    private Booking createBooking(String id, Client client, Room room, BookingStatus status) {
         Booking b = new Booking();
         b.setId(id);
-        b.setCustomer(customer);
+        b.setCustomer(client);
         b.setRoom(room);
         b.setStartTime(LocalDateTime.now().plusHours(1));
         b.setEndTime(LocalDateTime.now().plusHours(3));
@@ -69,9 +77,9 @@ class BookingRepositoryTest {
     void findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B1");
         Room room = createRoom("R1", branch);
-        Customer customer = createCustomer("C1", "0901111111");
-        createBooking("BK1", customer, room, BookingStatus.CONFIRMED);
-        createBooking("BK2", customer, room, BookingStatus.PENDING);
+        Client client = createClient("C1", "0901111111");
+        createBooking("BK1", client, room, BookingStatus.CONFIRMED);
+        createBooking("BK2", client, room, BookingStatus.PENDING);
 
         List<Booking> confirmed = bookingRepository.findByStatus(BookingStatus.CONFIRMED);
         assertFalse(confirmed.isEmpty());
@@ -82,5 +90,32 @@ class BookingRepositoryTest {
     void findByStatus_noResults_returnsEmpty() {
         List<Booking> cancelled = bookingRepository.findByStatus(BookingStatus.CANCELLED);
         assertTrue(cancelled.isEmpty());
+    }
+
+    @Test
+    void findByStatus_checkedIn_returnsOnlyCheckedIn() {
+        Branch branch = createBranch("B2");
+        Room room = createRoom("R2", branch);
+        Client client = createClient("C2", "0902222222");
+        createBooking("BK3", client, room, BookingStatus.CHECKED_IN);
+        createBooking("BK4", client, room, BookingStatus.CONFIRMED);
+
+        List<Booking> checkedIn = bookingRepository.findByStatus(BookingStatus.CHECKED_IN);
+        assertEquals(1, checkedIn.size());
+        assertEquals("BK3", checkedIn.get(0).getId());
+    }
+
+    @Test
+    void booking_persistsClientAndRoom() {
+        Branch branch = createBranch("B3");
+        Room room = createRoom("R3", branch);
+        Client client = createClient("C3", "0903333333");
+        createBooking("BK5", client, room, BookingStatus.CONFIRMED);
+
+        Booking found = bookingRepository.findById("BK5").orElseThrow();
+        assertNotNull(found.getCustomer());
+        assertEquals("C3", found.getCustomer().getId());
+        assertNotNull(found.getRoom());
+        assertEquals("R3", found.getRoom().getId());
     }
 }

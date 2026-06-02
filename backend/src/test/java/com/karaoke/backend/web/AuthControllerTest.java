@@ -1,9 +1,9 @@
 package com.karaoke.backend.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.karaoke.backend.domain.UserAccount;
+import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
-import com.karaoke.backend.repository.UserAccountRepository;
+import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -22,12 +22,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private UserAccountRepository userRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private void createTestUser(String id, String username, String email, String password, UserRole role) {
-        UserAccount user = new UserAccount();
+        User user = new User();
         user.setId(id);
         user.setUsername(username);
         user.setEmail(email);

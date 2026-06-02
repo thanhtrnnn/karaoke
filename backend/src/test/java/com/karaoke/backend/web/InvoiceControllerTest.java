@@ -21,15 +21,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class InvoiceControllerTest {
+class RoomReceiptControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private BranchRepository branchRepository;
     @Autowired private RoomRepository roomRepository;
-    @Autowired private MenuItemRepository menuItemRepository;
-    @Autowired private ServiceOrderRepository orderRepository;
-    @Autowired private InvoiceRepository invoiceRepository;
-    @Autowired private UserAccountRepository userRepository;
+    @Autowired private RoomTypeRepository roomTypeRepository;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private RoomReceiptRepository roomReceiptRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final String ADMIN_TOKEN = "Bearer dev-token-TESTADMIN";
@@ -37,7 +38,7 @@ class InvoiceControllerTest {
     @BeforeEach
     void setup() {
         if (!userRepository.existsById("TESTADMIN")) {
-            UserAccount admin = new UserAccount();
+            User admin = new User();
             admin.setId("TESTADMIN");
             admin.setUsername("testadmin");
             admin.setEmail("testadmin@test.com");
@@ -48,16 +49,24 @@ class InvoiceControllerTest {
         }
     }
 
-    private Room createRoomWithOrder(String roomId, String orderId, String itemId, int qty, BigDecimal price) {
+    private Room createRoomWithOrder(String roomId, String orderId, String productId, int qty, BigDecimal price) {
         Branch branch = new Branch();
         branch.setId("BR-" + roomId);
         branch.setName("Branch");
         branchRepository.save(branch);
 
+        RoomType rt = new RoomType();
+        rt.setId("RT-" + roomId);
+        rt.setTenLoai("VIP");
+        rt.setSucChua(10);
+        rt.setGiaCuoc(new BigDecimal("100000"));
+        rt.setTrangThai(true);
+        roomTypeRepository.save(rt);
+
         Room room = new Room();
         room.setId(roomId);
         room.setName("Room " + roomId);
-        room.setType("VIP");
+        room.setRoomType(rt);
         room.setCapacity(10);
         room.setHourlyPrice(new BigDecimal("100000"));
         room.setStatus(RoomStatus.OCCUPIED);
@@ -65,26 +74,26 @@ class InvoiceControllerTest {
         room.setActive(true);
         roomRepository.save(room);
 
-        MenuItem item = new MenuItem();
-        item.setId(itemId);
-        item.setName("Item");
-        item.setCategory("Do uong");
-        item.setPrice(price);
-        item.setStock(100);
-        item.setActive(true);
-        menuItemRepository.save(item);
+        Product product = new Product();
+        product.setId(productId);
+        product.setName("Item");
+        product.setCategory("Do uong");
+        product.setPrice(price);
+        product.setStock(100);
+        product.setActive(true);
+        productRepository.save(product);
 
-        ServiceOrder order = new ServiceOrder();
+        Order order = new Order();
         order.setId(orderId);
         order.setRoom(room);
         order.setStatus(OrderStatus.SERVED);
         order.setOrderedAt(LocalDateTime.now());
-        ServiceOrderItem soi = new ServiceOrderItem();
-        soi.setOrder(order);
-        soi.setMenuItem(item);
-        soi.setQuantity(qty);
-        soi.setUnitPrice(price);
-        order.setItems(List.of(soi));
+        OrderDetail detail = new OrderDetail();
+        detail.setOrder(order);
+        detail.setProduct(product);
+        detail.setQuantity(qty);
+        detail.setUnitPrice(price);
+        order.setItems(List.of(detail));
         orderRepository.save(order);
 
         return room;
@@ -92,9 +101,9 @@ class InvoiceControllerTest {
 
     @Test
     void generate_computesServiceTotal() throws Exception {
-        createRoomWithOrder("INV-R1", "INV-O1", "INV-I1", 2, new BigDecimal("30000"));
+        createRoomWithOrder("INV-R1", "INV-O1", "INV-P1", 2, new BigDecimal("30000"));
 
-        mockMvc.perform(post("/api/invoices/generate?roomId=INV-R1")
+        mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R1")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DRAFT"))
@@ -105,17 +114,17 @@ class InvoiceControllerTest {
 
     @Test
     void pay_setsStatusPaidAndPaidAt() throws Exception {
-        createRoomWithOrder("INV-R2", "INV-O2", "INV-I2", 1, new BigDecimal("50000"));
+        createRoomWithOrder("INV-R2", "INV-O2", "INV-P2", 1, new BigDecimal("50000"));
 
-        String response = mockMvc.perform(post("/api/invoices/generate?roomId=INV-R2")
+        String response = mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R2")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        String invoiceId = new com.fasterxml.jackson.databind.ObjectMapper()
+        String receiptId = new com.fasterxml.jackson.databind.ObjectMapper()
                 .readTree(response).get("id").asText();
 
-        mockMvc.perform(put("/api/invoices/" + invoiceId + "/pay")
+        mockMvc.perform(put("/api/room-receipts/" + receiptId + "/pay")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"paymentMethod\":\"CASH\"}"))
@@ -126,8 +135,8 @@ class InvoiceControllerTest {
     }
 
     @Test
-    void generate_withoutToken_returns401() throws Exception {
-        mockMvc.perform(post("/api/invoices/generate?roomId=INV-R1"))
+    void generate_withoutToken_returns403() throws Exception {
+        mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R1"))
                 .andExpect(status().isForbidden());
     }
 }
