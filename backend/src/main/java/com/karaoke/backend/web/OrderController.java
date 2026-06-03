@@ -6,6 +6,7 @@ import com.karaoke.backend.domain.OrderStatus;
 import com.karaoke.backend.domain.Product;
 import com.karaoke.backend.domain.Room;
 import com.karaoke.backend.domain.RoomStatus;
+import com.karaoke.backend.repository.EmployeeRepository;
 import com.karaoke.backend.repository.OrderRepository;
 import com.karaoke.backend.repository.ProductRepository;
 import com.karaoke.backend.repository.RoomReceiptRepository;
@@ -46,13 +47,16 @@ public class OrderController {
     private final RoomRepository rooms;
     private final ProductRepository products;
     private final RoomReceiptRepository receipts;
+    private final EmployeeRepository employees;
 
     public OrderController(OrderRepository orders, RoomRepository rooms,
-                           ProductRepository products, RoomReceiptRepository receipts) {
+                           ProductRepository products, RoomReceiptRepository receipts,
+                           EmployeeRepository employees) {
         this.orders = orders;
         this.rooms = rooms;
         this.products = products;
         this.receipts = receipts;
+        this.employees = employees;
     }
 
     @GetMapping
@@ -105,6 +109,11 @@ public class OrderController {
         order.setOrderTime(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setItems(new ArrayList<>());
+
+        // UC06: ghi nhận nhân viên tạo order (staffId)
+        if (request.employeeId() != null && !request.employeeId().isBlank()) {
+            employees.findById(request.employeeId()).ifPresent(order::setEmployee);
+        }
 
         BigDecimal orderTotal = BigDecimal.ZERO;
         for (CreateOrderItemRequest itemRequest : request.items()) {
@@ -160,7 +169,7 @@ public class OrderController {
         return OrderResponse.from(orders.save(order));
     }
 
-    record CreateOrderRequest(@NotBlank String roomId, @NotEmpty List<CreateOrderItemRequest> items) {}
+    record CreateOrderRequest(@NotBlank String roomId, @NotEmpty List<CreateOrderItemRequest> items, String employeeId) {}
 
     record CreateOrderItemRequest(@NotBlank String productId, @Min(1) int quantity) {}
 

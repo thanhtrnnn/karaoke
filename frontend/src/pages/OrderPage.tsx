@@ -34,7 +34,8 @@ export default function OrderPage() {
     const fetchRooms = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
+        // UC06: chỉ hiển thị phòng đang hoạt động (OCCUPIED) — khớp searchActiveRoom
+        const res = await fetch('/api/rooms?status=OCCUPIED', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           setRooms(data);
@@ -141,12 +142,14 @@ export default function OrderPage() {
     }
     try {
       const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: selectedRoom,
           items: cart.map(item => ({ productId: item.id, quantity: item.qty })),
+          employeeId: user.id || undefined,
         }),
       });
       if (res.ok) {

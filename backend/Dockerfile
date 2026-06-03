@@ -19,7 +19,7 @@ RUN ./mvnw compile test-compile -q
 CMD ["./mvnw", "test"]
 
 # Run stage (cuối cùng = default build target)
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jre-jammy AS run
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080

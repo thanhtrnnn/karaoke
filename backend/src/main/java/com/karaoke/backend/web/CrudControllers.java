@@ -612,8 +612,16 @@ class FacilityController {
 
     FacilityController(FacilityRepository repository) { this.repository = repository; }
 
-    @GetMapping @Operation(summary = "Danh sách tài sản")
-    List<Facility> list(@RequestParam(required = false) String keyword) {
+    @GetMapping @Operation(summary = "Danh sách tài sản — lọc theo phòng hoặc keyword")
+    List<Facility> list(
+            @RequestParam(required = false) String roomId,
+            @RequestParam(required = false) String keyword) {
+        if (roomId != null && !roomId.isBlank()) {
+            return repository.findByRoomId(roomId).stream()
+                    .filter(f -> keyword == null || keyword.isBlank()
+                            || (f.getName() != null && f.getName().toLowerCase().contains(keyword.toLowerCase())))
+                    .toList();
+        }
         if (keyword != null && !keyword.isBlank()) return repository.findByNameContainingIgnoreCase(keyword);
         return repository.findAll();
     }

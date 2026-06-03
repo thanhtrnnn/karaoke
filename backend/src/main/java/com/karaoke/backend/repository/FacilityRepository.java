@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FacilityRepository extends JpaRepository<Facility, String> {
     List<Facility> findByRoom(Room room);
+    List<Facility> findByRoomId(String roomId);
     List<Facility> findByNameContainingIgnoreCase(String name);
 }

@@ -34,6 +34,14 @@ class DamageReportController {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("DamageReport not found: " + id));
     }
 
+    // UC10: Tìm RoomReceipt đang mở (DRAFT) cho một phòng — dùng để link damage report
+    @GetMapping("/active-receipt")
+    @Operation(summary = "Tìm hóa đơn đang mở cho phòng (UC10)")
+    RoomReceipt getActiveReceipt(@RequestParam String roomId) {
+        return receiptRepository.findDraftByRoomId(roomId)
+                .orElse(null);
+    }
+
     // UC10: saveDamageReport — tạo report + details + trừ facility stock + update roomReceipt.damageFee
     @PostMapping @Operation(summary = "Tạo báo cáo hư hỏng (UC10)")
     @Transactional

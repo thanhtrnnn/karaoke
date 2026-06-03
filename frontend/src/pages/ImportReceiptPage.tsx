@@ -101,11 +101,13 @@ export default function ImportReceiptPage() {
   const cartTotal = importCart.reduce((s, d) => s + d.unitCost * d.quantity, 0);
 
   const save = async () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     const body = {
       ...formData,
       // Nếu có dòng chi tiết, backend tự tính totalCost và cộng tồn kho; nếu không, dùng totalCost nhập tay
       totalCost: importCart.length > 0 ? cartTotal : formData.totalCost,
       provider: formData.providerId ? { id: formData.providerId } : undefined,
+      employee: user.id ? { id: user.id } : undefined,
       details: importCart.map(d => ({ product: { id: d.product.id }, quantity: d.quantity, unitCost: d.unitCost })),
     };
     const res = await fetch('/api/import-receipts', { method: 'POST', headers, body: JSON.stringify(body) });

@@ -170,16 +170,20 @@ public class BookingController {
         return bookings.save(booking);
     }
 
-    // UC07: Danh sách đặt phòng đang chờ check-in
+    // UC07: Danh sách đặt phòng đang chờ check-in — lọc theo branch + ngày
     @GetMapping("/pending") @Operation(summary = "Danh sách đặt phòng chờ check-in (UC07)")
-    List<Booking> getPendingBookings(@RequestParam(required = false) String branchId) {
-        return bookings.findByStatus(BookingStatus.CONFIRMED);
+    List<Booking> getPendingBookings(
+            @RequestParam(required = false) String branchId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+        return bookings.findByStatusAndBranchAndDate(BookingStatus.CONFIRMED, branchId, date);
     }
 
-    // UC08: Danh sách phòng đang hoạt động (đã check-in, chưa check-out)
+    // UC08: Danh sách phòng đang hoạt động (đã check-in, chưa check-out) — lọc theo branch
     @GetMapping("/active-rooms") @Operation(summary = "Phòng đang hoạt động (UC08)")
-    List<Room> getActiveRooms() {
-        return rooms.findByStatus(RoomStatus.OCCUPIED);
+    List<Room> getActiveRooms(@RequestParam(required = false) String branchId) {
+        return rooms.findByStatus(RoomStatus.OCCUPIED).stream()
+                .filter(r -> branchId == null || (r.getBranch() != null && branchId.equals(r.getBranch().getId())))
+                .toList();
     }
 
     // UC05 — Tìm phòng trống: phòng AVAILABLE thuộc branch (nếu có), đúng loại phòng (nếu có)
