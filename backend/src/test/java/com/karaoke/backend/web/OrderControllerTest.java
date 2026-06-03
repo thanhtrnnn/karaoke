@@ -224,4 +224,56 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
+
+    // TC01 — Không tìm thấy phòng khi tạo order → 404
+    @Test
+    void TC01_orderWithNonexistentRoom_returns404() throws Exception {
+        mockMvc.perform(post("/api/orders")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new Object() {
+                                    public final String roomId = "NONEXISTENT";
+                                    public final Object[] items = new Object[]{
+                                            new Object() {
+                                                public final String productId = "P1";
+                                                public final int quantity = 1;
+                                            }
+                                    };
+                                }
+                        )))
+                .andExpect(status().isNotFound());
+    }
+
+    // TC02 — Không tìm thấy sản phẩm khi tạo order → 404
+    @Test
+    void TC02_orderWithNonexistentProduct_returns404() throws Exception {
+        Branch branch = branchRepository.save(new Branch("B-TC02", "Branch TC02", "Addr", "090", true));
+        RoomType rt = roomTypeRepository.save(new RoomType("RT-TC02", "VIP", 10, new BigDecimal("100000"), true));
+        Room room = new Room();
+        room.setId("R-TC02");
+        room.setName("Room TC02");
+        room.setRoomType(rt);
+        room.setCapacity(10);
+        room.setPrice(new BigDecimal("100000"));
+        room.setStatus(RoomStatus.OCCUPIED);
+        room.setBranch(branch);
+        roomRepository.save(room);
+
+        mockMvc.perform(post("/api/orders")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new Object() {
+                                    public final String roomId = "R-TC02";
+                                    public final Object[] items = new Object[]{
+                                            new Object() {
+                                                public final String productId = "NONEXISTENT";
+                                                public final int quantity = 1;
+                                            }
+                                    };
+                                }
+                        )))
+                .andExpect(status().isNotFound());
+    }
 }

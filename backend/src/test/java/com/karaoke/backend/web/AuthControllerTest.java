@@ -181,4 +181,36 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Current password is incorrect"));
     }
+
+    // TC03 — Mật khẩu sai 5 lần → trả lỗi mỗi lần (lockout chưa implement)
+    @Test
+    void TC03_wrongPasswordMultipleTimes_returns400EachTime() throws Exception {
+        createTestUser("U8", "locktest", "locktest@example.com", "correctpass", UserRole.CLIENT);
+
+        // Attempt 1-5: all should return 400
+        for (int i = 1; i <= 5; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    new Object() {
+                                        public final String usernameOrEmail = "locktest";
+                                        public final String password = "wrongpass";
+                                    }
+                            )))
+                    .andExpect(status().isBadRequest());
+        }
+
+        // After 5 failures, user should still be able to login with correct password
+        // (lockout not implemented yet — this documents the gap)
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new Object() {
+                                    public final String usernameOrEmail = "locktest";
+                                    public final String password = "correctpass";
+                                }
+                        )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+    }
 }

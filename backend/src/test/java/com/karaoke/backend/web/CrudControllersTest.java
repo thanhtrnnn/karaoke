@@ -31,6 +31,8 @@ class CrudControllersTest {
     @Autowired private ProductRepository productRepository;
     @Autowired private EmployeeRepository employeeRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private BookingRepository bookingRepository;
+    @Autowired private MembershipTierRepository membershipTierRepository;
     @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final String ADMIN_TOKEN = "Bearer dev-token-TESTADMIN";
@@ -222,6 +224,185 @@ class CrudControllersTest {
 
         mockMvc.perform(delete("/api/promotions/KM-001").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk());
+    }
+
+    // --- UC16: TC02 — Thêm chi nhánh tên trùng → 409 ---
+    @Test
+    void TC02_branchDuplicateName_returns409() throws Exception {
+        mockMvc.perform(post("/api/branches")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"BR-DUP1\",\"name\":\"Branch Dup\",\"address\":\"Addr\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/branches")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"BR-DUP2\",\"name\":\"Branch Dup\",\"address\":\"Addr2\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    // --- UC16: TC05 — Xóa chi nhánh có phòng → 409 ---
+    @Test
+    void TC05_deleteBranchWithRooms_returns409() throws Exception {
+        // Create branch with room
+        Branch branch = new Branch();
+        branch.setId("BR-WITHROOM");
+        branch.setName("Branch With Room");
+        branchRepository.save(branch);
+
+        RoomType rt = new RoomType();
+        rt.setId("RT-BRWR");
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
+        roomTypeRepository.save(rt);
+
+        Room room = new Room();
+        room.setId("RM-BRWR");
+        room.setName("Room in Branch");
+        room.setRoomType(rt);
+        room.setCapacity(10);
+        room.setPrice(new BigDecimal("100000"));
+        room.setStatus(RoomStatus.AVAILABLE);
+        room.setBranch(branch);
+        roomRepository.save(room);
+
+        mockMvc.perform(delete("/api/branches/BR-WITHROOM")
+                        .header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isConflict());
+    }
+
+    // --- UC17: TC09 — Khóa tài khoản khách hàng ---
+    @Test
+    void TC09_lockClientAccount_togglesStatus() throws Exception {
+        // Create client
+        Client c = new Client();
+        c.setId("KH-LOCK");
+        c.setFullName("Lock Test");
+        c.setPhone("0909999990");
+        c.setTier("Dong");
+        c.setLoyaltyPoints(0);
+        clientRepository.save(c);
+
+        mockMvc.perform(patch("/api/clients/KH-LOCK/lock")
+                        .header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountStatus").value(false));
+
+        // Toggle again → back to true
+        mockMvc.perform(patch("/api/clients/KH-LOCK/lock")
+                        .header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountStatus").value(true));
+    }
+
+    // --- UC18: TC12 — Nâng hạng thủ công ---
+    @Test
+    void TC12_manualTierUpgrade_success() throws Exception {
+        // Create tier first
+        MembershipTier tier = new MembershipTier();
+        tier.setTierName("Bac");
+        tier.setMinPoints(100);
+        tier.setDescription("Hang bac");
+        tier.setDiscountRate("0.95");
+        membershipTierRepository.save(tier);
+
+        // Create client
+        Client c = new Client();
+        c.setId("KH-UPGRADE");
+        c.setFullName("Upgrade Test");
+        c.setPhone("0909999991");
+        c.setTier("Dong");
+        c.setLoyaltyPoints(0);
+        clientRepository.save(c);
+
+        mockMvc.perform(patch("/api/membership/clients/KH-UPGRADE/tier")
+                        .header("Authorization", ADMIN_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tierName\":\"Bac\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tier").value("Bac"));
+    }
+
+    // --- UC19: TC17 — Xóa loại phòng đang sử dụng → 409 ---
+    @Test
+    void TC17_deleteRoomTypeInUse_returns409() throws Exception {
+        // Create RoomType + Room using it
+        RoomType rt = new RoomType();
+        rt.setId("RT-INUSE");
+        rt.setNameType("InUse");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
+        roomTypeRepository.save(rt);
+
+        Branch branch = new Branch();
+        branch.setId("BR-RTUSE");
+        branch.setName("Branch RT");
+        branchRepository.save(branch);
+
+        Room room = new Room();
+        room.setId("RM-RTUSE");
+        room.setName("Room Using RT");
+        room.setRoomType(rt);
+        room.setCapacity(10);
+        room.setPrice(new BigDecimal("100000"));
+        room.setStatus(RoomStatus.AVAILABLE);
+        room.setBranch(branch);
+        roomRepository.save(room);
+
+        mockMvc.perform(delete("/api/room-types/RT-INUSE")
+                        .header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isConflict());
+    }
+
+    // --- UC20: TC22 — Xóa phòng có booking → 409 ---
+    @Test
+    void TC22_deleteRoomWithBooking_returns409() throws Exception {
+        Branch branch = new Branch();
+        branch.setId("BR-RMBOOK");
+        branch.setName("Branch RB");
+        branchRepository.save(branch);
+
+        RoomType rt = new RoomType();
+        rt.setId("RT-RMBOOK");
+        rt.setNameType("VIP");
+        rt.setCapacity(10);
+        rt.setPrice(new BigDecimal("100000"));
+        rt.setStatus(true);
+        roomTypeRepository.save(rt);
+
+        Room room = new Room();
+        room.setId("RM-BOOKED");
+        room.setName("Booked Room");
+        room.setRoomType(rt);
+        room.setCapacity(10);
+        room.setPrice(new BigDecimal("100000"));
+        room.setStatus(RoomStatus.OCCUPIED);
+        room.setBranch(branch);
+        roomRepository.save(room);
+
+        Client client = new Client();
+        client.setId("KH-RMBOOK");
+        client.setFullName("Book Client");
+        client.setPhone("0909999992");
+        clientRepository.save(client);
+
+        com.karaoke.backend.domain.Booking booking = new com.karaoke.backend.domain.Booking();
+        booking.setId("BK-RMBOOK");
+        booking.setCustomer(client);
+        booking.setRoom(room);
+        booking.setStartTime(java.time.LocalDateTime.now().plusHours(1));
+        booking.setEndTime(java.time.LocalDateTime.now().plusHours(3));
+        booking.setGuestCount(5);
+        booking.setStatus(com.karaoke.backend.domain.BookingStatus.CHECKED_IN);
+        bookingRepository.save(booking);
+
+        mockMvc.perform(delete("/api/rooms/RM-BOOKED")
+                        .header("Authorization", ADMIN_TOKEN))
+                .andExpect(status().isConflict());
     }
 
     // --- Protected endpoints without token return 403 ---
