@@ -81,7 +81,7 @@ npx vitest run
 | `TokenAuthenticationFilterTest.java` | 6 | Token validation, inactive user blocking |
 | `ApiExceptionHandlerTest.java` | 6 | Error responses (400, 404, validation) |
 
-**Tổng: 111 tests**
+**Tổng: 134 tests**
 
 ---
 
@@ -186,11 +186,11 @@ npx vitest run
 | Module | TC trong tài liệu | Đã cover | Cần thêm | Tỷ lệ |
 |--------|-------------------|----------|----------|--------|
 | Tài khoản | 11 | 10 | 1 (OTP) | 91% |
-| Đặt phòng | 15 | 7 | 8 | 47% |
-| Dịch vụ | 10 | 5 | 5 | 50% |
-| Quản trị cốt lõi | 22 | 12 | 10 | 55% |
-| Nhân sự | 9 | 1 | 8 | 11% |
-| **Tổng** | **67** | **35** | **32** | **52%** |
+| Đặt phòng | 15 | 11 | 4 | 73% |
+| Dịch vụ | 10 | 7 | 3 | 70% |
+| Quản trị cốt lõi | 22 | 15 | 7 | 68% |
+| Nhân sự | 9 | 7 | 2 | 78% |
+| **Tổng** | **67** | **44** | **23** | **66%** |
 
 ---
 
