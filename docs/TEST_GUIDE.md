@@ -4,11 +4,12 @@
 
 ### Chạy theo module (scripts tại root project)
 
-**Yêu cầu:** Docker services phải đang chạy:
+**Yêu cầu:** Build image test trước (chỉ cần 1 lần):
 ```bash
-docker compose up -d postgres redis
+docker compose --profile test build test
 ```
 
+Chạy theo module:
 ```powershell
 # Windows PowerShell
 .\test-account.ps1      # Module 1: Tai khoan (UC01-04, UC20)
@@ -22,6 +23,9 @@ docker compose up -d postgres redis
 chmod +x test-hr.sh
 ./test-hr.sh            # Module 5: Nhan su & Bao cao (UC11, UC13, UC14, UC21)
 ```
+
+Scripts dùng `docker compose --profile test run --rm test ./mvnw test -Dtest=...`
+Container `test` chứa source code + Maven wrapper, kết nối postgres:5432 trong Docker network.
 
 ### Backend (Java / Spring Boot) — chạy trực tiếp
 

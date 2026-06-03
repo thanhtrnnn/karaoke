@@ -67,5 +67,26 @@ services:
     depends_on:
       - backend
 
+  # Test container — giữ source code, chạy ./mvnw test
+  test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    container_name: karaoke-test
+    profiles:
+      - test
+    environment:
+      - SPRING_PROFILES_ACTIVE=postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-karaoke}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-karaoke_admin}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-Secur3Passw0rd!}
+      - SPRING_REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   karaoke-postgres-data:
