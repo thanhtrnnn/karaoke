@@ -1,7 +1,9 @@
 package com.karaoke.backend.web;
 
 import com.karaoke.backend.domain.Otp;
+import com.karaoke.backend.domain.User;
 import com.karaoke.backend.repository.OtpRepository;
+import com.karaoke.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -31,9 +33,11 @@ public class OtpController {
     private static final int OTP_EXPIRY_MINUTES = 5;
 
     private final OtpRepository otps;
+    private final UserRepository users;
 
-    public OtpController(OtpRepository otps) {
+    public OtpController(OtpRepository otps, UserRepository users) {
         this.otps = otps;
+        this.users = users;
     }
 
     @PostMapping("/send-otp")
@@ -65,6 +69,11 @@ public class OtpController {
         otp.setType(request.type());
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
         otp.setVerified(false);
+        // UC02: gắn OTP với User tương ứng (username / email / phone) nếu tìm thấy.
+        User user = findUser(request.phoneNumberOrEmail());
+        if (user != null) {
+            otp.setUser(user);
+        }
         otps.save(otp);
 
         // Demo nên trả luôn mã OTP cho client.
@@ -93,8 +102,15 @@ public class OtpController {
                             """)))
     )
     Map<String, Object> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
-        // OtpRepository không có findByOtpCode -> dùng findAll().stream().filter.
-        Optional<Otp> found = otps.findAll().stream()
+        // UC02: tìm OTP theo user + code. Nếu có định danh user thì chỉ duyệt
+        // các OTP của user đó (mã chỉ verify được cho đúng chủ của nó);
+        // nếu không có định danh thì giữ hành vi cũ (dò toàn bộ theo code).
+        User user = findUser(request.phoneNumberOrEmail());
+        java.util.List<Otp> candidates = (user != null)
+                ? otps.findByUser(user)
+                : otps.findAll();
+
+        Optional<Otp> found = candidates.stream()
                 .filter(o -> request.otpCode().equals(o.getOtpCode()))
                 .findFirst();
 
@@ -129,10 +145,21 @@ public class OtpController {
         }
     }
 
+    /** Tìm User theo username, email hoặc số điện thoại (UC02). Trả null nếu không có. */
+    private User findUser(String identifier) {
+        if (identifier == null || identifier.isBlank()) {
+            return null;
+        }
+        return users.findByUsername(identifier)
+                .or(() -> users.findByEmail(identifier))
+                .orElse(null);
+    }
+
     record SendOtpRequest(
             @NotBlank String phoneNumberOrEmail,
             @NotBlank String type
     ) {}
 
-    record VerifyOtpRequest(@NotBlank String otpCode) {}
+    /** phoneNumberOrEmail tùy chọn (nullable) để verify OTP đúng chủ; giữ tương thích caller cũ. */
+    record VerifyOtpRequest(@NotBlank String otpCode, String phoneNumberOrEmail) {}
 }

@@ -25,12 +25,11 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // Backend /api/auth/register chỉ nhận {username, email, password, role};
-      // fullName & phoneNumber được giữ phía client để chuyển sang bước xác nhận OTP (UC02).
+      // UC02: gửi đầy đủ thông tin đăng ký (kèm fullName & phoneNumber) tới backend.
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, role: 'CLIENT' }),
+        body: JSON.stringify({ username, email, password, fullName, phoneNumber, role: 'CLIENT' }),
       });
 
       if (!response.ok) {
@@ -38,7 +37,15 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Đăng ký thất bại. Tên đăng nhập hoặc email đã tồn tại.');
       }
 
-      // UC02: sau khi điền thông tin đăng ký -> hệ thống gửi OTP -> hiển thị màn xác nhận OTP.
+      // UC02: hệ thống gửi OTP tới SĐT/Email -> chuyển sang màn xác nhận OTP.
+      // Gửi OTP ngay sau khi đăng ký để khớp luồng "đăng ký -> nhận OTP" (wireframe III.3.3).
+      await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumberOrEmail: phoneNumber || email, type: 'REGISTER' }),
+      }).catch(() => null);
+
+      // Chuyển ngữ cảnh đăng ký (username/phone/email) qua navigation state để bước OTP xác minh.
       navigate('/otp-verify', { state: { fullName, phoneNumber, username, email } });
     } catch (err: any) {
       setError(err.message);

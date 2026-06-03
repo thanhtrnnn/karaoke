@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
   const storedUser = (() => {
@@ -18,10 +18,48 @@ export default function ProfilePage() {
   const role = storedUser.role || '';
 
   // Các trường chỉ đọc theo wireframe hồ sơ (SĐT, Hạng hội viên, Điểm tích lũy).
-  // Backend hiện chưa trả các trường này nên đọc từ localStorage nếu có, không thì hiển thị "—".
-  const phoneNumber = storedUser.phoneNumber || storedUser.phone || '';
-  const membershipTier = storedUser.membershipTier || storedUser.tier || '';
-  const loyaltyPoints = (storedUser.loyaltyPoints ?? storedUser.points);
+  // Ưu tiên dữ liệu từ hồ sơ backend; chỉ dùng localStorage làm dự phòng (UC04).
+  const [phoneNumber, setPhoneNumber] = useState<string>(storedUser.phoneNumber || storedUser.phone || '');
+  const [membershipTier, setMembershipTier] = useState<string>(storedUser.membershipTier || storedUser.tier || '');
+  const [loyaltyPoints, setLoyaltyPoints] = useState<number | string | undefined>(
+    storedUser.loyaltyPoints ?? storedUser.points,
+  );
+
+  // UC04: lấy hồ sơ hiện tại từ backend để hiển thị hạng hội viên & điểm tích lũy.
+  // Nếu backend chưa trả các trường này (hoặc không có endpoint GET) thì giữ giá trị từ localStorage.
+  useEffect(() => {
+    if (!username) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/auth/profile?username=${encodeURIComponent(username)}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (cancelled || !data) return;
+        const tier = data.membershipTier ?? data.tier;
+        const points = data.loyaltyPoints ?? data.points;
+        const phone = data.phoneNumber ?? data.phone;
+        if (tier != null && tier !== '') setMembershipTier(String(tier));
+        if (points != null) setLoyaltyPoints(points);
+        if (phone != null && phone !== '') setPhoneNumber(String(phone));
+        // Đồng bộ lại localStorage để các lần hiển thị sau có sẵn dữ liệu.
+        const merged = {
+          ...storedUser,
+          ...(tier != null && tier !== '' ? { membershipTier: tier } : {}),
+          ...(points != null ? { loyaltyPoints: points } : {}),
+          ...(phone != null && phone !== '' ? { phoneNumber: phone } : {}),
+        };
+        localStorage.setItem('user', JSON.stringify(merged));
+      } catch {
+        // Bỏ qua lỗi mạng: giữ nguyên giá trị dự phòng từ localStorage.
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
   // Hồ sơ có thể chỉnh sửa (UC04: cập nhật hồ sơ — PUT /api/auth/profile)
   const [editMode, setEditMode] = useState(false);

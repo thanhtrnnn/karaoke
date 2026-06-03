@@ -5,11 +5,9 @@ import { useRef, useState } from 'react';
  * OtpVerifyPage (Boundary: OTPVerifyView / OTPVerifyPage) — UC02 Đăng ký.
  * Wireframe III.3.3: ô nhập OTP 6 chữ số, [btnConfirm], btnResendOTP.
  *
- * Ghi chú: Backend hiện CHƯA có endpoint OTP thực (/api/auth/verify-otp,
- * /api/auth/send-otp). Trang này là UI demo của bước xác nhận OTP trong luồng
- * đăng ký: nếu sau này backend bổ sung endpoint, chỉ cần điền vào verifyOtp()/
- * resendOtp(); hiện tại xác nhận sẽ chuyển hướng về /login (tài khoản đã được
- * tạo ở bước /api/auth/register trước đó).
+ * Xác minh mã OTP qua POST /api/auth/verify-otp; gửi lại mã qua
+ * POST /api/auth/send-otp. Ngữ cảnh đăng ký (username/phone/email) được nhận
+ * từ navigation state do RegisterPage truyền sang.
  */
 export default function OtpVerifyPage() {
   const navigate = useNavigate();
@@ -66,15 +64,25 @@ export default function OtpVerifyPage() {
     }
     setLoading(true);
     try {
-      // Backend chưa có endpoint OTP. Khi có, gọi tại đây, ví dụ:
-      // const res = await fetch('/api/auth/verify-otp', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ username: regData.username, otp: code }),
-      // });
-      // if (!res.ok) throw new Error('Mã OTP không hợp lệ hoặc đã hết hạn.');
+      // UC02: xác minh mã OTP người dùng nhập (kèm định danh tài khoản từ bước đăng ký).
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          otpCode: code,
+          phoneNumberOrEmail: regData.phoneNumber || regData.email,
+          username: regData.username,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error('Mã OTP không hợp lệ hoặc đã hết hạn.');
+      }
+      const data = (await res.json().catch(() => null)) as { verified?: boolean } | null;
+      if (!data?.verified) {
+        throw new Error('Mã OTP không hợp lệ hoặc đã hết hạn.');
+      }
 
-      // Demo: coi như xác minh thành công, tài khoản đã tạo ở bước đăng ký.
+      // Xác minh thành công -> tài khoản đã được tạo ở bước /api/auth/register.
       setInfo('Đăng ký thành công! Vui lòng đăng nhập.');
       setTimeout(() => navigate('/login'), 1200);
     } catch (err: any) {
@@ -90,12 +98,25 @@ export default function OtpVerifyPage() {
     setInfo(null);
     setDigits(Array(OTP_LENGTH).fill(''));
     inputsRef.current[0]?.focus();
-    // Backend chưa có endpoint gửi lại OTP. Khi có, gọi tại đây, ví dụ:
-    // await fetch('/api/auth/send-otp', {
-    //   method: 'POST', headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ username: regData.username }),
-    // });
-    setInfo('Đã gửi lại mã OTP (demo). Vui lòng kiểm tra điện thoại/email.');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumberOrEmail: regData.phoneNumber || regData.email,
+          type: 'REGISTER',
+        }),
+      });
+      if (!res.ok) {
+        throw new Error('Không gửi lại được mã OTP. Vui lòng thử lại.');
+      }
+      setInfo('Đã gửi lại mã OTP. Vui lòng kiểm tra điện thoại/email.');
+    } catch (err: any) {
+      setError(err.message || 'Không gửi lại được mã OTP. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

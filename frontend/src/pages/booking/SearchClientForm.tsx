@@ -3,7 +3,7 @@ import { useState } from 'react';
 // SearchClientForm — Màn hình con của module Đặt phòng (UC05)
 // Ô tìm tên/SĐT, gọi GET /api/clients?keyword= → bảng khách hàng.
 
-interface ClientRow {
+export interface ClientRow {
   id: string;
   fullName: string;
   phone: string;

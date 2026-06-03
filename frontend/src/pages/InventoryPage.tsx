@@ -231,21 +231,27 @@ export default function InventoryPage() {
             </tr>
           </thead>
           <tbody className="font-body-md divide-y divide-slate-800/50">
-            {filteredProducts.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-900/30 transition-colors">
-                <td className="py-4 px-6 text-slate-400">{p.id}</td>
-                <td className="py-4 px-6 text-white font-medium">{p.name}</td>
-                <td className="py-4 px-6">{p.currentStock}</td>
+            {filteredProducts.map((p) => {
+              const lowStock = p.currentStock <= p.safetyStock;
+              return (
+              <tr
+                key={p.id}
+                className={`transition-colors ${lowStock ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'hover:bg-slate-900/30'}`}
+              >
+                <td className={`py-4 px-6 ${lowStock ? 'text-red-400' : 'text-slate-400'}`}>{p.id}</td>
+                <td className={`py-4 px-6 font-medium ${lowStock ? 'text-red-400' : 'text-white'}`}>{p.name}</td>
+                <td className={`py-4 px-6 ${lowStock ? 'text-red-400 font-semibold' : ''}`}>{p.currentStock}</td>
                 <td className="py-4 px-6">{p.unit}</td>
                 <td className="py-4 px-6">
-                  {p.currentStock <= p.safetyStock && (
-                    <span className="text-status-cleaning flex items-center gap-1">
+                  {lowStock && (
+                    <span className="text-red-400 flex items-center gap-1">
                       <span className="material-symbols-outlined text-[16px]">warning</span>Sắp hết (định mức {p.safetyStock})
                     </span>
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

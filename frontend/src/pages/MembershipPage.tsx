@@ -4,6 +4,7 @@ interface TierConfig {
   tierName: string;
   minPoints: number;
   discount: string;
+  diemThuongNhan: number;
 }
 
 interface MembershipStats {
@@ -16,7 +17,7 @@ export default function MembershipPage() {
   const [stats, setStats] = useState<MembershipStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingTier, setEditingTier] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ minPoints: 0, discount: '' });
+  const [editForm, setEditForm] = useState({ minPoints: 0, discount: '', diemThuongNhan: 0 });
 
   // UC18: Manual tier upgrade state
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -34,7 +35,7 @@ export default function MembershipPage() {
       fetch('/api/membership/stats', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
     ])
       .then(([tiersData, statsData]) => {
-        setTiers((tiersData as any[]).map((t: any) => ({ ...t, discount: t.discountRate ?? t.discount ?? '' })));
+        setTiers((tiersData as any[]).map((t: any) => ({ ...t, discount: t.discountRate ?? t.discount ?? '', diemThuongNhan: t.diemThuongNhan ?? 0 })));
         setStats(statsData);
       })
       .catch(console.error)
@@ -43,7 +44,7 @@ export default function MembershipPage() {
 
   const handleEdit = (tier: TierConfig) => {
     setEditingTier(tier.tierName);
-    setEditForm({ minPoints: tier.minPoints, discount: tier.discount });
+    setEditForm({ minPoints: tier.minPoints, discount: tier.discount, diemThuongNhan: tier.diemThuongNhan });
   };
 
   const handleSaveRow = (tierName: string) => {
@@ -51,11 +52,11 @@ export default function MembershipPage() {
     fetch(`/api/membership/tiers/${encodeURIComponent(tierName)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ tierName, minPoints: editForm.minPoints, discountRate: editForm.discount }),
+      body: JSON.stringify({ tierName, minPoints: editForm.minPoints, discountRate: editForm.discount, diemThuongNhan: editForm.diemThuongNhan }),
     })
       .then(r => r.json())
       .then(updated => {
-        setTiers(tiers.map(t => t.tierName === tierName ? { ...updated, discount: updated.discountRate ?? editForm.discount } : t));
+        setTiers(tiers.map(t => t.tierName === tierName ? { ...updated, discount: updated.discountRate ?? editForm.discount, diemThuongNhan: updated.diemThuongNhan ?? editForm.diemThuongNhan } : t));
         setEditingTier(null);
       })
       .catch(console.error);
@@ -117,7 +118,7 @@ export default function MembershipPage() {
       <h1 className="font-h1 text-white">Quản lý hạng hội viên</h1>
       <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
         <h2 className="font-h2 text-white mb-4">Cấu hình hạng thành viên</h2>
-        <table className="w-full text-left whitespace-nowrap"><thead><tr className="border-b border-slate-700/50 text-slate-400 font-label-caps"><th className="py-4 px-6">Hạng</th><th className="py-4 px-6">Điểm tối thiểu</th><th className="py-4 px-6">Ưu đãi</th><th className="py-4 px-6">Thao tác</th></tr></thead>
+        <table className="w-full text-left whitespace-nowrap"><thead><tr className="border-b border-slate-700/50 text-slate-400 font-label-caps"><th className="py-4 px-6">Hạng</th><th className="py-4 px-6">Điểm tối thiểu</th><th className="py-4 px-6">Ưu đãi</th><th className="py-4 px-6">Hệ số điểm thưởng</th><th className="py-4 px-6">Thao tác</th></tr></thead>
           <tbody className="font-body-md divide-y divide-slate-800/50">
             {tiers.map((t) => (
               <tr key={t.tierName} className="hover:bg-slate-900/30 transition-colors">
@@ -144,6 +145,18 @@ export default function MembershipPage() {
                     />
                   ) : (
                     t.discount
+                  )}
+                </td>
+                <td className="py-4 px-6 text-slate-300">
+                  {editingTier === t.tierName ? (
+                    <input
+                      type="number"
+                      value={editForm.diemThuongNhan}
+                      onChange={e => setEditForm({ ...editForm, diemThuongNhan: parseInt(e.target.value) || 0 })}
+                      className="bg-surface-secondary border border-border-subtle rounded px-2 py-1 text-white w-24 focus:outline-none focus:border-primary-container"
+                    />
+                  ) : (
+                    `x${t.diemThuongNhan}`
                   )}
                 </td>
                 <td className="py-4 px-6">

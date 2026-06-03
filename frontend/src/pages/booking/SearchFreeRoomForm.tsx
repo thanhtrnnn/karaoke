@@ -1,15 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { todayGMT7 } from '../../config/constants';
+import SearchClientForm, { type ClientRow } from './SearchClientForm';
+import ConfirmBookingModal from './ConfirmBookingModal';
 
 // SearchFreeRoomForm — Màn hình con của module Đặt phòng (UC05)
 // Chọn ngày/giờ + chi nhánh, nút "Tìm" gọi GET /api/bookings/search-free → bảng phòng trống.
+//
+// BookingFlow (export bên dưới) — màn hình cha gắn 3 bước đặt phòng vào tuyến /search-free-room:
+//   1) SearchFreeRoomForm  → onPickRoom
+//   2) SearchClientForm    → onPickClient
+//   3) ConfirmBookingModal → POST /api/bookings
 
 interface Branch {
   id: string;
   name: string;
 }
 
-interface FreeRoom {
+export interface FreeRoom {
   id: string;
   type: string;
   cap: string;
@@ -181,6 +189,129 @@ export default function SearchFreeRoomForm(props: SearchFreeRoomFormProps): Reac
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// BookingFlow — màn hình cha của tuyến /search-free-room.
+// Quản lý 3 bước đặt phòng (UC05) bằng state cục bộ và nối các callback sẵn có:
+//   step 'room'   → SearchFreeRoomForm.onPickRoom
+//   step 'client' → SearchClientForm.onPickClient → mở ConfirmBookingModal
+//   ConfirmBookingModal.onConfirmed → POST /api/bookings xong, về /reception-home.
+// ---------------------------------------------------------------------------
+
+type BookingStep = 'room' | 'client';
+
+interface PickedRoom {
+  room: FreeRoom;
+  branchId: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+}
+
+function parseCapacity(cap: string): number {
+  const n = parseInt(cap, 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+export function BookingFlow(): React.ReactElement {
+  const navigate = useNavigate();
+  const [step, setStep] = useState<BookingStep>('room');
+  const [picked, setPicked] = useState<PickedRoom | null>(null);
+  const [client, setClient] = useState<ClientRow | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
+
+  const handlePickRoom = (
+    room: FreeRoom,
+    branchId: string,
+    bookingDate: string,
+    startTime: string,
+    endTime: string,
+  ): void => {
+    setPicked({ room, branchId, bookingDate, startTime, endTime });
+    setStep('client');
+  };
+
+  const handlePickClient = (pickedClient: ClientRow): void => {
+    setClient(pickedClient);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmed = (bookingId: string): void => {
+    alert(`Đặt phòng thành công! Mã đặt: ${bookingId}`);
+    navigate('/reception-home');
+  };
+
+  const steps: { key: BookingStep; label: string }[] = [
+    { key: 'room', label: '1. Chọn phòng trống' },
+    { key: 'client', label: '2. Chọn khách hàng' },
+  ];
+
+  return (
+    <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-h1 text-white">Đặt phòng</h1>
+        <button
+          onClick={() => navigate('/reception-home')}
+          className="px-4 py-2 rounded-lg font-label-caps border border-slate-700/50 text-slate-300 hover:bg-slate-900/30 transition-colors flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          Về trang lễ tân
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {steps.map((s) => (
+          <span
+            key={s.key}
+            className={`px-4 py-2 rounded-lg font-label-caps ${
+              step === s.key
+                ? 'bg-primary-container text-on-primary-container'
+                : 'bg-surface-container text-slate-400 border border-slate-700/50'
+            }`}
+          >
+            {s.label}
+          </span>
+        ))}
+      </div>
+
+      {step === 'room' && <SearchFreeRoomForm onPickRoom={handlePickRoom} />}
+
+      {step === 'client' && picked && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
+            <button
+              onClick={() => {
+                setStep('room');
+                setClient(null);
+              }}
+              className="px-4 py-2 rounded-lg font-label-caps border border-slate-700/50 text-slate-300 hover:bg-slate-900/30 transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+              Đổi phòng
+            </button>
+            <span className="font-body-md text-slate-300">
+              Phòng <span className="text-primary-container font-semibold">{picked.room.id}</span> ({picked.room.type}) ·{' '}
+              {picked.bookingDate} | {picked.startTime} — {picked.endTime}
+            </span>
+          </div>
+          <SearchClientForm onPickClient={handlePickClient} />
+        </div>
+      )}
+
+      <ConfirmBookingModal
+        open={confirmOpen}
+        room={picked ? { id: picked.room.id, type: picked.room.type, price: picked.room.price } : null}
+        client={client ? { id: client.id, fullName: client.fullName, phone: client.phone } : null}
+        bookingDate={picked?.bookingDate ?? ''}
+        startTime={picked?.startTime ?? ''}
+        endTime={picked?.endTime ?? ''}
+        guestCount={picked ? parseCapacity(picked.room.cap) : 1}
+        onClose={() => setConfirmOpen(false)}
+        onConfirmed={handleConfirmed}
+      />
     </div>
   );
 }

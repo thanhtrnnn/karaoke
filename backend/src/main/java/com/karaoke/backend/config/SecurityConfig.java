@@ -36,9 +36,9 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Admin-only: employee management, reports
-                        .requestMatchers("/api/employees/**").hasRole("ADMIN")
-                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                        // UC11 staff management + UC13/UC21 reports: ADMIN and BRANCH_MANAGER
+                        .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
+                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
                         // All other endpoints — authenticated
                         // Frontend RBAC (rbac.ts) controls which pages each role sees
                         .anyRequest().authenticated())

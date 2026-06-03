@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDateTime, todayGMT7 } from '../../config/constants';
 
 // ReceptionistHomePage — Màn hình chính module Đặt/Trả phòng cho Lễ tân.
-// 3 nút điều hướng (Đặt phòng, Check-in, Check-out) + bảng booking hôm nay (GET /api/bookings).
+// 4 nút điều hướng (Đặt phòng, Quản lý đặt phòng, Check-in, Check-out) + bảng booking hôm nay (GET /api/bookings).
 
 interface TodayBooking {
   id: string;
@@ -63,8 +63,13 @@ export default function ReceptionistHomePage(): React.ReactElement {
     fetchBookings();
   }, []);
 
+  // UC05 đặt phòng → /search-free-room (tìm phòng trống → chọn khách → xác nhận)
+  // UC06 hủy phòng  → /cancel-booking ("Quản lý đặt phòng")
+  // UC07 check-in   → /check-in
+  // UC08 check-out  → /checkout
   const actions: { label: string; icon: string; path: string }[] = [
-    { label: 'Đặt phòng', icon: 'add_circle', path: '/booking' },
+    { label: 'Đặt phòng', icon: 'add_circle', path: '/search-free-room' },
+    { label: 'Quản lý đặt phòng', icon: 'event_note', path: '/cancel-booking' },
     { label: 'Check-in', icon: 'login', path: '/check-in' },
     { label: 'Check-out', icon: 'logout', path: '/checkout' },
   ];
@@ -73,7 +78,7 @@ export default function ReceptionistHomePage(): React.ReactElement {
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <h1 className="font-h1 text-white">Lễ tân</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((a) => (
           <button
             key={a.path}

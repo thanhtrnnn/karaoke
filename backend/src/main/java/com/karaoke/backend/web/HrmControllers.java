@@ -191,9 +191,28 @@ class HrmBaoCaoController {
         this.receipts = receipts; this.clients = clients; this.rooms = rooms;
     }
 
-    @GetMapping("/create") @Operation(summary = "createReport(period, maCN) : BaoCao")
-    BaoCao createReport(@RequestParam(defaultValue = "Tháng") String period, @RequestParam(required = false) String maCN) {
-        List<RoomReceipt> all = receipts.findAll();
+    @GetMapping("/create") @Operation(summary = "createReport(period, maCN, from, to) : BaoCao")
+    BaoCao createReport(@RequestParam(defaultValue = "Tháng") String period,
+                        @RequestParam(required = false) String maCN,
+                        @RequestParam(required = false) String from,
+                        @RequestParam(required = false) String to) {
+        // UC13: số liệu báo cáo phải giới hạn THEO CHI NHÁNH (maCN) và (tùy chọn) khoảng
+        // thời gian [from,to]. Một RoomReceipt thuộc về chi nhánh qua đường
+        // receipt -> booking -> room -> branch. Khi maCN null/blank thì lấy toàn hệ thống
+        // (giữ tương thích ngược). Lọc theo ngày dựa trên paidAt.
+        LocalDate fromDate = parseDateOrNull(from);
+        LocalDate toDate = parseDateOrNull(to);
+        List<RoomReceipt> all = receipts.findAll().stream()
+                .filter(rc -> maCN == null || maCN.isBlank() || maCN.equals(receiptBranchId(rc)))
+                .filter(rc -> {
+                    if (fromDate == null && toDate == null) return true;
+                    if (rc.getPaidAt() == null) return false;
+                    LocalDate paid = rc.getPaidAt().toLocalDate();
+                    if (fromDate != null && paid.isBefore(fromDate)) return false;
+                    if (toDate != null && paid.isAfter(toDate)) return false;
+                    return true;
+                })
+                .toList();
         BigDecimal doanhThu = all.stream().map(RoomReceipt::getTotalAmount)
                 .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal fnb = all.stream().map(RoomReceipt::getServiceFee)
@@ -203,14 +222,35 @@ class HrmBaoCaoController {
         long total = roomList.size();
         long occupied = roomList.stream().filter(r -> r.getStatus() == RoomStatus.OCCUPIED).count();
         long congSuat = total > 0 ? occupied * 100 / total : 0;
-        return new BaoCao(period, maCN == null ? "chi-nhanh" : maCN, doanhThu, congSuat, clients.count(), fnb);
+        // luotKhach: số lượt khách trong phạm vi báo cáo = số hóa đơn (mỗi hóa đơn = 1 lượt
+        // khách đã thanh toán). Khi không lọc chi nhánh/ngày thì giữ tổng số khách hàng cũ
+        // để không phá vỡ hành vi/test toàn hệ thống.
+        long luotKhach = (maCN == null || maCN.isBlank()) && fromDate == null && toDate == null
+                ? clients.count() : all.size();
+        return new BaoCao(period, maCN == null ? "chi-nhanh" : maCN, doanhThu, congSuat, luotKhach, fnb);
+    }
+
+    /** Đường liên kết chi nhánh của 1 hóa đơn: receipt -> booking -> room -> branch. */
+    static String receiptBranchId(RoomReceipt rc) {
+        if (rc.getBooking() != null && rc.getBooking().getRoom() != null
+                && rc.getBooking().getRoom().getBranch() != null) {
+            return rc.getBooking().getRoom().getBranch().getId();
+        }
+        return null;
+    }
+
+    private static LocalDate parseDateOrNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { return LocalDate.parse(value); } catch (Exception ignored) { return null; }
     }
 
     @GetMapping("/export") @Operation(summary = "exportFile(period, maCN, format) : byte[] (CSV)")
     ResponseEntity<byte[]> exportFile(@RequestParam(defaultValue = "Tháng") String period,
                                       @RequestParam(required = false) String maCN,
+                                      @RequestParam(required = false) String from,
+                                      @RequestParam(required = false) String to,
                                       @RequestParam(defaultValue = "csv") String format) {
-        BaoCao bc = createReport(period, maCN);
+        BaoCao bc = createReport(period, maCN, from, to);
         String csv = "Kỳ,Phạm vi,Tổng doanh thu,Công suất,Lượt khách,Doanh số F&B\n"
                 + bc.ky() + "," + bc.phamVi() + "," + bc.tongDoanhThu() + ","
                 + bc.congSuatPhong() + "," + bc.luotKhach() + "," + bc.doanhSoFnB() + "\n";
@@ -239,6 +279,23 @@ class HrmKhachHangController {
                                    @RequestParam(required = false) String maCN) {
         List<Client> found = (keyword == null || keyword.isBlank())
                 ? clients.findAll() : clients.searchByKeyword(keyword);
+        // UC14: khi truyền maCN, chỉ trả khách hàng THUỘC chi nhánh đó. Một khách hàng
+        // liên kết với chi nhánh qua hóa đơn đã phát sinh tại chi nhánh:
+        // client <- receipt.booking.customer  và  receipt.booking.room.branch == maCN.
+        // Khi maCN null/blank thì giữ kết quả tìm theo từ khóa trên toàn hệ thống.
+        if (maCN != null && !maCN.isBlank()) {
+            java.util.Set<String> branchCustomerIds = receipts.findAll().stream()
+                    .filter(rc -> rc.getBooking() != null
+                            && rc.getBooking().getRoom() != null
+                            && rc.getBooking().getRoom().getBranch() != null
+                            && maCN.equals(rc.getBooking().getRoom().getBranch().getId())
+                            && rc.getBooking().getCustomer() != null)
+                    .map(rc -> rc.getBooking().getCustomer().getId())
+                    .collect(java.util.stream.Collectors.toSet());
+            found = found.stream()
+                    .filter(c -> branchCustomerIds.contains(c.getId()))
+                    .toList();
+        }
         return found.stream().map(KhachHang::from).toList();
     }
 
@@ -278,27 +335,80 @@ class BaoCaoChuoiController {
         this.receipts = receipts; this.clients = clients; this.rooms = rooms;
     }
 
-    @PostMapping("/aggregate") @Operation(summary = "aggregateChain(period, branches) : BaoCao")
-    BaoCao aggregateChain(@RequestBody AggregateRequest req) {
-        List<RoomReceipt> all = receipts.findAll();
-        BigDecimal doanhThu = all.stream().map(RoomReceipt::getTotalAmount)
-                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal fnb = all.stream().map(RoomReceipt::getServiceFee)
-                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
-        long total = rooms.count();
-        long occupied = rooms.findAll().stream().filter(r -> r.getStatus() == RoomStatus.OCCUPIED).count();
-        long congSuat = total > 0 ? occupied * 100 / total : 0;
+    @PostMapping("/aggregate") @Operation(summary = "aggregateChain(period, branches) : BaoCaoChuoi (tổng + xếp hạng theo chi nhánh)")
+    BaoCaoChuoi aggregateChain(@RequestBody AggregateRequest req) {
         String period = req == null || req.period() == null ? "Quý" : req.period();
-        return new BaoCao(period, "toan-chuoi", doanhThu, congSuat, clients.count(), fnb);
+        List<String> branchIds = req == null ? null : req.branches();
+
+        // UC21 (sequence: loop [mỗi chi nhánh] -> sumRevenue() -> rank):
+        // Tính doanh thu / công suất / lượt khách RIÊNG cho TỪNG chi nhánh được yêu cầu,
+        // rồi xếp hạng giảm dần theo doanh thu. Liên kết hóa đơn -> chi nhánh đi qua
+        // receipt -> booking -> room -> branch. Nếu branches null/blank thì lấy toàn bộ
+        // chi nhánh đang có (suy ra từ phòng) để tổng hợp toàn chuỗi.
+        List<RoomReceipt> allReceipts = receipts.findAll();
+        List<Room> allRooms = rooms.findAll();
+
+        java.util.List<String> targetBranches;
+        if (branchIds == null || branchIds.isEmpty()) {
+            targetBranches = allRooms.stream()
+                    .filter(r -> r.getBranch() != null)
+                    .map(r -> r.getBranch().getId())
+                    .distinct().sorted().toList();
+        } else {
+            targetBranches = branchIds;
+        }
+
+        List<BaoCao> perBranch = new java.util.ArrayList<>();
+        for (String bid : targetBranches) {
+            List<RoomReceipt> brReceipts = allReceipts.stream()
+                    .filter(rc -> bid != null && bid.equals(HrmBaoCaoController.receiptBranchId(rc)))
+                    .toList();
+            BigDecimal dt = brReceipts.stream().map(RoomReceipt::getTotalAmount)
+                    .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal brFnb = brReceipts.stream().map(RoomReceipt::getServiceFee)
+                    .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+            List<Room> brRooms = allRooms.stream()
+                    .filter(r -> r.getBranch() != null && bid != null && bid.equals(r.getBranch().getId()))
+                    .toList();
+            long brTotal = brRooms.size();
+            long brOcc = brRooms.stream().filter(r -> r.getStatus() == RoomStatus.OCCUPIED).count();
+            long brCongSuat = brTotal > 0 ? brOcc * 100 / brTotal : 0;
+            perBranch.add(new BaoCao(period, bid, dt, brCongSuat, (long) brReceipts.size(), brFnb));
+        }
+        // rank: doanh thu giảm dần
+        perBranch.sort(java.util.Comparator.comparing(BaoCao::tongDoanhThu).reversed());
+
+        // Tổng toàn chuỗi = cộng dồn các chi nhánh đã tính ở trên.
+        BigDecimal tongDoanhThu = perBranch.stream().map(BaoCao::tongDoanhThu)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal tongFnb = perBranch.stream().map(BaoCao::doanhSoFnB)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long tongLuotKhach = perBranch.stream().mapToLong(BaoCao::luotKhach).sum();
+        long avgCongSuat = perBranch.isEmpty() ? 0
+                : Math.round(perBranch.stream().mapToLong(BaoCao::congSuatPhong).average().orElse(0));
+
+        BaoCao tong = new BaoCao(period, "toan-chuoi", tongDoanhThu, avgCongSuat, tongLuotKhach, tongFnb);
+        // Giữ các trường top-level y như BaoCao (ky/phamVi/tongDoanhThu/...) để tương thích
+        // ngược; bổ sung chiTietChiNhanh là bảng xếp hạng theo chi nhánh.
+        return new BaoCaoChuoi(tong.ky(), tong.phamVi(), tong.tongDoanhThu(), tong.congSuatPhong(),
+                tong.luotKhach(), tong.doanhSoFnB(), perBranch);
     }
 
-    @PostMapping("/export") @Operation(summary = "exportFile(period, branches) : byte[] (CSV tổng hợp toàn chuỗi)")
+    @PostMapping("/export") @Operation(summary = "exportFile(period, branches) : byte[] (CSV xếp hạng toàn chuỗi)")
     ResponseEntity<byte[]> exportFile(@RequestBody(required = false) AggregateRequest req) {
-        BaoCao bc = aggregateChain(req);
-        String csv = "Kỳ,Phạm vi,Tổng doanh thu,Công suất,Lượt khách,Doanh số F&B\n"
-                + bc.ky() + "," + bc.phamVi() + "," + bc.tongDoanhThu() + ","
-                + bc.congSuatPhong() + "," + bc.luotKhach() + "," + bc.doanhSoFnB() + "\n";
-        byte[] body = ("﻿" + csv).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        BaoCaoChuoi bc = aggregateChain(req);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Kỳ,Phạm vi,Tổng doanh thu,Công suất,Lượt khách,Doanh số F&B\n");
+        sb.append(bc.ky()).append(",").append(bc.phamVi()).append(",").append(bc.tongDoanhThu()).append(",")
+          .append(bc.congSuatPhong()).append(",").append(bc.luotKhach()).append(",").append(bc.doanhSoFnB()).append("\n");
+        // bảng xếp hạng theo chi nhánh (UC21)
+        sb.append("Hạng,Chi nhánh,Doanh thu,Công suất,Lượt khách,Doanh số F&B\n");
+        int rank = 1;
+        for (BaoCao b : bc.chiTietChiNhanh()) {
+            sb.append(rank++).append(",").append(b.phamVi()).append(",").append(b.tongDoanhThu()).append(",")
+              .append(b.congSuatPhong()).append(",").append(b.luotKhach()).append(",").append(b.doanhSoFnB()).append("\n");
+        }
+        byte[] body = ("﻿" + sb).getBytes(java.nio.charset.StandardCharsets.UTF_8);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao-cao-chuoi.csv\"");
         headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
@@ -306,4 +416,19 @@ class BaoCaoChuoiController {
     }
 
     record AggregateRequest(String period, List<String> branches) {}
+
+    /**
+     * Kết quả tổng hợp toàn chuỗi (UC21): giữ nguyên các trường top-level của {@link BaoCao}
+     * (tương thích ngược cho client cũ chỉ đọc phamVi/tongDoanhThu) và bổ sung
+     * {@code chiTietChiNhanh} — bảng xếp hạng doanh thu theo từng chi nhánh.
+     */
+    record BaoCaoChuoi(
+            String ky,
+            String phamVi,
+            BigDecimal tongDoanhThu,
+            Long congSuatPhong,
+            Long luotKhach,
+            BigDecimal doanhSoFnB,
+            List<BaoCao> chiTietChiNhanh
+    ) {}
 }

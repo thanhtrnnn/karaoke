@@ -193,13 +193,13 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Current password is incorrect"));
     }
 
-    // TC03 — Mật khẩu sai 5 lần → trả lỗi mỗi lần (lockout chưa implement)
+    // TC03 — Mật khẩu sai 5 lần liên tiếp → khóa tài khoản (UC01 ngoại lệ)
     @Test
-    @DisplayName("UC01 — Mật khẩu sai 5 lần liên tiếp vẫn trả 400 mỗi lần (lockout chưa implement)")
-    void UC01_wrongPasswordMultipleTimes_returns400EachTime() throws Exception {
+    @DisplayName("UC01 — TC03: Sai mật khẩu 5 lần liên tiếp khóa tài khoản, mật khẩu đúng vẫn bị từ chối")
+    void UC01_wrongPassword5Times_locksAccount() throws Exception {
         createTestUser("U8", "locktest", "locktest@example.com", "correctpass", UserRole.CLIENT);
 
-        // Attempt 1-5: all should return 400
+        // Sai mật khẩu 5 lần: mỗi lần trả 400 "Invalid username or password"
         for (int i = 1; i <= 5; i++) {
             mockMvc.perform(post("/api/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -209,16 +209,48 @@ class AuthControllerTest {
                                         public final String password = "wrongpass";
                                     }
                             )))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Invalid username or password"));
         }
 
-        // After 5 failures, user should still be able to login with correct password
-        // (lockout not implemented yet — this documents the gap)
+        // Sau 5 lần sai, tài khoản bị khóa: ngay cả mật khẩu ĐÚNG cũng bị từ chối
+        // với thông báo "Tài khoản đã bị khóa".
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new Object() {
                                     public final String usernameOrEmail = "locktest";
+                                    public final String password = "correctpass";
+                                }
+                        )))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("khóa")));
+    }
+
+    @Test
+    @DisplayName("UC01 — Sai mật khẩu < 5 lần chưa khóa: đăng nhập đúng vẫn thành công")
+    void UC01_wrongPasswordFewTimes_thenCorrect_succeeds() throws Exception {
+        createTestUser("U9", "trytest", "trytest@example.com", "correctpass", UserRole.CLIENT);
+
+        // Sai 4 lần (chưa đạt ngưỡng 5)
+        for (int i = 1; i <= 4; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    new Object() {
+                                        public final String usernameOrEmail = "trytest";
+                                        public final String password = "wrongpass";
+                                    }
+                            )))
+                    .andExpect(status().isBadRequest());
+        }
+
+        // Mật khẩu đúng -> thành công, bộ đếm sai được reset
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new Object() {
+                                    public final String usernameOrEmail = "trytest";
                                     public final String password = "correctpass";
                                 }
                         )))

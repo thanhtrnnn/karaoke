@@ -45,13 +45,16 @@ public class BookingController {
     private final ClientRepository clients;
     private final RoomRepository rooms;
     private final RoomReceiptRepository receipts;
+    private final RoomReceiptController roomReceiptController;
 
     public BookingController(BookingRepository bookings, ClientRepository clients,
-                             RoomRepository rooms, RoomReceiptRepository receipts) {
+                             RoomRepository rooms, RoomReceiptRepository receipts,
+                             RoomReceiptController roomReceiptController) {
         this.bookings = bookings;
         this.clients = clients;
         this.rooms = rooms;
         this.receipts = receipts;
+        this.roomReceiptController = roomReceiptController;
     }
 
     @GetMapping
@@ -265,12 +268,35 @@ public class BookingController {
                 .toList();
     }
 
-    // confirmPayment / calculateInvoice: KHÔNG thêm ở đây — logic hóa đơn
-    // RoomReceipt được xử lý ở module Order/Receipt. Ánh xạ thiết kế:
-    //   calculateInvoice -> OrderController (POST /api/orders) cộng dồn
-    //                       serviceFee/totalAmount vào RoomReceipt đang DRAFT.
-    //   confirmPayment   -> BookingController#updateStatus với COMPLETED
-    //                       (PUT /api/bookings/{id}/status) chốt phiên + trả phòng.
+    // calculateInvoice(roomId) — đúng tên thiết kế (class diagram đặt trên
+    // BookingController). Ủy quyền sang RoomReceiptController#generate(roomId):
+    // tính roomFee từ giờ thực tế + serviceFee từ order vào RoomReceipt DRAFT.
+    @PostMapping("/calculate-invoice")
+    @Operation(summary = "Tính hóa đơn (calculateInvoice) — ủy quyền tới RoomReceiptController#generate")
+    @Transactional
+    RoomReceipt calculateInvoice(@RequestParam String roomId) {
+        return roomReceiptController.generate(roomId);
+    }
+
+    // confirmPayment(receiptId, paymentMethod) — đúng tên thiết kế. Ủy quyền
+    // sang RoomReceiptController#pay(id, body): chốt PAID + trả phòng + tích điểm.
+    @PutMapping("/{receiptId}/confirm-payment")
+    @Operation(summary = "Xác nhận thanh toán (confirmPayment) — ủy quyền tới RoomReceiptController#pay")
+    @Transactional
+    RoomReceipt confirmPayment(@PathVariable String receiptId,
+                               @RequestBody(required = false) java.util.Map<String, String> body) {
+        return roomReceiptController.pay(receiptId, body);
+    }
+
+    // applyPromotion(receiptId, voucherCode) — đúng tên thiết kế. Ủy quyền sang
+    // RoomReceiptController#applyPromotion(id, body): áp mã giảm giá vào hóa đơn.
+    @PostMapping("/{receiptId}/apply-promotion")
+    @Operation(summary = "Áp dụng khuyến mãi (applyPromotion) — ủy quyền tới RoomReceiptController#applyPromotion")
+    @Transactional
+    RoomReceipt applyPromotion(@PathVariable String receiptId,
+                              @RequestBody java.util.Map<String, String> body) {
+        return roomReceiptController.applyPromotion(receiptId, body);
+    }
 
     // updateRoomStatus(roomId, status) — đổi trạng thái phòng trực tiếp.
     @PutMapping("/room/{roomId}/status")

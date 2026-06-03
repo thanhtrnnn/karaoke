@@ -33,7 +33,7 @@ import ChainReportPage from './pages/ChainReportPage';
 import BranchReportPage from './pages/BranchReportPage';
 import CustomerInfoPage from './pages/CustomerInfoPage';
 import ReceptionistHomePage from './pages/booking/ReceptionistHomePage';
-import SearchFreeRoomForm from './pages/booking/SearchFreeRoomForm';
+import { BookingFlow } from './pages/booking/SearchFreeRoomForm';
 import SearchClientForm from './pages/booking/SearchClientForm';
 import CheckInPage from './pages/booking/CheckInPage';
 import CancelBookingPage from './pages/booking/CancelBookingPage';
@@ -85,7 +85,8 @@ function App() {
 
           {/* Booking — màn hình đúng tên thiết kế (UC05–UC08) */}
           <Route path="/reception-home" element={<ReceptionistHomePage />} />
-          <Route path="/search-free-room" element={<SearchFreeRoomForm />} />
+          {/* UC05 — flow đặt phòng: tìm phòng trống → chọn khách → xác nhận (ConfirmBookingModal) */}
+          <Route path="/search-free-room" element={<BookingFlow />} />
           <Route path="/search-client" element={<SearchClientForm />} />
           <Route path="/check-in" element={<CheckInPage />} />
           <Route path="/cancel-booking" element={<CancelBookingPage />} />

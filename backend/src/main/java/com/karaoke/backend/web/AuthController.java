@@ -1,8 +1,10 @@
 package com.karaoke.backend.web;
 
+import com.karaoke.backend.domain.Client;
 import com.karaoke.backend.domain.LoginSession;
 import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
+import com.karaoke.backend.repository.ClientRepository;
 import com.karaoke.backend.repository.LoginSessionRepository;
 import com.karaoke.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,13 +32,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Đăng nhập, đăng ký và đổi mật khẩu")
 public class AuthController {
+    /** Account UC01 ngoại lệ: số lần đăng nhập sai tối đa trước khi khóa. */
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    /** Account UC01 ngoại lệ: thời gian khóa tài khoản (phút). */
+    private static final int LOCK_DURATION_MINUTES = 15;
+
     private final UserRepository users;
+    private final ClientRepository clients;
     private final LoginSessionRepository loginSessions;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserRepository users, LoginSessionRepository loginSessions,
+    public AuthController(UserRepository users, ClientRepository clients,
+                          LoginSessionRepository loginSessions,
                           PasswordEncoder passwordEncoder) {
         this.users = users;
+        this.clients = clients;
         this.loginSessions = loginSessions;
         this.passwordEncoder = passwordEncoder;
     }
@@ -80,10 +91,10 @@ public class AuthController {
                 passwordEncoder.encode(request.password()),
                 UserRole.CLIENT,
                 true,
-                null, null, null
+                request.fullName(), request.phoneNumber(), LocalDateTime.now()
         );
         users.save(user);
-        return AuthResponse.from(user);
+        return buildResponse(user);
     }
 
     @PostMapping("/login")
@@ -114,9 +125,25 @@ public class AuthController {
                 .or(() -> users.findByEmail(request.usernameOrEmail()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
 
+        // Account UC01 ngoại lệ (TC03): tài khoản đang bị khóa -> từ chối đăng nhập
+        if (user.isLocked()) {
+            throw new IllegalArgumentException("Tài khoản đã bị khóa");
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            // Account UC01 ngoại lệ: tăng số lần sai, khóa 15 phút khi đạt 5 lần
+            user.incrementFailedAttempts();
+            if (user.getFailedAttempts() != null && user.getFailedAttempts() >= MAX_FAILED_ATTEMPTS) {
+                user.lockAccount(LOCK_DURATION_MINUTES);
+            }
+            users.save(user);
             throw new IllegalArgumentException("Invalid username or password");
         }
+
+        // Đăng nhập thành công: reset bộ đếm sai + bỏ khóa
+        user.setFailedAttempts(0);
+        user.setLockUntil(null);
+        users.save(user);
 
         // Ghi 1 phiên đăng nhập (Account diagram: LoginSession)
         String token = "dev-token-" + user.getId();
@@ -130,7 +157,7 @@ public class AuthController {
         session.setUser(user);
         loginSessions.save(session);
 
-        return AuthResponse.from(user);
+        return buildResponse(user);
     }
 
     @PostMapping("/change-password")
@@ -210,14 +237,17 @@ public class AuthController {
             user.setEmail(request.email());
         }
         users.save(user);
-        return AuthResponse.from(user);
+        return buildResponse(user);
     }
 
     record RegisterRequest(
             @NotBlank String username,
             @Email String email,
             @NotBlank @Size(min = 8) String password,
-            UserRole role
+            UserRole role,
+            // Account UC02: tùy chọn (nullable) để các caller cũ vẫn hợp lệ
+            String fullName,
+            String phoneNumber
     ) {}
 
     record LoginRequest(@NotBlank String usernameOrEmail, @NotBlank String password) {}
@@ -234,10 +264,41 @@ public class AuthController {
             @Email String email
     ) {}
 
-    record AuthResponse(String id, String username, String email, UserRole role, String token) {
+    /**
+     * Phản hồi xác thực. membershipTier + loyaltyPoints (Account UC04) chỉ có
+     * khi User tương ứng một Client (thành viên); ngược lại để null.
+     */
+    record AuthResponse(String id, String username, String email, UserRole role, String token,
+                        String membershipTier, Integer loyaltyPoints) {
         static AuthResponse from(User user) {
             return new AuthResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole(),
-                    "dev-token-" + user.getId());
+                    "dev-token-" + user.getId(), null, null);
         }
+    }
+
+    /** Tạo AuthResponse và gắn thêm hạng hội viên + điểm tích lũy nếu User là một Client. */
+    private AuthResponse buildResponse(User user) {
+        Client client = findClientForUser(user);
+        String tier = client != null ? client.getTier() : null;
+        Integer points = client != null ? client.getLoyaltyPoints() : null;
+        return new AuthResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole(),
+                "dev-token-" + user.getId(), tier, points);
+    }
+
+    /** Tìm Client tương ứng User: theo phoneNumber trước, sau đó dò trùng email. */
+    private Client findClientForUser(User user) {
+        if (user.getPhoneNumber() != null) {
+            Optional<Client> byPhone = clients.findByPhone(user.getPhoneNumber());
+            if (byPhone.isPresent()) {
+                return byPhone.get();
+            }
+        }
+        if (user.getEmail() != null) {
+            return clients.findAll().stream()
+                    .filter(c -> user.getEmail().equalsIgnoreCase(c.getEmail()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
     }
 }
