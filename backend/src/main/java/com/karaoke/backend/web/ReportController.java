@@ -91,7 +91,20 @@ public class ReportController {
             return true;
         };
 
-        java.util.List<Order> filteredOrders = orders.findAll().stream().filter(datePredicate).toList();
+        // UC13: when branchId is provided, only count orders belonging to that branch
+        // (via room.branch). Null-safe so orders without a room/branch are excluded
+        // when filtering. When branchId == null, keep all orders (original behaviour).
+        java.util.function.Predicate<Order> branchPredicate = order -> {
+            if (branchId == null) return true;
+            return order.getRoom() != null
+                    && order.getRoom().getBranch() != null
+                    && branchId.equals(order.getRoom().getBranch().getId());
+        };
+
+        java.util.List<Order> filteredOrders = orders.findAll().stream()
+                .filter(datePredicate)
+                .filter(branchPredicate)
+                .toList();
 
         BigDecimal revenueFnB = filteredOrders.stream()
                 .map(order -> order.getItems() == null ? BigDecimal.ZERO :
@@ -127,11 +140,40 @@ public class ReportController {
             summary = "Doanh thu theo thời gian",
             description = "Trả về dữ liệu doanh thu theo giờ/ngày/tháng. Giá trị period: hourly, weekly, monthly"
     )
-    List<Map<String, Object>> revenue(@RequestParam(defaultValue = "weekly") String period) {
+    List<Map<String, Object>> revenue(
+            @RequestParam(defaultValue = "weekly") String period,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String branchId
+    ) {
         ZoneId gmt7 = ZoneId.of("Asia/Ho_Chi_Minh");
         ZonedDateTime now = ZonedDateTime.now(gmt7);
         List<Map<String, Object>> result = new ArrayList<>();
         List<Order> allOrders = orders.findAll();
+
+        // UC13/UC21: optional pre-filter by date range [from,to] and branch (via
+        // room.branch) BEFORE grouping. When no filter params are supplied the list
+        // is untouched so the existing period grouping behaviour is unchanged.
+        if (from != null || to != null || branchId != null) {
+            java.time.LocalDate fromDate = parseDateOrNull(from);
+            java.time.LocalDate toDate = parseDateOrNull(to);
+            allOrders = allOrders.stream()
+                    .filter(o -> {
+                        if (fromDate != null) {
+                            if (o.getOrderTime() == null || o.getOrderTime().toLocalDate().isBefore(fromDate)) return false;
+                        }
+                        if (toDate != null) {
+                            if (o.getOrderTime() == null || o.getOrderTime().toLocalDate().isAfter(toDate)) return false;
+                        }
+                        if (branchId != null) {
+                            return o.getRoom() != null
+                                    && o.getRoom().getBranch() != null
+                                    && branchId.equals(o.getRoom().getBranch().getId());
+                        }
+                        return true;
+                    })
+                    .toList();
+        }
 
         java.util.function.Function<Order, BigDecimal> orderTotal = order ->
                 order.getItems() == null ? BigDecimal.ZERO :
@@ -206,6 +248,15 @@ public class ReportController {
             }
         }
         return result;
+    }
+
+    private static java.time.LocalDate parseDateOrNull(String value) {
+        if (value == null) return null;
+        try {
+            return java.time.LocalDate.parse(value);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     @GetMapping("/notifications")

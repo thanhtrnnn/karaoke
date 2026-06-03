@@ -43,4 +43,38 @@ public class User {
     private String phoneNumber;
 
     private LocalDateTime createdAt;
+
+    // Account design (UC01 ngoại lệ): khóa tài khoản sau nhiều lần đăng nhập sai
+    private Integer failedAttempts = 0;
+    private LocalDateTime lockUntil;
+
+    /** Constructor 9 tham số (giữ tương thích các nơi đang gọi: DataSeeder, AuthController). */
+    public User(String id, String username, String email, String passwordHash, UserRole role,
+                Boolean active, String fullName, String phoneNumber, LocalDateTime createdAt) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.active = active;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
+        this.createdAt = createdAt;
+        this.failedAttempts = 0;
+    }
+
+    /** incrementFailedAttempts() — theo lớp thực thể User trong tài liệu. */
+    public void incrementFailedAttempts() {
+        this.failedAttempts = (this.failedAttempts == null ? 0 : this.failedAttempts) + 1;
+    }
+
+    /** lockAccount(lockDuration) — khóa tài khoản trong số phút chỉ định. */
+    public void lockAccount(int lockDurationMinutes) {
+        this.lockUntil = LocalDateTime.now().plusMinutes(lockDurationMinutes);
+    }
+
+    /** isLocked() — tài khoản có đang bị khóa không. */
+    public boolean isLocked() {
+        return this.lockUntil != null && this.lockUntil.isAfter(LocalDateTime.now());
+    }
 }

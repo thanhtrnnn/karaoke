@@ -270,8 +270,10 @@ class ProductController {
 
     ProductController(ProductRepository repository) { this.repository = repository; }
 
-    @GetMapping @Operation(summary = "Danh sách sản phẩm")
-    List<Product> list(@RequestParam(required = false) String category) {
+    @GetMapping @Operation(summary = "Danh sách sản phẩm (UC06/UC15 — tìm theo tên)")
+    List<Product> list(@RequestParam(required = false) String category,
+                       @RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isBlank()) return repository.findByNameContainingIgnoreCase(keyword);
         return category == null ? repository.findAll() : repository.findByCategoryIgnoreCase(category);
     }
 
@@ -588,7 +590,10 @@ class FacilityController {
     FacilityController(FacilityRepository repository) { this.repository = repository; }
 
     @GetMapping @Operation(summary = "Danh sách tài sản")
-    List<Facility> list() { return repository.findAll(); }
+    List<Facility> list(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isBlank()) return repository.findByNameContainingIgnoreCase(keyword);
+        return repository.findAll();
+    }
 
     @GetMapping("/{id}") @Operation(summary = "Chi tiết tài sản")
     Facility get(@PathVariable String id) {
@@ -628,7 +633,10 @@ class ProviderController {
     ProviderController(ProviderRepository repository) { this.repository = repository; }
 
     @GetMapping @Operation(summary = "Danh sách nhà cung cấp")
-    List<Provider> list() { return repository.findAll(); }
+    List<Provider> list(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.isBlank()) return repository.findByNameContainingIgnoreCase(keyword);
+        return repository.findAll();
+    }
 
     @GetMapping("/{id}") @Operation(summary = "Chi tiết nhà cung cấp")
     Provider get(@PathVariable String id) {

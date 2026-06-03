@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/import-receipts")
-@Tag(name = "Import Receipts", description = "Nhập kho (UC11)")
+@Tag(name = "Import Receipts", description = "Nhập kho (UC12)")
 class ImportController {
     private final ImportReceiptRepository repository;
     private final ProductRepository productRepository;
@@ -33,8 +33,8 @@ class ImportController {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("ImportReceipt not found: " + id));
     }
 
-    // UC11: saveImportReceipt — tạo receipt + details + cập nhật product.stock
-    @PostMapping @Operation(summary = "Tạo phiếu nhập kho (UC11)")
+    // UC12: saveImportReceipt — tạo receipt + details + cập nhật product.stock
+    @PostMapping @Operation(summary = "Tạo phiếu nhập kho (UC12)")
     @Transactional
     ImportReceipt create(@RequestBody ImportReceipt receipt) {
         if (receipt.getImportDate() == null) receipt.setImportDate(LocalDate.now());
@@ -49,7 +49,7 @@ class ImportController {
                             : BigDecimal.ZERO;
                     detail.setLineTotal(lineTotal);
                     totalCost = totalCost.add(lineTotal);
-                    // UC11: cập nhật product.stock
+                    // UC12: cập nhật product.stock
                     Product product = detail.getProduct();
                     product.updateQuantity(detail.getQuantity());
                     productRepository.save(product);

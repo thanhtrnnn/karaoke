@@ -39,8 +39,12 @@ public class SecurityConfig {
                         // UC13: Branch reports — Admin + Branch Manager
                         // UC21: Chain reports — Admin only (controller-level check if needed)
                         .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        // UC20: Employees — Admin only
+                        // UC11: Branch Manager xem danh sách nhân viên chi nhánh (đọc); ghi = Admin (UC20)
+                        .requestMatchers(HttpMethod.GET, "/api/employees/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
                         .requestMatchers("/api/employees/**").hasRole("ADMIN")
+                        // UC21: Tổng hợp toàn chuỗi — Admin; còn lại HRM (UC11/13/14) — Admin + Branch Manager
+                        .requestMatchers("/api/hrm/bao-cao-chuoi/**").hasRole("ADMIN")
+                        .requestMatchers("/api/hrm/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
                         // UC11: HR endpoints — Admin + Branch Manager
                         .requestMatchers("/api/shifts/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
                         .requestMatchers("/api/timekeeping/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")

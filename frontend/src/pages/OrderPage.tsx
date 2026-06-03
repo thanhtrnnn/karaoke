@@ -44,33 +44,44 @@ export default function OrderPage() {
     fetchRooms();
   }, []);
 
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/products', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setMenuItems(data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            cat: item.category,
-            price: item.price,
-            stock: item.currentStock,
-            image: item.image || '/images/snack.png',
-            active: item.active
-          })));
-        }
-      } catch (e) {
-        console.error('Failed to fetch menu items:', e);
-      } finally {
-        setLoading(false);
+  const fetchMenu = async (keyword?: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      // Tìm sản phẩm theo tên qua API keyword (khớp tài liệu); giữ lọc client-side làm fallback
+      const url = keyword && keyword.trim()
+        ? `/api/products?keyword=${encodeURIComponent(keyword.trim())}`
+        : '/api/products';
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMenuItems(data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          cat: item.category,
+          price: item.price,
+          currentStock: item.currentStock,
+          image: item.image || '/images/snack.png',
+          active: item.active
+        })));
       }
-    };
+    } catch (e) {
+      console.error('Failed to fetch menu items:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMenu();
   }, []);
+
+  // Gọi lại API với keyword khi người dùng gõ ô tìm kiếm (debounce nhẹ)
+  useEffect(() => {
+    const t = setTimeout(() => { fetchMenu(searchQuery); }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const categories = ['Tất cả', 'Đồ uống', 'Đồ ăn', 'Trái cây', 'Khác'];
 

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -142,6 +143,43 @@ public class AuthController {
         return Map.of("success", true);
     }
 
+    @PutMapping("/profile")
+    @Operation(
+            summary = "Cập nhật hồ sơ",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(examples = @ExampleObject(value = """
+                            {
+                              "username": "admin",
+                              "fullName": "Quản trị viên",
+                              "email": "admin@karaoke.local"
+                            }
+                            """))
+            ),
+            responses = @ApiResponse(responseCode = "200", description = "Cập nhật hồ sơ thành công",
+                    content = @Content(examples = @ExampleObject(value = """
+                            {
+                              "id": "USR001",
+                              "username": "admin",
+                              "email": "admin@karaoke.local",
+                              "role": "ADMIN",
+                              "token": "dev-token-USR001"
+                            }
+                            """)))
+    )
+    AuthResponse updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        User user = users.findByUsername(request.username())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if (request.fullName() != null) {
+            user.setFullName(request.fullName());
+        }
+        if (request.email() != null) {
+            user.setEmail(request.email());
+        }
+        users.save(user);
+        return AuthResponse.from(user);
+    }
+
     record RegisterRequest(
             @NotBlank String username,
             @Email String email,
@@ -155,6 +193,12 @@ public class AuthController {
             @NotBlank String username,
             @NotBlank String currentPassword,
             @NotBlank @Size(min = 8) String newPassword
+    ) {}
+
+    record UpdateProfileRequest(
+            @NotBlank String username,
+            String fullName,
+            @Email String email
     ) {}
 
     record AuthResponse(String id, String username, String email, UserRole role, String token) {

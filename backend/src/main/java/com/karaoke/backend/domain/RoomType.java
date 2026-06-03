@@ -22,4 +22,16 @@ public class RoomType {
     private Integer capacity;
     private BigDecimal price;
     private Boolean status = true;
+
+    // core test-data: mô tả loại phòng (description)
+    private String moTa;
+
+    /** Constructor 5 tham số (giữ tương thích các nơi đang gọi: DataSeeder). moTa = null. */
+    public RoomType(String id, String nameType, Integer capacity, BigDecimal price, Boolean status) {
+        this.id = id;
+        this.nameType = nameType;
+        this.capacity = capacity;
+        this.price = price;
+        this.status = status;
+    }
 }

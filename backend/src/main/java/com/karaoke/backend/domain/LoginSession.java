@@ -27,6 +27,9 @@ public class LoginSession {
     private LocalDateTime expiresAt;
     private String device;
 
+    // account TC07: trạng thái phiên (vd: "Đã thu hồi")
+    private String trangThai;
+
     @ManyToOne
     private User user;
 }

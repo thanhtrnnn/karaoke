@@ -20,4 +20,15 @@ public class MembershipTier {
     private int minPoints;
     private String description;
     private String discountRate;
+
+    // account: hệ số/bonus điểm thưởng nhận được ở hạng này
+    private Integer diemThuongNhan;
+
+    /** Constructor 4 tham số (giữ tương thích các nơi đang gọi: DataSeeder). diemThuongNhan = null. */
+    public MembershipTier(String tierName, int minPoints, String description, String discountRate) {
+        this.tierName = tierName;
+        this.minPoints = minPoints;
+        this.description = description;
+        this.discountRate = discountRate;
+    }
 }
