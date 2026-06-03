@@ -253,6 +253,19 @@ class MissingTCsTest {
     @Test
     @DisplayName("UC10 — Danh sách tài sản phòng trả về mảng")
     void TC05_facilityList_returnsArray() throws Exception {
+        Branch b = createBranch("B-TC05", "Branch TC05");
+        RoomType rt = createRoomType("RT-TC05", "VIP");
+        Room room = createRoom("R-TC05", b, rt, RoomStatus.AVAILABLE);
+
+        Facility f = new Facility();
+        f.setId("TS-TC05");
+        f.setName("Mic karaoke");
+        f.setCompensationPrice(new BigDecimal("50000"));
+        f.setUnit("Cai");
+        f.setStock(10);
+        f.setRoom(room);
+        facilityRepository.save(f);
+
         mockMvc.perform(get("/api/facilities")
                         .header("Authorization", TOKEN))
                 .andExpect(status().isOk())
@@ -275,6 +288,13 @@ class MissingTCsTest {
     @Test
     @DisplayName("UC12 — Danh sách nhà cung cấp trả về mảng")
     void TC09_providerList_returnsArray() throws Exception {
+        Provider p = new Provider();
+        p.setId("NCC-TC09");
+        p.setName("Công ty Bia Sài Gòn");
+        p.setTel("02812345678");
+        p.setAddress("123 Lý Thường Kiệt");
+        providerRepository.save(p);
+
         mockMvc.perform(get("/api/providers")
                         .header("Authorization", TOKEN))
                 .andExpect(status().isOk())
@@ -397,7 +417,14 @@ class MissingTCsTest {
     @Test
     @DisplayName("UC12 — Tìm kiếm nhà cung cấp trả về kết quả")
     void searchProviders_returnsResults() throws Exception {
-        mockMvc.perform(get("/api/providers")
+        Provider p = new Provider();
+        p.setId("NCC-SRCH");
+        p.setName("Công ty Nước Ngọt");
+        p.setTel("02899999999");
+        p.setAddress("456 Lê Lợi");
+        providerRepository.save(p);
+
+        mockMvc.perform(get("/api/providers?keyword=Nước")
                         .header("Authorization", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -407,7 +434,20 @@ class MissingTCsTest {
     @Test
     @DisplayName("UC10 — Tìm kiếm tài sản phòng trả về kết quả")
     void searchFacilities_returnsResults() throws Exception {
-        mockMvc.perform(get("/api/facilities")
+        Branch b = createBranch("B-FSRCH", "Branch FSrch");
+        RoomType rt = createRoomType("RT-FSRCH", "VIP");
+        Room room = createRoom("R-FSRCH", b, rt, RoomStatus.AVAILABLE);
+
+        Facility f = new Facility();
+        f.setId("TS-FSRCH");
+        f.setName("Loa Bluetooth");
+        f.setCompensationPrice(new BigDecimal("100000"));
+        f.setUnit("Cai");
+        f.setStock(5);
+        f.setRoom(room);
+        facilityRepository.save(f);
+
+        mockMvc.perform(get("/api/facilities?keyword=Loa")
                         .header("Authorization", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
