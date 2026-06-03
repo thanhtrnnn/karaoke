@@ -2,7 +2,22 @@
 
 ## 1. Cách chạy tests
 
-### Backend (Java / Spring Boot)
+### Chạy theo module (scripts tại root project)
+
+```powershell
+# Windows PowerShell — chạy qua Docker
+.\test-account.ps1      # Module 1: Tai khoan (UC01-04, UC20)
+.\test-booking.ps1      # Module 2: Dat phong (UC05, UC07, UC08)
+.\test-services.ps1     # Module 3: Dich vu (UC06, UC10, UC12, UC15)
+.\test-core.ps1         # Module 4: Quan tri cot loi (UC16-19)
+```
+
+```bash
+# macOS/Linux — chạy qua Docker
+./test-hr.sh            # Module 5: Nhan su & Bao cao (UC11, UC13, UC14, UC21)
+```
+
+### Backend (Java / Spring Boot) — chạy trực tiếp
 
 ```bash
 cd /Users/quant/Desktop/Thanh Tran/projects/karaoke/backend
