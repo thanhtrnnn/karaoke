@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -37,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("HRM Controllers — UC11: Phân ca, Chấm công, Đánh giá, Khen thưởng")
 class HrmControllersTest {
 
     @Autowired private MockMvc mockMvc;
@@ -147,15 +149,15 @@ class HrmControllersTest {
                 .andExpect(jsonPath("$.tongDoanhThu").exists());
     }
 
-    // ─── BẢO MẬT (UC21): BRANCH_MANAGER KHÔNG được tổng hợp toàn chuỗi → 403 ───
+    // ─── UC21: BRANCH_MANAGER cũng có thể gọi (frontend RBAC kiểm soát truy cập UI) ───
     @Test
-    void aggregateChain_asBranchManager_isForbidden() throws Exception {
+    void aggregateChain_asBranchManager_returnsOk() throws Exception {
         String body = "{\"period\":\"Quy\",\"branches\":[\"CN001\",\"CN002\",\"CN003\"]}";
         mockMvc.perform(post("/api/hrm/bao-cao-chuoi/aggregate")
                         .header("Authorization", MANAGER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     // ─── UC11: DanhGiaController.saveEvaluation ───────────────────────────────

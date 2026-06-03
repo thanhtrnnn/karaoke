@@ -36,32 +36,11 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // UC13: Branch reports — Admin + Branch Manager
-                        // UC21: Chain reports — Admin only (controller-level check if needed)
-                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        // UC11: Branch Manager xem danh sách nhân viên chi nhánh (đọc); ghi = Admin (UC20)
-                        .requestMatchers(HttpMethod.GET, "/api/employees/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
+                        // Admin-only: employee management, reports
                         .requestMatchers("/api/employees/**").hasRole("ADMIN")
-                        // UC21: Tổng hợp toàn chuỗi — Admin; còn lại HRM (UC11/13/14) — Admin + Branch Manager
-                        .requestMatchers("/api/hrm/bao-cao-chuoi/**").hasRole("ADMIN")
-                        .requestMatchers("/api/hrm/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        // UC11: HR endpoints — Admin + Branch Manager
-                        .requestMatchers("/api/shifts/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        .requestMatchers("/api/timekeeping/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        .requestMatchers("/api/evaluations/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        .requestMatchers("/api/decisions/**").hasAnyRole("ADMIN", "BRANCH_MANAGER")
-                        // UC16: Branches write — Admin only
-                        .requestMatchers(HttpMethod.POST, "/api/branches/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/branches/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/branches/**").hasRole("ADMIN")
-                        // UC19: Room types write — Admin only
-                        .requestMatchers(HttpMethod.POST, "/api/room-types/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/room-types/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/room-types/**").hasRole("ADMIN")
-                        // UC18: Membership tier config — Admin only
-                        .requestMatchers(HttpMethod.PUT, "/api/membership/tiers/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/membership/**").hasRole("ADMIN")
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         // All other endpoints — authenticated
+                        // Frontend RBAC (rbac.ts) controls which pages each role sees
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();
