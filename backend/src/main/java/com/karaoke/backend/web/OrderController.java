@@ -40,7 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/orders")
-@Tag(name = "Orders", description = "Gọi món và quản lý trạng thái phục vụ (UC08)")
+@Tag(name = "Orders", description = "Gọi món và quản lý trạng thái phục vụ (UC06)")
 public class OrderController {
     private final OrderRepository orders;
     private final RoomRepository rooms;
@@ -70,7 +70,7 @@ public class OrderController {
         return result.stream().map(OrderResponse::from).toList();
     }
 
-    // UC08 — Tạo order gọi món
+    // UC06 — Tạo order gọi món
     @PostMapping
     @Operation(
             summary = "Tạo order gọi món",
@@ -93,7 +93,7 @@ public class OrderController {
         Room room = rooms.findById(request.roomId())
                 .orElseThrow(() -> new EntityNotFoundException("Room not found: " + request.roomId()));
 
-        // UC08: chỉ cho phép gọi món khi phòng đang OCCUPIED
+        // UC06: chỉ cho phép gọi món khi phòng đang OCCUPIED
         if (room.getStatus() != RoomStatus.OCCUPIED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Phòng " + room.getId() + " chưa check-in (trạng thái: " + room.getStatus() + ")");
@@ -126,7 +126,7 @@ public class OrderController {
 
         Order saved = orders.save(order);
 
-        // UC08: cộng dồn tiền dịch vụ vào RoomReceipt đang DRAFT
+        // UC06: cộng dồn tiền dịch vụ vào RoomReceipt đang DRAFT
         final BigDecimal finalOrderTotal = orderTotal;
         receipts.findDraftByRoomId(request.roomId()).ifPresent(receipt -> {
             BigDecimal current = receipt.getServiceFee() != null ? receipt.getServiceFee() : BigDecimal.ZERO;

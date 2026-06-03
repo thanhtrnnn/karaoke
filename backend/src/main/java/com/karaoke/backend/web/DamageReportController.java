@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/damage-reports")
-@Tag(name = "Damage Reports", description = "Báo cáo hư hỏng tài sản (UC09)")
+@Tag(name = "Damage Reports", description = "Báo cáo hư hỏng tài sản (UC10)")
 class DamageReportController {
     private final DamageReportRepository repository;
     private final FacilityRepository facilityRepository;
@@ -34,8 +34,8 @@ class DamageReportController {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("DamageReport not found: " + id));
     }
 
-    // UC09: saveDamageReport — tạo report + details + trừ facility stock + update roomReceipt.damageFee
-    @PostMapping @Operation(summary = "Tạo báo cáo hư hỏng (UC09)")
+    // UC10: saveDamageReport — tạo report + details + trừ facility stock + update roomReceipt.damageFee
+    @PostMapping @Operation(summary = "Tạo báo cáo hư hỏng (UC10)")
     @Transactional
     DamageReport create(@RequestBody DamageReport report) {
         if (report.getReportTime() == null) report.setReportTime(LocalDateTime.now());
@@ -52,7 +52,7 @@ class DamageReportController {
                     detail.setUnitFineAmount(fac.getCompensationPrice());
                     detail.setLineTotal(lineTotal);
                     totalFine = totalFine.add(lineTotal);
-                    // UC09: trừ facility stock
+                    // UC10: trừ facility stock
                     fac.setStock(Math.max(0, (fac.getStock() != null ? fac.getStock() : 0) - detail.getQuantity()));
                     facilityRepository.save(fac);
                 }
@@ -62,7 +62,7 @@ class DamageReportController {
 
         DamageReport saved = repository.save(report);
 
-        // UC09: cập nhật damageFee trong RoomReceipt
+        // UC10: cập nhật damageFee trong RoomReceipt
         if (saved.getRoomReceipt() != null && totalFine.compareTo(BigDecimal.ZERO) > 0) {
             RoomReceipt receipt = saved.getRoomReceipt();
             receipt.updateDamageFee(totalFine);

@@ -15,8 +15,40 @@ export default function ProfilePage() {
   const [pwLoading, setPwLoading] = useState(false);
 
   const username = storedUser.username || '';
-  const email = storedUser.email || '';
   const role = storedUser.role || '';
+
+  // Hồ sơ có thể chỉnh sửa (UC: cập nhật hồ sơ — PUT /api/auth/profile)
+  const [fullName, setFullName] = useState(storedUser.fullName || '');
+  const [email, setEmail] = useState(storedUser.email || '');
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setProfileError(null);
+    setProfileSuccess(null);
+    setProfileLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, fullName, email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'Cập nhật hồ sơ thất bại.');
+      }
+      // Đồng bộ lại thông tin user trong localStorage
+      const updated = { ...storedUser, email };
+      localStorage.setItem('user', JSON.stringify(updated));
+      setProfileSuccess('Cập nhật hồ sơ thành công!');
+    } catch (err: any) {
+      setProfileError(err.message);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const roleLabel: Record<string, string> = {
     ADMIN: 'Quản trị viên',
@@ -87,12 +119,22 @@ export default function ProfilePage() {
             <p className="text-primary-container font-label-caps uppercase">{roleLabel[role] || role}</p>
           </div>
         </div>
+        {profileError && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 font-body-md">{profileError}</div>
+        )}
+        {profileSuccess && (
+          <div className="mb-4 p-3 bg-status-available/10 border border-status-available/50 rounded-lg text-status-available font-body-md">{profileSuccess}</div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên đăng nhập</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={username} readOnly /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={email} readOnly /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Họ và tên</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Họ và tên" /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" /></div>
           <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Vai trò</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={roleLabel[role] || role} readOnly /></div>
           <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Mã người dùng</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={storedUser.id || ''} readOnly /></div>
         </div>
+        <button onClick={handleSaveProfile} disabled={profileLoading} className="mt-6 px-6 py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors disabled:opacity-50">
+          {profileLoading ? 'ĐANG LƯU...' : 'Lưu hồ sơ'}
+        </button>
       </div>
       {/* Change Password */}
       <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">

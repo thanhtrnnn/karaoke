@@ -179,6 +179,44 @@ public class BookingController {
         return rooms.findByStatus(RoomStatus.OCCUPIED);
     }
 
+    // UC05 — Tìm phòng trống: phòng AVAILABLE thuộc branch (nếu có), đúng loại phòng (nếu có)
+    // và không có booking đang hoạt động (CONFIRMED/CHECKED_IN) trùng khoảng [startTime, endTime].
+    @GetMapping("/search-free")
+    @Operation(summary = "Tìm phòng trống (UC05 — searchFreeRoom)")
+    List<Room> searchFreeRoom(
+            @RequestParam(required = false) String branchId,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime startTime,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime endTime,
+            @RequestParam(required = false) String roomType) {
+        // Phòng AVAILABLE, lọc theo branch và loại phòng nếu được cung cấp
+        List<Room> candidates = rooms.findByStatus(RoomStatus.AVAILABLE).stream()
+                .filter(r -> branchId == null
+                        || (r.getBranch() != null && branchId.equals(r.getBranch().getId())))
+                .filter(r -> roomType == null
+                        || (r.getRoomType() != null && roomType.equals(r.getRoomType().getId())))
+                .toList();
+
+        // Nếu không có khoảng thời gian thì chỉ trả phòng AVAILABLE đã lọc
+        if (startTime == null || endTime == null) {
+            return candidates;
+        }
+
+        // Loại các phòng có booking đang hoạt động trùng khoảng [startTime, endTime]
+        List<Booking> active = new java.util.ArrayList<>(bookings.findByStatus(BookingStatus.CONFIRMED));
+        active.addAll(bookings.findByStatus(BookingStatus.CHECKED_IN));
+        return candidates.stream()
+                .filter(r -> active.stream().noneMatch(b ->
+                        b.getRoom() != null && r.getId().equals(b.getRoom().getId())
+                                && b.getStartTime() != null && b.getEndTime() != null
+                                && b.getStartTime().isBefore(endTime)
+                                && b.getEndTime().isAfter(startTime)))
+                .toList();
+    }
+
     record CreateBookingRequest(
             @NotBlank String clientId,
             @NotBlank String roomId,
