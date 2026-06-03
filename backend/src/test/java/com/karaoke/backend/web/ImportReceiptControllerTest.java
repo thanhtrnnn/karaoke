@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.ProviderRepository;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Import Receipt Controller — UC12: Quản lý kho")
 class ImportReceiptControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -51,7 +53,8 @@ class ImportReceiptControllerTest {
     }
 
     @Test
-    void importReceipt_createAndList() throws Exception {
+    @DisplayName("UC12 — Tạo phiếu nhập kho + danh sách")
+    void UC12_importReceipt_createAndList() throws Exception {
         // Create
         mockMvc.perform(post("/api/import-receipts")
                         .header("Authorization", ADMIN_TOKEN)
@@ -70,7 +73,8 @@ class ImportReceiptControllerTest {
     }
 
     @Test
-    void importReceipt_getById() throws Exception {
+    @DisplayName("UC12 — Lấy chi tiết phiếu nhập theo ID")
+    void UC12_importReceipt_getById() throws Exception {
         mockMvc.perform(post("/api/import-receipts")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +87,8 @@ class ImportReceiptControllerTest {
     }
 
     @Test
-    void importReceipt_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Phiếu nhập không có token trả 403")
+    void UC12_importReceipt_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/import-receipts"))
                 .andExpect(status().isForbidden());
     }

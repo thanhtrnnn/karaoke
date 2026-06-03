@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("HR Controller — UC11: Quản lý nhân viên chi nhánh")
 class HRControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -71,7 +73,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void TC01_assignShift_success() throws Exception {
+    @DisplayName("UC11 — Phân ca thành công + ChamCong tự khởi tạo")
+    void UC11_assignShift_success() throws Exception {
         mockMvc.perform(post("/api/shifts")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,7 +100,8 @@ class HRControllerTest {
     }
 
     @Test
-    void TC02_assignShift_duplicateShift_returns409() throws Exception {
+    @DisplayName("UC11 — Trùng ca trả 409 CONFLICT")
+    void UC11_assignShift_duplicateShift_returns409() throws Exception {
         // Create first shift
         mockMvc.perform(post("/api/shifts")
                         .header("Authorization", ADMIN_TOKEN)
@@ -134,7 +138,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void TC03_evaluatePerformance_success() throws Exception {
+    @DisplayName("UC11 — Đánh giá hiệu suất thành công (điểm 0-10)")
+    void UC11_evaluatePerformance_success() throws Exception {
         mockMvc.perform(post("/api/evaluations")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -157,7 +162,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void createDecision_success() throws Exception {
+    @DisplayName("UC11 — Tạo quyết định khen thưởng/kỷ luật")
+    void UC11_createDecision_success() throws Exception {
         // Need evaluation first (QuyetDinh FK -> DanhGia)
         // Actually QuyetDinh FK was changed to Employee, so we can create directly
         mockMvc.perform(post("/api/decisions")
@@ -181,7 +187,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void TC04_branchReport_withData() throws Exception {
+    @DisplayName("UC13 — Báo cáo chi nhánh có dữ liệu")
+    void UC13_branchReport_withData() throws Exception {
         mockMvc.perform(get("/api/reports/summary")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -191,7 +198,8 @@ class HRControllerTest {
     }
 
     @Test
-    void TC05_branchReport_invalidDateRange() throws Exception {
+    @DisplayName("UC13 — Báo cáo khoảng ngày không hợp lệ")
+    void UC13_branchReport_invalidDateRange() throws Exception {
         mockMvc.perform(get("/api/reports/revenue?period=weekly&from=2026-06-10&to=2026-06-01")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk()); // API doesn't validate date range, returns empty
@@ -202,7 +210,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void TC06_customerInfo_found() throws Exception {
+    @DisplayName("UC14 — Tìm khách hàng theo tên thành công")
+    void UC14_customerInfo_found() throws Exception {
         // Create a client first
         Client c = new Client();
         c.setId("KH-HR01");
@@ -219,7 +228,8 @@ class HRControllerTest {
     }
 
     @Test
-    void TC07_customerInfo_notFound() throws Exception {
+    @DisplayName("UC14 — Tìm khách hàng không tồn tại trả rỗng")
+    void UC14_customerInfo_notFound() throws Exception {
         mockMvc.perform(get("/api/clients?keyword=KhongTonTai999")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -232,7 +242,8 @@ class HRControllerTest {
     // ──────────────────────────────────────────────
 
     @Test
-    void TC08_chainReport_multipleBranches() throws Exception {
+    @DisplayName("UC21 — Tổng hợp báo cáo nhiều chi nhánh")
+    void UC21_chainReport_multipleBranches() throws Exception {
         // Create second branch
         if (!branchRepository.existsById("BR-HR2")) {
             Branch b = new Branch();
@@ -249,7 +260,8 @@ class HRControllerTest {
     }
 
     @Test
-    void TC09_chainReport_noBranchSelected() throws Exception {
+    @DisplayName("UC21 — Báo cáo chuỗi không chọn chi nhánh")
+    void UC21_chainReport_noBranchSelected() throws Exception {
         // API doesn't require branch selection — returns all
         mockMvc.perform(get("/api/reports/summary")
                         .header("Authorization", ADMIN_TOKEN))

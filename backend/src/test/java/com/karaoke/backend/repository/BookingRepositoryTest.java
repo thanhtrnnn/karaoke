@@ -1,6 +1,7 @@
 package com.karaoke.backend.repository;
 
 import com.karaoke.backend.domain.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@DisplayName("Booking Repository — UC05: Truy vấn đặt phòng")
 class BookingRepositoryTest {
 
     @Autowired private BookingRepository bookingRepository;
@@ -74,7 +76,8 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findByStatus_filtersCorrectly() {
+    @DisplayName("UC05 — findByStatus lọc đúng booking theo trạng thái CONFIRMED")
+    void UC05_findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B1");
         Room room = createRoom("R1", branch);
         Client client = createClient("C1", "0901111111");
@@ -87,13 +90,15 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void findByStatus_noResults_returnsEmpty() {
+    @DisplayName("UC05 — findByStatus không có kết quả trả về danh sách rỗng")
+    void UC05_findByStatus_noResults_returnsEmpty() {
         List<Booking> cancelled = bookingRepository.findByStatus(BookingStatus.CANCELLED);
         assertTrue(cancelled.isEmpty());
     }
 
     @Test
-    void findByStatus_checkedIn_returnsOnlyCheckedIn() {
+    @DisplayName("UC05 — findByStatus chỉ trả về booking CHECKED_IN")
+    void UC05_findByStatus_checkedIn_returnsOnlyCheckedIn() {
         Branch branch = createBranch("B2");
         Room room = createRoom("R2", branch);
         Client client = createClient("C2", "0902222222");
@@ -106,7 +111,8 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void booking_persistsClientAndRoom() {
+    @DisplayName("UC05 — Booking lưu đúng quan hệ với Client và Room")
+    void UC05_booking_persistsClientAndRoom() {
         Branch branch = createBranch("B3");
         Room room = createRoom("R3", branch);
         Client client = createClient("C3", "0903333333");

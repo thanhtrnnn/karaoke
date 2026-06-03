@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Order Controller — UC06: Gọi món / Quản lý order")
 class OrderControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -94,7 +96,8 @@ class OrderControllerTest {
 
     // UC08 — Gọi món: stock giảm sau khi order
     @Test
-    void create_decrementsStock() throws Exception {
+    @DisplayName("UC06 — Tạo order trừ stock sản phẩm")
+    void UC06_create_decrementsStock() throws Exception {
         Branch branch = createBranch("B1");
         Room room = createRoom("R1", branch);
         createProduct("P1", 10);
@@ -123,7 +126,8 @@ class OrderControllerTest {
 
     // UC11 — Kiểm tra tồn kho: không đủ hàng → 400
     @Test
-    void create_insufficientStock_returns400() throws Exception {
+    @DisplayName("UC06 — Hết stock trả 400")
+    void UC06_create_insufficientStock_returns400() throws Exception {
         Branch branch = createBranch("B2");
         Room room = createRoom("R2", branch);
         createProduct("P2", 2);
@@ -148,7 +152,8 @@ class OrderControllerTest {
 
     // UC08 — Chuyển trạng thái order: PENDING → PREPARING → SERVED
     @Test
-    void updateStatus_transitions() throws Exception {
+    @DisplayName("UC06 — Chuyển trạng thái order: PENDING → PREPARING → SERVED")
+    void UC06_updateStatus_transitions() throws Exception {
         Branch branch = createBranch("B3");
         Room room = createRoom("R3", branch);
         Product product = createProduct("P3", 10);
@@ -183,7 +188,8 @@ class OrderControllerTest {
 
     // Giá đơn vị ghi nhận đúng tại thời điểm order
     @Test
-    void create_setsCorrectUnitPrice() throws Exception {
+    @DisplayName("UC06 — Order lưu đúng giá sản phẩm")
+    void UC06_create_setsCorrectUnitPrice() throws Exception {
         Branch branch = createBranch("B4");
         Room room = createRoom("R4", branch);
         Product product = createProduct("P4", 10);
@@ -210,7 +216,8 @@ class OrderControllerTest {
 
     // Không có token → 403
     @Test
-    void create_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Tạo order không có token trả 403")
+    void UC06_create_withoutToken_returns403() throws Exception {
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"roomId\":\"R1\",\"items\":[]}"))
@@ -219,7 +226,8 @@ class OrderControllerTest {
 
     // Danh sách order
     @Test
-    void list_returnsArray() throws Exception {
+    @DisplayName("UC06 — Danh sách order trả về mảng")
+    void UC06_list_returnsArray() throws Exception {
         mockMvc.perform(get("/api/orders").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
@@ -227,7 +235,8 @@ class OrderControllerTest {
 
     // TC01 — Không tìm thấy phòng khi tạo order → 404
     @Test
-    void TC01_orderWithNonexistentRoom_returns404() throws Exception {
+    @DisplayName("UC06 — Order phòng không tồn tại trả 404")
+    void UC06_orderWithNonexistentRoom_returns404() throws Exception {
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -247,7 +256,8 @@ class OrderControllerTest {
 
     // TC02 — Không tìm thấy sản phẩm khi tạo order → 404
     @Test
-    void TC02_orderWithNonexistentProduct_returns404() throws Exception {
+    @DisplayName("UC06 — Order sản phẩm không tồn tại trả 404")
+    void UC06_orderWithNonexistentProduct_returns404() throws Exception {
         Branch branch = branchRepository.save(new Branch("B-TC02", "Branch TC02", "Addr", "090", true));
         RoomType rt = roomTypeRepository.save(new RoomType("RT-TC02", "VIP", 10, new BigDecimal("100000"), true));
         Room room = new Room();

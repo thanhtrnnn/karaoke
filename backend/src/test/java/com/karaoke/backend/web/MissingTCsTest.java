@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Missing TCs — Test cases bổ sung cho coverage đầy đủ")
 class MissingTCsTest {
 
     @Autowired private MockMvc mockMvc;
@@ -104,6 +106,7 @@ class MissingTCsTest {
     // ══════════════════════════════════════════════════
 
     @Test
+    @DisplayName("UC02 — Đăng ký thành công (OTP chưa implement)")
     void TC06_register_duplicatePhone_returns400() throws Exception {
         // TC06 docs: OTP sai 3 lần → hủy phiên
         // OTP flow chưa implement — test thay thế: đăng ký thành công (không check OTP)
@@ -124,6 +127,7 @@ class MissingTCsTest {
 
     // TC02 — Không tìm thấy phòng trống (phòng OCCUPIED → 409)
     @Test
+    @DisplayName("UC05 — Phòng đã OCCUPIED, đặt phòng bị từ chối (409)")
     void TC02_allRoomsOccupied_bookingRejected() throws Exception {
         Branch b = createBranch("B-TC02", "Branch TC02");
         RoomType rt = createRoomType("RT-TC02", "VIP");
@@ -146,6 +150,7 @@ class MissingTCsTest {
 
     // TC03 — Khách hàng chưa có trong CSDL
     @Test
+    @DisplayName("UC05 — Khách hàng không tồn tại trong CSDL trả 404")
     void TC03_clientNotInDB_returns404() throws Exception {
         Branch b = createBranch("B-TC03", "Branch TC03");
         RoomType rt = createRoomType("RT-TC03", "VIP");
@@ -166,6 +171,7 @@ class MissingTCsTest {
 
     // TC11 — Voucher không hợp lệ
     @Test
+    @DisplayName("UC08 — Voucher không hợp lệ trả 404")
     void TC11_invalidVoucher_returns404() throws Exception {
         Branch b = createBranch("B-TC11", "Branch TC11");
         RoomType rt = createRoomType("RT-TC11", "VIP");
@@ -203,6 +209,7 @@ class MissingTCsTest {
 
     // TC12 — Check-out chuyển khoản
     @Test
+    @DisplayName("UC08 — Check-out thanh toán chuyển khoản thành công")
     void TC12_checkoutBankTransfer_success() throws Exception {
         Branch b = createBranch("B-TC12", "Branch TC12");
         RoomType rt = createRoomType("RT-TC12", "VIP");
@@ -244,6 +251,7 @@ class MissingTCsTest {
 
     // TC05 — Facility: API trả về tất cả (không filter keyword trong controller hiện tại)
     @Test
+    @DisplayName("UC10 — Danh sách tài sản phòng trả về mảng")
     void TC05_facilityList_returnsArray() throws Exception {
         mockMvc.perform(get("/api/facilities")
                         .header("Authorization", TOKEN))
@@ -254,6 +262,7 @@ class MissingTCsTest {
 
     // TC07 — Product search: API trả về tất cả sản phẩm
     @Test
+    @DisplayName("UC06 — Danh sách sản phẩm trả về mảng")
     void TC07_productList_returnsArray() throws Exception {
         mockMvc.perform(get("/api/products")
                         .header("Authorization", TOKEN))
@@ -264,6 +273,7 @@ class MissingTCsTest {
 
     // TC09 — Provider list: API trả về tất cả nhà cung cấp
     @Test
+    @DisplayName("UC12 — Danh sách nhà cung cấp trả về mảng")
     void TC09_providerList_returnsArray() throws Exception {
         mockMvc.perform(get("/api/providers")
                         .header("Authorization", TOKEN))
@@ -278,6 +288,7 @@ class MissingTCsTest {
 
     // TC08 — Xem lịch sử sử dụng KH
     @Test
+    @DisplayName("UC17 — Xem lịch sử sử dụng khách hàng trả về hóa đơn")
     void TC08_viewCustomerHistory_returnsInvoices() throws Exception {
         Client c = createClient("C-TC08", "0908000000");
 
@@ -313,6 +324,7 @@ class MissingTCsTest {
 
     // TC14 — Thêm loại phòng thất bại (tên trùng)
     @Test
+    @DisplayName("UC19 — Thêm loại phòng tên trùng (hiện tại vẫn tạo được — gap)")
     void TC14_duplicateRoomType_stillCreates() throws Exception {
         createRoomType("RT-TC14A", "VIP Room");
 
@@ -326,6 +338,7 @@ class MissingTCsTest {
 
     // TC19 — Thêm phòng thất bại (tên trùng trong chi nhánh)
     @Test
+    @DisplayName("UC20 — Thêm phòng tên trùng trong chi nhánh (hiện tại vẫn tạo được — gap)")
     void TC19_duplicateRoomName_stillCreates() throws Exception {
         Branch b = createBranch("B-TC19", "Branch TC19");
         RoomType rt = createRoomType("RT-TC19", "VIP");
@@ -354,6 +367,7 @@ class MissingTCsTest {
     // ══════════════════════════════════════════════════
 
     @Test
+    @DisplayName("UC17 — Tìm kiếm khách hàng theo keyword trả về kết quả")
     void searchClients_byKeyword_returnsResults() throws Exception {
         createClient("C-SEARCH", "0909000000");
         mockMvc.perform(get("/api/clients?keyword=SEARCH")
@@ -363,6 +377,7 @@ class MissingTCsTest {
     }
 
     @Test
+    @DisplayName("UC06 — Tìm kiếm sản phẩm theo keyword trả về kết quả")
     void searchProducts_byKeyword_returnsResults() throws Exception {
         Product p = new Product();
         p.setId("P-SEARCH");
@@ -380,6 +395,7 @@ class MissingTCsTest {
     }
 
     @Test
+    @DisplayName("UC12 — Tìm kiếm nhà cung cấp trả về kết quả")
     void searchProviders_returnsResults() throws Exception {
         mockMvc.perform(get("/api/providers")
                         .header("Authorization", TOKEN))
@@ -389,6 +405,7 @@ class MissingTCsTest {
     }
 
     @Test
+    @DisplayName("UC10 — Tìm kiếm tài sản phòng trả về kết quả")
     void searchFacilities_returnsResults() throws Exception {
         mockMvc.perform(get("/api/facilities")
                         .header("Authorization", TOKEN))
@@ -402,6 +419,7 @@ class MissingTCsTest {
     // ══════════════════════════════════════════════════
 
     @Test
+    @DisplayName("UC06 — Tạo order với danh sách rỗng trả 400")
     void createOrder_emptyItems_returns400() throws Exception {
         Branch b = createBranch("B-EMPTY", "Branch Empty");
         RoomType rt = createRoomType("RT-EMPTY", "VIP");
@@ -418,6 +436,7 @@ class MissingTCsTest {
     }
 
     @Test
+    @DisplayName("UC05 — Lọc danh sách booking theo trạng thái trả về kết quả đúng")
     void bookingList_filterByStatus_returnsFiltered() throws Exception {
         Branch b = createBranch("B-FILTER", "Branch Filter");
         RoomType rt = createRoomType("RT-FILTER", "VIP");

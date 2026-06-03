@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -20,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Report Controller — UC13: Báo cáo chi nhánh, UC21: Tổng hợp chuỗi")
 class ReportControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -97,7 +99,8 @@ class ReportControllerTest {
     }
 
     @Test
-    void summary_returnsAllKeys() throws Exception {
+    @DisplayName("UC13 — Dashboard tổng hợp có đầy đủ key")
+    void UC13_summary_returnsAllKeys() throws Exception {
         createOrderWithItems("ORD-R1", "ROOM-R1", "ITEM-R1", 2, new BigDecimal("30000"));
 
         mockMvc.perform(get("/api/reports/summary")
@@ -114,7 +117,8 @@ class ReportControllerTest {
     }
 
     @Test
-    void revenue_computedFromOrderItems() throws Exception {
+    @DisplayName("UC13 — Doanh thu tính từ order items")
+    void UC13_revenue_computedFromOrderItems() throws Exception {
         createOrderWithItems("ORD-R2", "ROOM-R2", "ITEM-R2", 3, new BigDecimal("50000"));
 
         mockMvc.perform(get("/api/reports/revenue?period=weekly")
@@ -124,16 +128,17 @@ class ReportControllerTest {
     }
 
     @Test
-    void revenue_byPeriod_monthly_returns12Entries() throws Exception {
+    @DisplayName("UC13 — Doanh thu theo tháng trả 12 entries")
+    void UC13_revenue_byPeriod_monthly_returns12Entries() throws Exception {
         mockMvc.perform(get("/api/reports/revenue?period=monthly")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(12));
     }
 
-    // Module 5 — Báo cáo doanh thu theo giờ (UC13/UC21)
     @Test
-    void revenue_hourly_returns14Entries() throws Exception {
+    @DisplayName("UC13 — Doanh thu theo giờ trả 17 entries (10h-23h + 00h-02h)")
+    void UC13_revenue_hourly_returns17Entries() throws Exception {
         mockMvc.perform(get("/api/reports/revenue?period=hourly")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -141,18 +146,18 @@ class ReportControllerTest {
                 .andExpect(jsonPath("$.length()").value(17)); // 10h–23h (14) + 00h–02h (3) = 17 entries
     }
 
-    // Module 5 — Thông báo hệ thống (UC13)
     @Test
-    void notifications_returnsArray() throws Exception {
+    @DisplayName("UC13 — Thông báo hệ thống trả về mảng")
+    void UC13_notifications_returnsArray() throws Exception {
         mockMvc.perform(get("/api/reports/notifications")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // Module 5 — Thông báo cảnh báo kho khi tồn kho thấp
     @Test
-    void notifications_lowStock_triggersAlert() throws Exception {
+    @DisplayName("UC13 — Cảnh báo tồn kho thấp khi stock ≤ safetyStock")
+    void UC13_notifications_lowStock_triggersAlert() throws Exception {
         Product lowStockProduct = new Product();
         lowStockProduct.setId("LOW-STOCK-001");
         lowStockProduct.setName("Sản phẩm sắp hết");
@@ -169,7 +174,8 @@ class ReportControllerTest {
     }
 
     @Test
-    void summary_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Báo cáo không có token trả 403")
+    void UC13_summary_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/reports/summary"))
                 .andExpect(status().isForbidden());
     }

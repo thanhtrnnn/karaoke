@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Booking Controller — UC05: Đặt phòng, UC07: Check-in, UC08: Check-out")
 class BookingControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -96,7 +98,8 @@ class BookingControllerTest {
 
     // UC05 — Đặt phòng: tạo booking → room chuyển RESERVED
     @Test
-    void create_setsRoomReserved() throws Exception {
+    @DisplayName("UC05 — Đặt phòng thành công, phòng chuyển RESERVED")
+    void UC05_createBooking_setsRoomReserved() throws Exception {
         Branch branch = createBranch("B1");
         Room room = createRoom("R1", branch, RoomStatus.AVAILABLE);
         createClient("C1", "0901111111");
@@ -123,7 +126,8 @@ class BookingControllerTest {
 
     // UC07 — Check-in: CONFIRMED → CHECKED_IN, room chuyển OCCUPIED
     @Test
-    void checkIn_setsRoomOccupied() throws Exception {
+    @DisplayName("UC07 — Check-in thành công, phòng chuyển OCCUPIED")
+    void UC07_checkIn_setsRoomOccupied() throws Exception {
         Branch branch = createBranch("B2");
         Room room = createRoom("R2", branch, RoomStatus.RESERVED);
         Client client = createClient("C2", "0902222222");
@@ -151,7 +155,8 @@ class BookingControllerTest {
 
     // UC08 — Check-out: CHECKED_IN → COMPLETED, room chuyển AVAILABLE
     @Test
-    void complete_setsRoomAvailable() throws Exception {
+    @DisplayName("UC08 — Check-out thành công, phòng chuyển AVAILABLE")
+    void UC08_complete_setsRoomAvailable() throws Exception {
         Branch branch = createBranch("B3");
         Room room = createRoom("R3", branch, RoomStatus.OCCUPIED);
         Client client = createClient("C3", "0903333333");
@@ -179,7 +184,8 @@ class BookingControllerTest {
 
     // UC06 — Hủy phòng: CONFIRMED → CANCELLED, room chuyển AVAILABLE
     @Test
-    void cancel_setsRoomAvailable() throws Exception {
+    @DisplayName("UC05 — Hủy phòng thành công, phòng chuyển AVAILABLE")
+    void UC05_cancel_setsRoomAvailable() throws Exception {
         Branch branch = createBranch("B4");
         Room room = createRoom("R4", branch, RoomStatus.RESERVED);
         Client client = createClient("C4", "0904444444");
@@ -207,7 +213,8 @@ class BookingControllerTest {
 
     // Kiểm soát truy cập — không có token trả 403
     @Test
-    void create_withoutToken_returns403() throws Exception {
+    @DisplayName("UC05 — Đặt phòng không có token trả 403")
+    void UC05_create_withoutToken_returns403() throws Exception {
         mockMvc.perform(post("/api/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"clientId\":\"C1\",\"roomId\":\"R1\",\"startTime\":\"2025-01-01T10:00\",\"endTime\":\"2025-01-01T12:00\",\"guestCount\":5}"))
@@ -216,7 +223,8 @@ class BookingControllerTest {
 
     // Client không tồn tại → 404
     @Test
-    void create_badClientId_returns404() throws Exception {
+    @DisplayName("UC05 — Đặt phòng với client không tồn tại trả 404")
+    void UC05_create_badClientId_returns404() throws Exception {
         Branch branch = createBranch("B5");
         createRoom("R5", branch, RoomStatus.AVAILABLE);
 
@@ -237,7 +245,8 @@ class BookingControllerTest {
 
     // Danh sách booking
     @Test
-    void list_returnsArray() throws Exception {
+    @DisplayName("UC05 — Lấy danh sách booking trả về mảng")
+    void UC05_list_returnsArray() throws Exception {
         mockMvc.perform(get("/api/bookings").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
@@ -245,7 +254,8 @@ class BookingControllerTest {
 
     // TC06 — Phòng đang dọn dẹp → không thể check-in
     @Test
-    void TC06_roomCleaning_cannotCheckIn() throws Exception {
+    @DisplayName("UC07 — Phòng đang CLEANING, check-in vẫn thành công (status quản lý riêng)")
+    void UC07_roomCleaning_cannotCheckIn() throws Exception {
         Branch branch = createBranch("B6");
         Room room = createRoom("R6", branch, RoomStatus.CLEANING);
         Client client = createClient("C6", "0906666666");
@@ -271,7 +281,8 @@ class BookingControllerTest {
 
     // TC10 — Check-out hội viên Vàng → tích lũy điểm
     @Test
-    void TC10_checkout_goldMember_accumulatesPoints() throws Exception {
+    @DisplayName("UC08 — Check-out hội viên Vàng, tích lũy điểm thành công")
+    void UC08_checkout_goldMember_accumulatesPoints() throws Exception {
         Branch branch = createBranch("B10");
         Room room = createRoom("R10", branch, RoomStatus.OCCUPIED);
         Client client = createClient("C10", "0901010101");
@@ -303,7 +314,8 @@ class BookingControllerTest {
 
     // TC14 — Booking không tồn tại → 404
     @Test
-    void TC14_bookingNotFound_returns404() throws Exception {
+    @DisplayName("UC07 — Booking không tồn tại, check-in trả 404")
+    void UC07_bookingNotFound_returns404() throws Exception {
         mockMvc.perform(put("/api/bookings/NONEXISTENT/status")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -313,7 +325,8 @@ class BookingControllerTest {
 
     // TC15 — Booking quá thời gian hủy
     @Test
-    void TC15_bookingPastCancel_cancelStillWorks() throws Exception {
+    @DisplayName("UC05 — Hủy booking quá thời gian vẫn thành công (chưa có restriction)")
+    void UC05_bookingPastCancel_cancelStillWorks() throws Exception {
         Branch branch = createBranch("B15");
         Room room = createRoom("R15", branch, RoomStatus.RESERVED);
         Client client = createClient("C15", "0901515151");

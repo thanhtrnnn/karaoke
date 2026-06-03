@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Seed Data Integrity — Kiểm tra dữ liệu seed đầy đủ")
 class SeedDataIntegrityTest {
 
     @Autowired private MockMvc mockMvc;
@@ -52,6 +54,7 @@ class SeedDataIntegrityTest {
 
     // CORE — seed CN001, CN002, CN003 ⇒ ≥ 3 chi nhánh
     @Test
+    @DisplayName("Seed ≥ 3 chi nhánh (CN001, CN002, CN003)")
     void seed_branches_atLeast3() throws Exception {
         mockMvc.perform(get("/api/branches").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -61,6 +64,7 @@ class SeedDataIntegrityTest {
 
     // HR — seed NV001..NV006 ⇒ ≥ 6 nhân viên
     @Test
+    @DisplayName("Seed ≥ 6 nhân viên (NV001..NV006)")
     void seed_employees_atLeast6() throws Exception {
         mockMvc.perform(get("/api/employees").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -70,6 +74,7 @@ class SeedDataIntegrityTest {
 
     // CRM — seed KH001..KH004 ⇒ ≥ 4 khách hàng
     @Test
+    @DisplayName("Seed ≥ 4 khách hàng (KH001..KH004)")
     void seed_clients_atLeast4() throws Exception {
         mockMvc.perform(get("/api/clients").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -79,6 +84,7 @@ class SeedDataIntegrityTest {
 
     // SERVICES (UC06) — seed ORD001..ORD004 ⇒ là mảng, ≥ 4 (tối thiểu ≥ 1)
     @Test
+    @DisplayName("Seed ≥ 4 đơn hàng (ORD001..ORD004)")
     void seed_orders_atLeast4() throws Exception {
         mockMvc.perform(get("/api/orders").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -88,6 +94,7 @@ class SeedDataIntegrityTest {
 
     // SERVICES (UC09) — seed BC001 ⇒ ≥ 1 báo cáo hư hỏng
     @Test
+    @DisplayName("Seed ≥ 1 báo cáo hư hỏng (BC001)")
     void seed_damageReports_atLeast1() throws Exception {
         mockMvc.perform(get("/api/damage-reports").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -97,6 +104,7 @@ class SeedDataIntegrityTest {
 
     // SERVICES (UC12) — seed PN001 ⇒ ≥ 1 phiếu nhập kho
     @Test
+    @DisplayName("Seed ≥ 1 phiếu nhập kho (PN001)")
     void seed_importReceipts_atLeast1() throws Exception {
         mockMvc.perform(get("/api/import-receipts").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -106,6 +114,7 @@ class SeedDataIntegrityTest {
 
     // HR (UC11) — seed 3 ca làm việc ⇒ ≥ 3 ca
     @Test
+    @DisplayName("Seed ≥ 3 ca làm việc")
     void seed_shifts_atLeast3() throws Exception {
         mockMvc.perform(get("/api/shifts").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -115,6 +124,7 @@ class SeedDataIntegrityTest {
 
     // HR (UC11) — seed dg1, dg2, dg3 ⇒ ≥ 3 đánh giá
     @Test
+    @DisplayName("Seed ≥ 3 đánh giá hiệu suất (dg1, dg2, dg3)")
     void seed_evaluations_atLeast3() throws Exception {
         mockMvc.perform(get("/api/evaluations").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -124,6 +134,7 @@ class SeedDataIntegrityTest {
 
     // HR (UC11) — seed qd1 ⇒ ≥ 1 quyết định
     @Test
+    @DisplayName("Seed ≥ 1 quyết định khen thưởng/kỷ luật (qd1)")
     void seed_decisions_atLeast1() throws Exception {
         mockMvc.perform(get("/api/decisions").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -133,6 +144,7 @@ class SeedDataIntegrityTest {
 
     // BILLING (UC14) — seed HD001, HD002 ⇒ ≥ 2 hóa đơn phòng
     @Test
+    @DisplayName("Seed ≥ 2 hóa đơn phòng (HD001, HD002)")
     void seed_roomReceipts_atLeast2() throws Exception {
         mockMvc.perform(get("/api/room-receipts").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())

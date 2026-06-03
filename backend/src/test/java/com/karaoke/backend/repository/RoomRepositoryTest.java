@@ -1,6 +1,7 @@
 package com.karaoke.backend.repository;
 
 import com.karaoke.backend.domain.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -11,6 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@DisplayName("Room Repository — UC20: Truy vấn phòng")
 class RoomRepositoryTest {
 
     @Autowired private RoomRepository roomRepository;
@@ -48,7 +50,8 @@ class RoomRepositoryTest {
     }
 
     @Test
-    void findByStatus_filtersCorrectly() {
+    @DisplayName("UC20 — findByStatus lọc đúng phòng AVAILABLE")
+    void UC20_findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B1");
         RoomType rt = createRoomType("RT1");
         createRoom("R1", branch, rt, RoomStatus.AVAILABLE);
@@ -61,7 +64,8 @@ class RoomRepositoryTest {
     }
 
     @Test
-    void saveWithBranch_persists() {
+    @DisplayName("UC20 — Phòng lưu đúng quan hệ với Branch")
+    void UC20_saveWithBranch_persists() {
         Branch branch = createBranch("B2");
         RoomType rt = createRoomType("RT2");
         createRoom("R4", branch, rt, RoomStatus.AVAILABLE);
@@ -72,7 +76,8 @@ class RoomRepositoryTest {
     }
 
     @Test
-    void saveWithRoomType_persists() {
+    @DisplayName("UC20 — Phòng lưu đúng quan hệ với RoomType")
+    void UC20_saveWithRoomType_persists() {
         Branch branch = createBranch("B3");
         RoomType rt = createRoomType("RT3");
         rt.setNameType("Deluxe");
@@ -86,7 +91,8 @@ class RoomRepositoryTest {
     }
 
     @Test
-    void findByStatus_occupied_returnsOnlyOccupied() {
+    @DisplayName("UC20 — findByStatus chỉ trả về phòng OCCUPIED")
+    void UC20_findByStatus_occupied_returnsOnlyOccupied() {
         Branch branch = createBranch("B4");
         RoomType rt = createRoomType("RT4");
         createRoom("R6", branch, rt, RoomStatus.OCCUPIED);

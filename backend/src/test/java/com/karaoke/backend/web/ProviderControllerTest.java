@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Provider Controller — UC12: Nhà cung cấp")
 class ProviderControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -40,7 +42,8 @@ class ProviderControllerTest {
     }
 
     @Test
-    void provider_crud() throws Exception {
+    @DisplayName("UC12 — CRUD nhà cung cấp: tạo, đọc, sửa, xóa")
+    void UC12_provider_crud() throws Exception {
         // Create
         mockMvc.perform(post("/api/providers")
                         .header("Authorization", ADMIN_TOKEN)
@@ -78,13 +81,15 @@ class ProviderControllerTest {
     }
 
     @Test
-    void provider_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Nhà cung cấp không có token trả 403")
+    void UC12_provider_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/providers"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void provider_create_persistsAllFields() throws Exception {
+    @DisplayName("UC12 — Tạo NCC lưu đúng tất cả trường")
+    void UC12_provider_create_persistsAllFields() throws Exception {
         mockMvc.perform(post("/api/providers")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)

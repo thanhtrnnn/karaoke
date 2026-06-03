@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Services Search — UC06/UC10/UC12/UC15: Tìm kiếm sản phẩm, NCC, tài sản")
 class ServicesSearchTest {
 
     @Autowired private MockMvc mockMvc;
@@ -53,7 +55,8 @@ class ServicesSearchTest {
 
     // --- Tìm kiếm sản phẩm: keyword khớp nhiều kết quả (UC06/UC15) ---
     @Test
-    void searchProducts_byKeywordBia_returnsAtLeastTwo() throws Exception {
+    @DisplayName("UC15 — Tìm sản phẩm 'Bia' trả ≥ 2 kết quả")
+    void UC15_searchProducts_byKeywordBia_returnsAtLeastTwo() throws Exception {
         mockMvc.perform(get("/api/products?keyword=Bia").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -62,7 +65,8 @@ class ServicesSearchTest {
 
     // --- Tìm kiếm sản phẩm: keyword không tồn tại → mảng rỗng ---
     @Test
-    void searchProducts_byUnknownKeyword_returnsEmptyArray() throws Exception {
+    @DisplayName("UC15 — Tìm sản phẩm không tồn tại trả rỗng")
+    void UC15_searchProducts_byUnknownKeyword_returnsEmptyArray() throws Exception {
         mockMvc.perform(get("/api/products?keyword=khongtontai999").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -71,7 +75,8 @@ class ServicesSearchTest {
 
     // --- Tìm kiếm tài sản phòng theo tên (TS001 "Micro karaoke") ---
     @Test
-    void searchFacilities_byKeywordMicro_returnsAtLeastOne() throws Exception {
+    @DisplayName("UC10 — Tìm tài sản 'Micro' trả ≥ 1 kết quả")
+    void UC10_searchFacilities_byKeywordMicro_returnsAtLeastOne() throws Exception {
         mockMvc.perform(get("/api/facilities?keyword=Micro").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -80,7 +85,8 @@ class ServicesSearchTest {
 
     // --- Tìm kiếm nhà cung cấp theo tên (NCC001 "Công ty Bia Sài Gòn") ---
     @Test
-    void searchProviders_byKeywordBia_returnsAtLeastOne() throws Exception {
+    @DisplayName("UC12 — Tìm nhà cung cấp 'Bia' trả ≥ 1 kết quả")
+    void UC12_searchProviders_byKeywordBia_returnsAtLeastOne() throws Exception {
         mockMvc.perform(get("/api/providers?keyword=Bia").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -89,7 +95,8 @@ class ServicesSearchTest {
 
     // --- Cảnh báo tồn kho thấp: SP011 "Nước suối" (8 <= 30) sinh thông báo ---
     @Test
-    void notifications_returnsLowStockWarnings() throws Exception {
+    @DisplayName("UC13 — Cảnh báo tồn kho thấp trong notifications")
+    void UC13_notifications_returnsLowStockWarnings() throws Exception {
         mockMvc.perform(get("/api/reports/notifications").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())

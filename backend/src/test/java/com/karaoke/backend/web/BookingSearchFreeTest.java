@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Booking Search Free — UC05: Tìm phòng trống")
 class BookingSearchFreeTest {
 
     @Autowired private MockMvc mockMvc;
@@ -52,7 +54,8 @@ class BookingSearchFreeTest {
 
     // CN001 có 3 phòng AVAILABLE trong seed (P01, P04, P05) → mảng, ít nhất 1 phần tử.
     @Test
-    void searchFree_branchCN001_returnsAvailableRooms() throws Exception {
+    @DisplayName("UC05 — Tìm phòng trống CN001 trả về ít nhất 1 phòng AVAILABLE")
+    void UC05_searchFree_branchCN001_returnsAvailableRooms() throws Exception {
         mockMvc.perform(get("/api/bookings/search-free")
                         .param("branchId", "CN001")
                         .header("Authorization", ADMIN_TOKEN))
@@ -63,7 +66,8 @@ class BookingSearchFreeTest {
 
     // CN002 có 2 phòng AVAILABLE trong seed (P21, P23) → mảng, ít nhất 1 phần tử.
     @Test
-    void searchFree_branchCN002_returnsAvailableRooms() throws Exception {
+    @DisplayName("UC05 — Tìm phòng trống CN002 trả về ít nhất 1 phòng AVAILABLE")
+    void UC05_searchFree_branchCN002_returnsAvailableRooms() throws Exception {
         mockMvc.perform(get("/api/bookings/search-free")
                         .param("branchId", "CN002")
                         .header("Authorization", ADMIN_TOKEN))
@@ -74,7 +78,8 @@ class BookingSearchFreeTest {
 
     // Không truyền tham số → trả tất cả phòng AVAILABLE (mọi chi nhánh) → mảng.
     @Test
-    void searchFree_noParams_returnsArray() throws Exception {
+    @DisplayName("UC05 — Tìm phòng trống không tham số trả về tất cả AVAILABLE")
+    void UC05_searchFree_noParams_returnsArray() throws Exception {
         mockMvc.perform(get("/api/bookings/search-free")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -85,7 +90,8 @@ class BookingSearchFreeTest {
     // Có khoảng thời gian (ISO_DATE_TIME) ở tương lai xa → không booking nào trùng
     // nên vẫn trả các phòng AVAILABLE của CN001 → mảng, ít nhất 1 phần tử.
     @Test
-    void searchFree_branchCN001_withTimeRange_returnsArray() throws Exception {
+    @DisplayName("UC05 — Tìm phòng trống CN001 với khoảng thời gian trả về kết quả")
+    void UC05_searchFree_branchCN001_withTimeRange_returnsArray() throws Exception {
         mockMvc.perform(get("/api/bookings/search-free")
                         .param("branchId", "CN001")
                         .param("startTime", "2030-01-01T10:00:00")

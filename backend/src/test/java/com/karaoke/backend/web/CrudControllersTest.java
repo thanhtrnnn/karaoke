@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -20,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("CRUD Controllers — UC16: Chi nhánh, UC17: Khách hàng, UC18: Hạng HV, UC19: Loại phòng, UC20: Phòng/NV")
 class CrudControllersTest {
 
     @Autowired private MockMvc mockMvc;
@@ -53,7 +55,8 @@ class CrudControllersTest {
 
     // --- Branch CRUD ---
     @Test
-    void branch_crud() throws Exception {
+    @DisplayName("UC16 — CRUD chi nhánh: tạo, đọc, sửa, xóa")
+    void UC16_branch_crud() throws Exception {
         mockMvc.perform(post("/api/branches")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -86,7 +89,8 @@ class CrudControllersTest {
 
     // --- Client CRUD (was Customer) ---
     @Test
-    void client_crud() throws Exception {
+    @DisplayName("UC17 — CRUD khách hàng: tạo, đọc, sửa, xóa")
+    void UC17_client_crud() throws Exception {
         mockMvc.perform(post("/api/clients")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +114,8 @@ class CrudControllersTest {
 
     // --- Room CRUD + PATCH status (room needs RoomType) ---
     @Test
-    void room_crudAndPatchStatus() throws Exception {
+    @DisplayName("UC20 — CRUD phòng + đổi trạng thái PATCH")
+    void UC20_room_crudAndPatchStatus() throws Exception {
         Branch branch = new Branch();
         branch.setId("BR-ROOM");
         branch.setName("Branch for Room");
@@ -144,7 +149,8 @@ class CrudControllersTest {
 
     // --- Product CRUD (was MenuItem at /api/menu-items) ---
     @Test
-    void product_crud() throws Exception {
+    @DisplayName("UC15 — CRUD sản phẩm menu")
+    void UC15_product_crud() throws Exception {
         mockMvc.perform(post("/api/products")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +167,8 @@ class CrudControllersTest {
 
     // --- Employee CRUD ---
     @Test
-    void employee_crud() throws Exception {
+    @DisplayName("UC20 — CRUD nhân viên")
+    void UC20_employee_crud() throws Exception {
         Branch branch = new Branch();
         branch.setId("BR-EMP");
         branch.setName("Branch for Employee");
@@ -183,7 +190,8 @@ class CrudControllersTest {
 
     // --- RoomType CRUD ---
     @Test
-    void roomType_crud() throws Exception {
+    @DisplayName("UC19 — CRUD loại phòng")
+    void UC19_roomType_crud() throws Exception {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -209,7 +217,8 @@ class CrudControllersTest {
 
     // --- Promotion CRUD ---
     @Test
-    void promotion_crud() throws Exception {
+    @DisplayName("UC08 — CRUD khuyến mãi/voucher")
+    void UC08_promotion_crud() throws Exception {
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -228,7 +237,8 @@ class CrudControllersTest {
 
     // --- UC16: TC02 — Thêm chi nhánh tên trùng → 409 ---
     @Test
-    void TC02_branchDuplicateName_returns409() throws Exception {
+    @DisplayName("UC16 — Trùng tên chi nhánh trả 409")
+    void UC16_branchDuplicateName_returns409() throws Exception {
         mockMvc.perform(post("/api/branches")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -244,7 +254,8 @@ class CrudControllersTest {
 
     // --- UC16: TC05 — Xóa chi nhánh có phòng → 409 ---
     @Test
-    void TC05_deleteBranchWithRooms_returns409() throws Exception {
+    @DisplayName("UC16 — Xóa chi nhánh còn phòng trả 409")
+    void UC16_deleteBranchWithRooms_returns409() throws Exception {
         // Create branch with room
         Branch branch = new Branch();
         branch.setId("BR-WITHROOM");
@@ -276,7 +287,8 @@ class CrudControllersTest {
 
     // --- UC17: TC09 — Khóa tài khoản khách hàng ---
     @Test
-    void TC09_lockClientAccount_togglesStatus() throws Exception {
+    @DisplayName("UC17 — Khóa/mở tài khoản khách hàng")
+    void UC17_lockClientAccount_togglesStatus() throws Exception {
         // Create client
         Client c = new Client();
         c.setId("KH-LOCK");
@@ -300,7 +312,8 @@ class CrudControllersTest {
 
     // --- UC18: TC12 — Nâng hạng thủ công ---
     @Test
-    void TC12_manualTierUpgrade_success() throws Exception {
+    @DisplayName("UC18 — Nâng hạng thủ công thành công")
+    void UC18_manualTierUpgrade_success() throws Exception {
         // Create tier first
         MembershipTier tier = new MembershipTier();
         tier.setTierName("Bac");
@@ -328,7 +341,8 @@ class CrudControllersTest {
 
     // --- UC19: TC17 — Xóa loại phòng đang sử dụng → 409 ---
     @Test
-    void TC17_deleteRoomTypeInUse_returns409() throws Exception {
+    @DisplayName("UC19 — Xóa loại phòng đang sử dụng trả 409")
+    void UC19_deleteRoomTypeInUse_returns409() throws Exception {
         // Create RoomType + Room using it
         RoomType rt = new RoomType();
         rt.setId("RT-INUSE");
@@ -360,7 +374,8 @@ class CrudControllersTest {
 
     // --- UC20: TC22 — Xóa phòng có booking → 409 ---
     @Test
-    void TC22_deleteRoomWithBooking_returns409() throws Exception {
+    @DisplayName("UC20 — Xóa phòng đang có booking trả 409")
+    void UC20_deleteRoomWithBooking_returns409() throws Exception {
         Branch branch = new Branch();
         branch.setId("BR-RMBOOK");
         branch.setName("Branch RB");
@@ -407,6 +422,7 @@ class CrudControllersTest {
 
     // --- Protected endpoints without token return 403 ---
     @Test
+    @DisplayName("Bảo vệ — Endpoint không có token trả 403")
     void protectedEndpoints_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/branches")).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/clients")).andExpect(status().isForbidden());

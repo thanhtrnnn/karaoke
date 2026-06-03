@@ -2,6 +2,7 @@ package com.karaoke.backend.repository;
 
 import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@DisplayName("User Repository — UC01: Truy vấn tài khoản người dùng")
 class UserRepositoryTest {
 
     @Autowired
@@ -28,7 +30,8 @@ class UserRepositoryTest {
     }
 
     @Test
-    void findByUsername_returnsUser() {
+    @DisplayName("UC01 — findByUsername trả về user khi tồn tại")
+    void UC01_findByUsername_returnsUser() {
         createUser("U1", "testuser", "test@example.com", UserRole.CLIENT);
         Optional<User> found = repository.findByUsername("testuser");
         assertTrue(found.isPresent());
@@ -36,13 +39,15 @@ class UserRepositoryTest {
     }
 
     @Test
-    void findByUsername_notFound_returnsEmpty() {
+    @DisplayName("UC01 — findByUsername trả về rỗng khi không tồn tại")
+    void UC01_findByUsername_notFound_returnsEmpty() {
         Optional<User> found = repository.findByUsername("nonexistent");
         assertFalse(found.isPresent());
     }
 
     @Test
-    void findByEmail_returnsUser() {
+    @DisplayName("UC01 — findByEmail trả về user khi tồn tại")
+    void UC01_findByEmail_returnsUser() {
         createUser("U2", "user2", "user2@example.com", UserRole.ADMIN);
         Optional<User> found = repository.findByEmail("user2@example.com");
         assertTrue(found.isPresent());
@@ -50,30 +55,35 @@ class UserRepositoryTest {
     }
 
     @Test
-    void findByEmail_notFound_returnsEmpty() {
+    @DisplayName("UC01 — findByEmail trả về rỗng khi không tồn tại")
+    void UC01_findByEmail_notFound_returnsEmpty() {
         Optional<User> found = repository.findByEmail("missing@example.com");
         assertFalse(found.isPresent());
     }
 
     @Test
-    void existsByUsername_true() {
+    @DisplayName("UC01 — existsByUsername trả true khi username đã tồn tại")
+    void UC01_existsByUsername_true() {
         createUser("U3", "exists", "exists@example.com", UserRole.RECEPTIONIST);
         assertTrue(repository.existsByUsername("exists"));
     }
 
     @Test
-    void existsByUsername_false() {
+    @DisplayName("UC01 — existsByUsername trả false khi username chưa tồn tại")
+    void UC01_existsByUsername_false() {
         assertFalse(repository.existsByUsername("nope"));
     }
 
     @Test
-    void existsByEmail_true() {
+    @DisplayName("UC01 — existsByEmail trả true khi email đã tồn tại")
+    void UC01_existsByEmail_true() {
         createUser("U4", "user4", "user4@example.com", UserRole.SERVICE_STAFF);
         assertTrue(repository.existsByEmail("user4@example.com"));
     }
 
     @Test
-    void existsByEmail_false() {
+    @DisplayName("UC01 — existsByEmail trả false khi email chưa tồn tại")
+    void UC01_existsByEmail_false() {
         assertFalse(repository.existsByEmail("missing@example.com"));
     }
 }

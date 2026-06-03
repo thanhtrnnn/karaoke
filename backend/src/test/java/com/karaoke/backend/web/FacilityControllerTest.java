@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Facility Controller — UC10: Báo cáo hàng hóa (tài sản phòng)")
 class FacilityControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -71,7 +73,8 @@ class FacilityControllerTest {
     }
 
     @Test
-    void facility_crud() throws Exception {
+    @DisplayName("UC10 — CRUD tài sản phòng: tạo, đọc, sửa")
+    void UC10_facility_crud() throws Exception {
         // Create
         mockMvc.perform(post("/api/facilities")
                         .header("Authorization", ADMIN_TOKEN)
@@ -101,7 +104,8 @@ class FacilityControllerTest {
     }
 
     @Test
-    void facility_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Tài sản không có token trả 403")
+    void UC10_facility_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/facilities"))
                 .andExpect(status().isForbidden());
     }

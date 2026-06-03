@@ -1,6 +1,7 @@
 package com.karaoke.backend.repository;
 
 import com.karaoke.backend.domain.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@DisplayName("Order Repository — UC06: Truy vấn đơn hàng dịch vụ")
 class OrderRepositoryTest {
 
     @Autowired private OrderRepository orderRepository;
@@ -77,7 +79,8 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void findAll_returnsEagerlyLoadedRelations() {
+    @DisplayName("UC06 — findAll load eager quan hệ Room, Branch, Product")
+    void UC06_findAll_returnsEagerlyLoadedRelations() {
         Branch branch = createBranch("B1");
         RoomType rt = createRoomType("RT1");
         Room room = createRoom("R1", branch, rt, RoomStatus.AVAILABLE);
@@ -94,7 +97,8 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void findByStatus_filtersCorrectly() {
+    @DisplayName("UC06 — findByStatus lọc đúng đơn PENDING")
+    void UC06_findByStatus_filtersCorrectly() {
         Branch branch = createBranch("B2");
         RoomType rt = createRoomType("RT2");
         Room room = createRoom("R2", branch, rt, RoomStatus.AVAILABLE);
@@ -110,7 +114,8 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void findByRoomId_returnsOnlyThatRoomsOrders() {
+    @DisplayName("UC06 — findByRoomId chỉ trả về đơn của phòng đó")
+    void UC06_findByRoomId_returnsOnlyThatRoomsOrders() {
         Branch branch = createBranch("B3");
         RoomType rt = createRoomType("RT3");
         Room room1 = createRoom("R3", branch, rt, RoomStatus.AVAILABLE);

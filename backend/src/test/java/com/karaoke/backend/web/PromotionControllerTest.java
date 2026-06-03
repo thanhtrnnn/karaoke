@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Promotion Controller — UC08: Khuyến mãi/voucher")
 class PromotionControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -40,7 +42,8 @@ class PromotionControllerTest {
     }
 
     @Test
-    void promotion_crud() throws Exception {
+    @DisplayName("UC08 — CRUD khuyến mãi: tạo, đọc, sửa, xóa")
+    void UC08_promotion_crud() throws Exception {
         // Create
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
@@ -78,13 +81,15 @@ class PromotionControllerTest {
     }
 
     @Test
-    void promotion_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Khuyến mãi không có token trả 403")
+    void UC08_promotion_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/promotions"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void promotion_fixedAmount_type() throws Exception {
+    @DisplayName("UC08 — Khuyến mãi loại cố định (tiền)")
+    void UC08_promotion_fixedAmount_type() throws Exception {
         mockMvc.perform(post("/api/promotions")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)

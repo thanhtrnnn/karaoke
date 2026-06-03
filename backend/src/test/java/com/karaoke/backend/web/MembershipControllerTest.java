@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Membership Controller — UC18: Quản lý hạng hội viên")
 class MembershipControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -78,7 +80,8 @@ class MembershipControllerTest {
 
     // UC18 — Danh sách hạng sắp xếp theo diemToiThieu tăng dần
     @Test
-    void listTiers_sortedByDiemToiThieu() throws Exception {
+    @DisplayName("UC18 — Danh sách hạng sắp xếp theo điểm tăng dần")
+    void UC18_listTiers_sortedByDiemToiThieu() throws Exception {
         mockMvc.perform(get("/api/membership/tiers").header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -89,7 +92,8 @@ class MembershipControllerTest {
 
     // UC18 — Cập nhật ngưỡng điểm hạng
     @Test
-    void updateTier_changesHeSoUuDai() throws Exception {
+    @DisplayName("UC18 — Cập nhật ngưỡng điểm và giảm giá hạng")
+    void UC18_updateTier_changesHeSoUuDai() throws Exception {
         mockMvc.perform(put("/api/membership/tiers/Bac")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +105,8 @@ class MembershipControllerTest {
 
     // UC18 — Tier không tồn tại → 404
     @Test
-    void updateTier_notFound_returns404() throws Exception {
+    @DisplayName("UC18 — Cập nhật hạng không tồn tại trả 404")
+    void UC18_updateTier_notFound_returns404() throws Exception {
         mockMvc.perform(put("/api/membership/tiers/GHOST")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -111,7 +116,8 @@ class MembershipControllerTest {
 
     // Module 3 — Thống kê hội viên theo hạng
     @Test
-    void stats_returnsCountPerTier() throws Exception {
+    @DisplayName("UC18 — Thống kê số lượng hội viên theo hạng")
+    void UC18_stats_returnsCountPerTier() throws Exception {
         Client c1 = new Client();
         c1.setId("KH-STAT1");
         c1.setFullName("Client 1");
@@ -136,7 +142,8 @@ class MembershipControllerTest {
 
     // Không có token → 403
     @Test
-    void tiers_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Danh sách hạng không có token trả 403")
+    void UC18_tiers_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/membership/tiers"))
                 .andExpect(status().isForbidden());
     }

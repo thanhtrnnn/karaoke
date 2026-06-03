@@ -5,6 +5,7 @@ import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.EmployeeRepository;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Damage Report Controller — UC10: Báo cáo tình trạng hàng hóa")
 class DamageReportControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -52,7 +54,8 @@ class DamageReportControllerTest {
     }
 
     @Test
-    void damageReport_createAndList() throws Exception {
+    @DisplayName("UC10 — Tạo báo cáo hư hại + danh sách")
+    void UC10_damageReport_createAndList() throws Exception {
         // Create
         mockMvc.perform(post("/api/damage-reports")
                         .header("Authorization", ADMIN_TOKEN)
@@ -71,7 +74,8 @@ class DamageReportControllerTest {
     }
 
     @Test
-    void damageReport_updateStatus() throws Exception {
+    @DisplayName("UC10 — Cập nhật trạng thái báo cáo")
+    void UC10_damageReport_updateStatus() throws Exception {
         // Create first
         mockMvc.perform(post("/api/damage-reports")
                         .header("Authorization", ADMIN_TOKEN)
@@ -89,7 +93,8 @@ class DamageReportControllerTest {
     }
 
     @Test
-    void damageReport_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Báo cáo hư hại không có token trả 403")
+    void UC10_damageReport_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/damage-reports"))
                 .andExpect(status().isForbidden());
     }

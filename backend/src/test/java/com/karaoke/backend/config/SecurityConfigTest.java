@@ -1,5 +1,6 @@
 package com.karaoke.backend.config;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -17,24 +18,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Security Config — Kiểm soát truy cập & phân quyền endpoint")
 class SecurityConfigTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
+    @DisplayName("Public endpoint /api/health truy cập không cần xác thực")
     void publicEndpoint_health_withoutAuth() throws Exception {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk());
     }
 
     @Test
+    @DisplayName("Public endpoint / truy cập không cần xác thực")
     void publicEndpoint_root_withoutAuth() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk());
     }
 
     @Test
+    @DisplayName("Public endpoint /api/auth/login trả 400 khi user không tồn tại")
     void publicEndpoint_authLogin_withoutAuth() throws Exception {
         // 400 vì user không tồn tại, không phải 401/403
         mockMvc.perform(post("/api/auth/login")
@@ -44,6 +49,7 @@ class SecurityConfigTest {
     }
 
     @Test
+    @DisplayName("Protected endpoints trả 403 khi không có token")
     void protectedEndpoints_withoutAuth_returns403() throws Exception {
         mockMvc.perform(get("/api/branches")).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/orders")).andExpect(status().isForbidden());
@@ -62,6 +68,7 @@ class SecurityConfigTest {
     }
 
     @Test
+    @DisplayName("OPTIONS request được phép (CORS preflight)")
     void optionsRequests_permitted() throws Exception {
         mockMvc.perform(options("/api/branches"))
                 .andExpect(status().isOk());

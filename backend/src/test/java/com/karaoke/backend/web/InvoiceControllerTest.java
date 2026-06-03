@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Room Receipt Controller — UC08: Quản lý trả phòng (hóa đơn)")
 class RoomReceiptControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -100,7 +102,8 @@ class RoomReceiptControllerTest {
     }
 
     @Test
-    void generate_computesServiceTotal() throws Exception {
+    @DisplayName("UC08 — Tính hóa đơn: tổng = tiền phòng + tiền dịch vụ")
+    void UC08_generate_computesServiceTotal() throws Exception {
         createRoomWithOrder("INV-R1", "INV-O1", "INV-P1", 2, new BigDecimal("30000"));
 
         mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R1")
@@ -113,7 +116,8 @@ class RoomReceiptControllerTest {
     }
 
     @Test
-    void pay_setsStatusPaidAndPaidAt() throws Exception {
+    @DisplayName("UC08 — Thanh toán: trạng thái PAID + paidAt + phương thức")
+    void UC08_pay_setsStatusPaidAndPaidAt() throws Exception {
         createRoomWithOrder("INV-R2", "INV-O2", "INV-P2", 1, new BigDecimal("50000"));
 
         String response = mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R2")
@@ -135,7 +139,8 @@ class RoomReceiptControllerTest {
     }
 
     @Test
-    void generate_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Hóa đơn không có token trả 403")
+    void UC08_generate_withoutToken_returns403() throws Exception {
         mockMvc.perform(post("/api/room-receipts/generate?roomId=INV-R1"))
                 .andExpect(status().isForbidden());
     }

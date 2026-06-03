@@ -1,6 +1,7 @@
 package com.karaoke.backend.repository;
 
 import com.karaoke.backend.domain.Client;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -8,6 +9,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@DisplayName("Client Repository — UC17: Truy vấn khách hàng")
 class ClientRepositoryTest {
 
     @Autowired
@@ -25,18 +27,21 @@ class ClientRepositoryTest {
     }
 
     @Test
-    void existsByPhone_true() {
+    @DisplayName("UC17 — existsByPhone trả true khi SĐT đã tồn tại")
+    void UC17_existsByPhone_true() {
         createClient("C1", "0901234567", "Dong");
         assertTrue(repository.existsByPhone("0901234567"));
     }
 
     @Test
-    void existsByPhone_false() {
+    @DisplayName("UC17 — existsByPhone trả false khi SĐT chưa tồn tại")
+    void UC17_existsByPhone_false() {
         assertFalse(repository.existsByPhone("0999999999"));
     }
 
     @Test
-    void countByTier_returnsCorrectCounts() {
+    @DisplayName("UC17 — countByTier trả về số lượng đúng theo hạng")
+    void UC17_countByTier_returnsCorrectCounts() {
         createClient("C2", "0901111111", "Vang");
         createClient("C3", "0902222222", "Vang");
         createClient("C4", "0903333333", "Bac");

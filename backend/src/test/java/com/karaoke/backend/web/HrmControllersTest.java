@@ -76,7 +76,8 @@ class HrmControllersTest {
 
     // ─── UC21: ChiNhanhController ─────────────────────────────────────────────
     @Test
-    void getBranches_returnsArrayWithAtLeastThreeBranches() throws Exception {
+    @DisplayName("UC16 — Danh sách chi nhánh ≥ 3")
+    void UC16_getBranches_returnsArrayWithAtLeastThreeBranches() throws Exception {
         mockMvc.perform(get("/api/hrm/chi-nhanh")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -86,7 +87,8 @@ class HrmControllersTest {
 
     // ─── UC11: NhanVienController.getStaffByBranch ────────────────────────────
     @Test
-    void getStaffByBranch_CN001_returnsArray() throws Exception {
+    @DisplayName("UC11 — Danh sách nhân viên chi nhánh CN001")
+    void UC11_getStaffByBranch_CN001_returnsArray() throws Exception {
         mockMvc.perform(get("/api/hrm/nhan-vien/by-branch")
                         .param("maCN", "CN001")
                         .header("Authorization", ADMIN_TOKEN))
@@ -96,7 +98,8 @@ class HrmControllersTest {
 
     // ─── UC11: NhanVienController.searchStaff ─────────────────────────────────
     @Test
-    void searchStaff_byKeyword_returnsArray() throws Exception {
+    @DisplayName("UC11 — Tìm kiếm nhân viên theo từ khóa")
+    void UC11_searchStaff_byKeyword_returnsArray() throws Exception {
         mockMvc.perform(get("/api/hrm/nhan-vien/search")
                         .param("keyword", "Nguyễn")
                         .header("Authorization", ADMIN_TOKEN))
@@ -106,7 +109,8 @@ class HrmControllersTest {
 
     // ─── UC14: KhachHangController.searchCustomer ─────────────────────────────
     @Test
-    void searchCustomer_byKeyword_returnsMatchWithMaKhachHang() throws Exception {
+    @DisplayName("UC14 — Tìm khách hàng theo từ khóa")
+    void UC14_searchCustomer_byKeyword_returnsMatch() throws Exception {
         mockMvc.perform(get("/api/hrm/khach-hang/search")
                         .param("keyword", "Nguy")
                         .header("Authorization", ADMIN_TOKEN))
@@ -118,7 +122,8 @@ class HrmControllersTest {
 
     // ─── UC14: KhachHangController.getHistory ─────────────────────────────────
     @Test
-    void getCustomerHistory_KH004_returnsArray() throws Exception {
+    @DisplayName("UC14 — Lịch sử khách hàng KH004")
+    void UC14_getCustomerHistory_KH004_returnsArray() throws Exception {
         mockMvc.perform(get("/api/hrm/khach-hang/{maKH}/lich-su", "KH004")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
@@ -127,7 +132,8 @@ class HrmControllersTest {
 
     // ─── UC13: BaoCaoController.createReport ──────────────────────────────────
     @Test
-    void createReport_byPeriodAndBranch_returnsTongDoanhThu() throws Exception {
+    @DisplayName("UC13 — Tạo báo cáo theo kỳ và chi nhánh")
+    void UC13_createReport_byPeriodAndBranch_returnsTongDoanhThu() throws Exception {
         mockMvc.perform(get("/api/hrm/bao-cao/create")
                         .param("period", "Thang")
                         .param("maCN", "CN001")
@@ -138,7 +144,8 @@ class HrmControllersTest {
 
     // ─── UC21: BaoCaoChuoiController.aggregateChain — ADMIN OK ────────────────
     @Test
-    void aggregateChain_asAdmin_returnsToanChuoiScope() throws Exception {
+    @DisplayName("UC21 — Tổng hợp chuỗi với quyền Admin")
+    void UC21_aggregateChain_asAdmin_returnsToanChuoiScope() throws Exception {
         String body = "{\"period\":\"Quy\",\"branches\":[\"CN001\",\"CN002\",\"CN003\"]}";
         mockMvc.perform(post("/api/hrm/bao-cao-chuoi/aggregate")
                         .header("Authorization", ADMIN_TOKEN)
@@ -151,7 +158,8 @@ class HrmControllersTest {
 
     // ─── UC21: BRANCH_MANAGER cũng có thể gọi (frontend RBAC kiểm soát truy cập UI) ───
     @Test
-    void aggregateChain_asBranchManager_returnsOk() throws Exception {
+    @DisplayName("UC21 — Tổng hợp chuỗi với quyền QL chi nhánh")
+    void UC21_aggregateChain_asBranchManager_returnsOk() throws Exception {
         String body = "{\"period\":\"Quy\",\"branches\":[\"CN001\",\"CN002\",\"CN003\"]}";
         mockMvc.perform(post("/api/hrm/bao-cao-chuoi/aggregate")
                         .header("Authorization", MANAGER_TOKEN)
@@ -162,7 +170,8 @@ class HrmControllersTest {
 
     // ─── UC11: DanhGiaController.saveEvaluation ───────────────────────────────
     @Test
-    void saveEvaluation_validBody_returnsOk() throws Exception {
+    @DisplayName("UC11 — Lưu đánh giá hiệu suất")
+    void UC11_saveEvaluation_validBody_returnsOk() throws Exception {
         String body = "{\"maNhanVien\":\"NV001\",\"kyDanhGia\":\"2026-Q2\",\"diem\":80,\"nhanXet\":\"ok\"}";
         mockMvc.perform(post("/api/hrm/danh-gia/save")
                         .header("Authorization", ADMIN_TOKEN)

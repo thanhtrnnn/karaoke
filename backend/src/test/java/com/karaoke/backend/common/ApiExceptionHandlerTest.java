@@ -4,6 +4,7 @@ import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -20,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("API Exception Handler — Xử lý lỗi HTTP toàn module")
 class ApiExceptionHandlerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -43,6 +45,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Entity không tồn tại trả 404 kèm body JSON")
     void entityNotFound_returns404WithBody() throws Exception {
         mockMvc.perform(get("/api/branches/NONEXISTENT")
                         .header("Authorization", ADMIN_TOKEN))
@@ -53,6 +56,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Client không tồn tại trả 404")
     void clientNotFound_returns404() throws Exception {
         mockMvc.perform(get("/api/clients/GHOST")
                         .header("Authorization", ADMIN_TOKEN))
@@ -60,6 +64,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("RoomType không tồn tại trả 404")
     void roomTypeNotFound_returns404() throws Exception {
         mockMvc.perform(get("/api/room-types/GHOST_RT")
                         .header("Authorization", ADMIN_TOKEN))
@@ -67,6 +72,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Product không tồn tại trả 404")
     void productNotFound_returns404() throws Exception {
         mockMvc.perform(get("/api/products/GHOST_SP")
                         .header("Authorization", ADMIN_TOKEN))
@@ -74,6 +80,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Provider không tồn tại trả 404")
     void providerNotFound_returns404() throws Exception {
         mockMvc.perform(get("/api/providers/GHOST_NCC")
                         .header("Authorization", ADMIN_TOKEN))
@@ -81,6 +88,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Không có token trả 403")
     void noToken_returns403() throws Exception {
         mockMvc.perform(get("/api/branches/NONEXISTENT"))
                 .andExpect(status().isForbidden());

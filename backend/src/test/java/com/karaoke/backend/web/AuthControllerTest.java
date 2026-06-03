@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
 import com.karaoke.backend.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -19,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("Auth Controller — UC01: Đăng nhập, UC02: Đăng ký, UC03: Đổi mật khẩu")
 class AuthControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -38,7 +40,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_success() throws Exception {
+    @DisplayName("UC02 — Đăng ký thành công, trả về token và role")
+    void UC02_register_success() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
@@ -58,7 +61,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_duplicateUsername_returns400() throws Exception {
+    @DisplayName("UC02 — Đăng ký trùng username trả 400")
+    void UC02_register_duplicateUsername_returns400() throws Exception {
         createTestUser("U1", "existing", "existing@example.com", "pass123", UserRole.CLIENT);
 
         mockMvc.perform(post("/api/auth/register")
@@ -76,7 +80,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_duplicateEmail_returns400() throws Exception {
+    @DisplayName("UC02 — Đăng ký trùng email trả 400")
+    void UC02_register_duplicateEmail_returns400() throws Exception {
         createTestUser("U2", "user2", "dup@example.com", "pass123", UserRole.CLIENT);
 
         mockMvc.perform(post("/api/auth/register")
@@ -94,7 +99,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_missingFields_returns400() throws Exception {
+    @DisplayName("UC02 — Đăng ký thiếu trường bắt buộc trả 400")
+    void UC02_register_missingFields_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"\",\"email\":\"not-an-email\",\"password\":\"\"}"))
@@ -102,7 +108,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_success() throws Exception {
+    @DisplayName("UC01 — Đăng nhập thành công, trả về token")
+    void UC01_login_success() throws Exception {
         createTestUser("U4", "testlogin", "login@example.com", "mypassword", UserRole.ADMIN);
 
         mockMvc.perform(post("/api/auth/login")
@@ -120,7 +127,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_wrongPassword_returns400() throws Exception {
+    @DisplayName("UC01 — Đăng nhập sai mật khẩu trả 400")
+    void UC01_login_wrongPassword_returns400() throws Exception {
         createTestUser("U5", "testuser5", "test5@example.com", "correct", UserRole.CLIENT);
 
         mockMvc.perform(post("/api/auth/login")
@@ -136,7 +144,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_nonexistentUser_returns400() throws Exception {
+    @DisplayName("UC01 — Đăng nhập user không tồn tại trả 400")
+    void UC01_login_nonexistentUser_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
@@ -149,7 +158,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void changePassword_success() throws Exception {
+    @DisplayName("UC03 — Đổi mật khẩu thành công")
+    void UC03_changePassword_success() throws Exception {
         createTestUser("U6", "changepw", "changepw@example.com", "oldpass", UserRole.CLIENT);
 
         mockMvc.perform(post("/api/auth/change-password")
@@ -166,7 +176,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void changePassword_wrongCurrent_returns400() throws Exception {
+    @DisplayName("UC03 — Đổi mật khẩu sai mật khẩu hiện tại trả 400")
+    void UC03_changePassword_wrongCurrent_returns400() throws Exception {
         createTestUser("U7", "changepw2", "changepw2@example.com", "oldpass", UserRole.CLIENT);
 
         mockMvc.perform(post("/api/auth/change-password")
@@ -184,7 +195,8 @@ class AuthControllerTest {
 
     // TC03 — Mật khẩu sai 5 lần → trả lỗi mỗi lần (lockout chưa implement)
     @Test
-    void TC03_wrongPasswordMultipleTimes_returns400EachTime() throws Exception {
+    @DisplayName("UC01 — Mật khẩu sai 5 lần liên tiếp vẫn trả 400 mỗi lần (lockout chưa implement)")
+    void UC01_wrongPasswordMultipleTimes_returns400EachTime() throws Exception {
         createTestUser("U8", "locktest", "locktest@example.com", "correctpass", UserRole.CLIENT);
 
         // Attempt 1-5: all should return 400

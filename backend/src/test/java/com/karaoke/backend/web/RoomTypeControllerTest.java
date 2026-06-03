@@ -3,6 +3,7 @@ package com.karaoke.backend.web;
 import com.karaoke.backend.domain.*;
 import com.karaoke.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
+@DisplayName("RoomType Controller — UC19: Quản lý danh mục loại phòng")
 class RoomTypeControllerTest {
 
     @Autowired private MockMvc mockMvc;
@@ -40,7 +42,8 @@ class RoomTypeControllerTest {
     }
 
     @Test
-    void roomType_crud() throws Exception {
+    @DisplayName("UC19 — CRUD loại phòng: tạo, đọc, sửa, xóa")
+    void UC19_roomType_crud() throws Exception {
         // Create
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
@@ -80,13 +83,15 @@ class RoomTypeControllerTest {
     }
 
     @Test
-    void roomType_withoutToken_returns403() throws Exception {
+    @DisplayName("Bảo vệ — Loại phòng không có token trả 403")
+    void UC19_roomType_withoutToken_returns403() throws Exception {
         mockMvc.perform(get("/api/room-types"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void roomType_create_multipleTypes() throws Exception {
+    @DisplayName("UC19 — Tạo nhiều loại phòng khác nhau")
+    void UC19_roomType_create_multipleTypes() throws Exception {
         mockMvc.perform(post("/api/room-types")
                         .header("Authorization", ADMIN_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
