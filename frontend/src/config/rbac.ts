@@ -11,11 +11,11 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_ROUTES: Record<Role, string[]> = {
   ADMIN: ['*'],
   BRANCH_MANAGER: [
-    '/branch-report', '/employees', '/rooms', '/room-session',
+    '/manager', '/rooms', '/room-session',
     '/orders', '/order-management', '/menu', '/inventory',
-    '/checkout', '/booking-management', '/settings', '/profile',
+    '/checkout', '/booking-management', '/booking', '/settings', '/profile',
     '/damage-reports', '/facilities', '/import-receipts', '/providers',
-    '/customer-info',
+    '/customer-info', '/customers', '/membership', '/room-types',
   ],
   RECEPTIONIST: [
     '/', '/booking', '/booking-management', '/rooms', '/room-session',
