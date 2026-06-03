@@ -63,10 +63,10 @@ export default function LoginPage() {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-5">
               <div className="relative">
-                <label className="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase tracking-wider" htmlFor="username">Tên đăng nhập</label>
+                <label className="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase tracking-wider" htmlFor="username">SĐT hoặc Email</label>
                 <div className="relative flex items-center">
                   <span className="material-symbols-outlined absolute left-4 text-text-secondary">person</span>
-                  <input autoComplete="username" className="block w-full pl-12 pr-4 py-3.5 bg-surface-secondary border border-border-subtle rounded-lg text-text-primary font-body-md focus:outline-none focus:ring-1 focus:ring-primary-container focus:border-primary-container transition-all duration-200 shadow-sm placeholder:text-slate-600" id="username" name="username" placeholder="Nhập tên đăng nhập..." required type="text" />
+                  <input autoComplete="username" className="block w-full pl-12 pr-4 py-3.5 bg-surface-secondary border border-border-subtle rounded-lg text-text-primary font-body-md focus:outline-none focus:ring-1 focus:ring-primary-container focus:border-primary-container transition-all duration-200 shadow-sm placeholder:text-slate-600" id="username" name="username" placeholder="Nhập SĐT hoặc Email..." required type="text" />
                 </div>
               </div>
               <div className="relative">

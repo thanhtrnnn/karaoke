@@ -26,6 +26,7 @@ export default function BookingManagement() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   const [dateFilter, setDateFilter] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
@@ -82,9 +83,14 @@ export default function BookingManagement() {
     }
   };
 
+  const kw = searchKeyword.trim().toLowerCase();
   const filteredBookings = bookings.filter(b =>
     (statusFilter === 'Tất cả' || b.rawStatus === statusFilter) &&
-    (!dateFilter || b.date === formatDate(dateFilter))
+    (!dateFilter || b.date === formatDate(dateFilter)) &&
+    (!kw ||
+      b.customer.toLowerCase().includes(kw) ||
+      b.phone.toLowerCase().includes(kw) ||
+      b.id.toLowerCase().includes(kw))
   );
 
   if (loading) {
@@ -99,6 +105,16 @@ export default function BookingManagement() {
       </div>
 
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
+        <div className="relative flex-1 min-w-[240px]">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="Tìm theo tên khách / SĐT / mã đặt..."
+            className="w-full bg-surface-secondary border border-border-subtle rounded-lg pl-10 pr-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+          />
+        </div>
         <input
           type="date"
           value={dateFilter}

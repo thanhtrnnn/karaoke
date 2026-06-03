@@ -2,6 +2,7 @@ package com.karaoke.backend.domain;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -35,6 +36,6 @@ public class ImportReceipt {
     @ManyToOne
     private Employee employee;
 
-    @OneToMany(mappedBy = "importReceipt", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "importReceipt", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ImportDetail> details = new ArrayList<>();
 }

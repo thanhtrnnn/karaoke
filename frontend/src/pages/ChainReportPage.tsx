@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface Branch {
   id: string;
@@ -18,6 +19,8 @@ interface BranchStats {
 export default function ChainReportPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
+  const [periodType, setPeriodType] = useState('quarterly');
+  const [year, setYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [reporting, setReporting] = useState(false);
   const [results, setResults] = useState<BranchStats[]>([]);
@@ -56,7 +59,7 @@ export default function ChainReportPage() {
         selectedBranches.map(async branchId => {
           const branchName = branches.find(b => b.id === branchId)?.name || branchId;
           try {
-            const res = await fetch(`/api/reports/summary?branchId=${branchId}`, { headers });
+            const res = await fetch(`/api/reports/summary?branchId=${branchId}&period=${periodType}&year=${year}`, { headers });
             if (res.ok) {
               const data = await res.json();
               return {
@@ -102,6 +105,26 @@ export default function ChainReportPage() {
 
       {/* Filter panel */}
       <div className="bg-slate-800 rounded-xl p-5 space-y-4">
+        {/* Period selector (UC21: cboPeriod) */}
+        <div className="flex flex-wrap gap-4 items-end">
+          <div>
+            <label className="block text-xs text-slate-400 uppercase mb-1">Kỳ báo cáo</label>
+            <select value={periodType} onChange={e => setPeriodType(e.target.value)}
+              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">
+              <option value="monthly">Tháng</option>
+              <option value="quarterly">Quý</option>
+              <option value="yearly">Năm</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 uppercase mb-1">Năm</label>
+            <select value={year} onChange={e => setYear(Number(e.target.value))}
+              className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">
+              {[0, 1, 2].map(d => { const y = new Date().getFullYear() - d; return <option key={y} value={y}>{y}</option>; })}
+            </select>
+          </div>
+        </div>
+
         {/* Branch multi-select */}
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -159,6 +182,27 @@ export default function ChainReportPage() {
             <div className="bg-slate-800 rounded-xl p-4">
               <p className="text-xs text-slate-400 uppercase mb-1">Tổng đơn F&B</p>
               <p className="text-2xl font-bold text-white">{results.reduce((s, r) => s + r.orders, 0)}</p>
+            </div>
+          </div>
+
+          {/* Comparison chart (UC21: ComparisonPanel.chartCompare) */}
+          <div className="bg-slate-800 rounded-xl p-6">
+            <h2 className="text-lg font-bold text-white mb-4">Biểu đồ so sánh doanh thu chi nhánh</h2>
+            <div className="h-[320px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={results} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                  <XAxis dataKey="branchName" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false}
+                    tickFormatter={(val: number) => val >= 1000000 ? `${(val / 1000000).toFixed(0)}tr` : `${val / 1000}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                    formatter={(val: any) => [`${Number(val).toLocaleString('vi-VN')}đ`, 'Doanh thu']} />
+                  <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
+                    {results.map((_, i) => <Cell key={i} fill={i === 0 ? '#D4AF37' : '#64748b'} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useUIStore } from '../store/uiStore';
-import { getUserFromStorage, ROLE_ROUTES } from '../config/rbac';
+import { getUserFromStorage, hasRouteAccess } from '../config/rbac';
 
 const menuItems = [
   { path: '/', label: 'Lễ tân', icon: 'dashboard' },
@@ -34,12 +34,12 @@ export default function Sidebar() {
 
   const user = getUserFromStorage();
   const role = user?.role;
-  const allowedRoutes = role ? ROLE_ROUTES[role] : [];
 
-  const filteredMenuItems = allowedRoutes.length > 0
-    ? menuItems.filter(item =>
-        allowedRoutes.includes('*') || allowedRoutes.includes(item.path)
-      )
+  // Role-based filtering: only render menu items the current role is allowed
+  // to access, per ROLE_ROUTES (ADMIN '*' = all). Falls back to empty when no
+  // role is present so an unauthenticated/unknown user sees no menu items.
+  const filteredMenuItems = role
+    ? menuItems.filter(item => hasRouteAccess(role, item.path))
     : [];
 
   return (

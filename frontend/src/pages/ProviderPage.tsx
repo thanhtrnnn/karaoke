@@ -10,6 +10,7 @@ interface Provider {
 export default function ProviderPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Provider | null>(null);
   const [formData, setFormData] = useState({ id: '', name: '', address: '', tel: '' });
@@ -17,13 +18,25 @@ export default function ProviderPage() {
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  useEffect(() => {
-    fetch('/api/providers', { headers: { 'Authorization': `Bearer ${token}` } })
+  // searchProvider(keyword): tìm NCC theo tên qua API (khớp tài liệu); rỗng = lấy tất cả
+  const fetchProviders = (keyword?: string) => {
+    const url = keyword && keyword.trim()
+      ? `/api/providers?keyword=${encodeURIComponent(keyword.trim())}`
+      : '/api/providers';
+    fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : [])
       .then(setProviders)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchProviders(); }, []);
+
+  // Gọi lại API với keyword khi gõ ô tìm kiếm (debounce nhẹ)
+  useEffect(() => {
+    const t = setTimeout(() => fetchProviders(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const openCreate = () => {
     setEditingItem(null);
@@ -70,6 +83,21 @@ export default function ProviderPage() {
         </button>
       </div>
 
+      <div className="relative mb-6 max-w-md">
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2.5 pl-10 pr-10 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder:text-slate-500"
+          placeholder="Tìm nhà cung cấp theo tên..."
+        />
+        {search && (
+          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        )}
+      </div>
+
       <div className="bg-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-700 text-slate-300">
@@ -102,7 +130,7 @@ export default function ProviderPage() {
             ))}
           </tbody>
         </table>
-        {providers.length === 0 && <div className="py-12 text-center text-slate-500">Chưa có nhà cung cấp nào</div>}
+        {providers.length === 0 && <div className="py-12 text-center text-slate-500">{search ? 'Không tìm thấy nhà cung cấp phù hợp' : 'Chưa có nhà cung cấp nào'}</div>}
       </div>
 
       {isModalOpen && (

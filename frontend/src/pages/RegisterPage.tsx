@@ -11,6 +11,8 @@ export default function RegisterPage() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const fullName = formData.get('reg-fullname') as string;
+    const phoneNumber = formData.get('reg-phone') as string;
     const username = formData.get('reg-username') as string;
     const email = formData.get('email') as string;
     const password = formData.get('reg-password') as string;
@@ -23,6 +25,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
+      // Backend /api/auth/register chỉ nhận {username, email, password, role};
+      // fullName & phoneNumber được giữ phía client để chuyển sang bước xác nhận OTP (UC02).
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,7 +38,8 @@ export default function RegisterPage() {
         throw new Error(data?.message || 'Đăng ký thất bại. Tên đăng nhập hoặc email đã tồn tại.');
       }
 
-      navigate('/login');
+      // UC02: sau khi điền thông tin đăng ký -> hệ thống gửi OTP -> hiển thị màn xác nhận OTP.
+      navigate('/otp-verify', { state: { fullName, phoneNumber, username, email } });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -68,6 +73,14 @@ export default function RegisterPage() {
           <form className="space-y-6" onSubmit={handleRegister}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
               <div className="flex flex-col gap-2 sm:col-span-2">
+                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="reg-fullname">Họ tên</label>
+                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="reg-fullname" name="reg-fullname" placeholder="Nhập họ tên" type="text" required />
+              </div>
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="reg-phone">Số điện thoại</label>
+                <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="reg-phone" name="reg-phone" placeholder="VD: 0912345678" type="tel" required />
+              </div>
+              <div className="flex flex-col gap-2 sm:col-span-2">
                 <label className="font-label-caps text-label-caps text-text-secondary uppercase" htmlFor="reg-username">Tên đăng nhập</label>
                 <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="reg-username" name="reg-username" placeholder="Nhập tên đăng nhập" type="text" required />
               </div>
@@ -84,9 +97,12 @@ export default function RegisterPage() {
                 <input className="bg-surface-secondary border border-border-subtle rounded text-text-primary px-4 py-3 font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors w-full placeholder-text-secondary/50" id="confirm_password" name="confirm_password" placeholder="••••••••" type="password" required />
               </div>
             </div>
-            <div className="pt-6">
-              <button className="w-full bg-primary text-on-primary font-body-lg font-bold py-4 rounded hover:bg-primary-fixed transition-colors shadow-sm disabled:opacity-50" type="submit" disabled={loading}>
-                {loading ? 'ĐANG ĐĂNG KÝ...' : 'ĐĂNG KÝ'}
+            <div className="pt-6 flex gap-4">
+              <button className="flex-1 bg-primary text-on-primary font-body-lg font-bold py-4 rounded hover:bg-primary-fixed transition-colors shadow-sm disabled:opacity-50" type="submit" disabled={loading}>
+                {loading ? 'ĐANG XỬ LÝ...' : 'TIẾP TỤC'}
+              </button>
+              <button className="px-8 bg-surface-secondary border border-border-subtle text-text-secondary font-body-lg font-bold py-4 rounded hover:text-text-primary transition-colors disabled:opacity-50" type="button" disabled={loading} onClick={() => navigate('/login')}>
+                HỦY
               </button>
             </div>
             <div className="text-center mt-6">

@@ -9,12 +9,14 @@ interface Customer {
   phone: string;
   tier: string;
   loyaltyPoints: number;
+  accountStatus?: boolean;
 }
 
 export default function ClientPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchField, setSearchField] = useState<'all' | 'name' | 'phone' | 'id'>('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -38,6 +40,7 @@ export default function ClientPage() {
             phone: c.phone,
             tier: c.tier || 'Đồng',
             loyaltyPoints: c.loyaltyPoints || 0,
+            accountStatus: c.accountStatus,
           }));
           setCustomers(mapped);
           if (mapped.length > 0) setSelectedCustomer(mapped[0]);
@@ -52,9 +55,37 @@ export default function ClientPage() {
   }, []);
 
   const filteredCustomers = customers.filter(c => {
-    const q = searchQuery.toLowerCase();
-    return c.fullName.toLowerCase().includes(q) || c.phone.includes(q);
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    if (searchField === 'name') return c.fullName.toLowerCase().includes(q);
+    if (searchField === 'phone') return c.phone.toLowerCase().includes(q);
+    if (searchField === 'id') return c.id.toLowerCase().includes(q);
+    return c.fullName.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
   });
+
+  // UC17: Khóa / mở khóa tài khoản khách hàng (toggle)
+  const handleToggleLock = async (c: Customer) => {
+    const locking = c.accountStatus !== false;
+    const action = locking ? 'khóa' : 'mở khóa';
+    if (!confirm(`Bạn có chắc muốn ${action} tài khoản ${c.fullName} (${c.id})?`)) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/clients/${c.id}/lock`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCustomers(prev => prev.map(x => x.id === updated.id ? { ...x, accountStatus: updated.accountStatus } : x));
+        setSelectedCustomer(prev => prev && prev.id === updated.id ? { ...prev, accountStatus: updated.accountStatus } : prev);
+      } else {
+        alert(`Không thể ${action} tài khoản. Vui lòng thử lại.`);
+      }
+    } catch (e) {
+      console.error('Failed to toggle lock:', e);
+      alert('Lỗi kết nối khi cập nhật trạng thái tài khoản.');
+    }
+  };
 
   const handleSaveCustomer = async () => {
     if (!formData.fullName || !formData.phone) {
@@ -160,6 +191,16 @@ export default function ClientPage() {
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-5 border border-slate-700/50">
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value as 'all' | 'name' | 'phone' | 'id')}
+          className="bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 px-3 text-white font-body-md focus:outline-none focus:border-[#D4AF37]"
+        >
+          <option value="all">Tất cả tiêu chí</option>
+          <option value="name">Tên</option>
+          <option value="phone">SĐT</option>
+          <option value="id">Mã KH</option>
+        </select>
         <div className="relative flex-1 min-w-[250px] max-w-[30rem]">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
           <input
@@ -182,13 +223,13 @@ export default function ClientPage() {
         <table className="w-full text-left whitespace-nowrap">
           <thead>
             <tr className="border-b border-slate-700/50 text-slate-400 font-label-caps bg-surface-container-low">
-              <th className="py-4 px-6">Mã KH</th><th className="py-4 px-6">Họ tên</th><th className="py-4 px-6">SĐT</th><th className="py-4 px-6">Hạng</th><th className="py-4 px-6">Điểm</th><th className="py-4 px-6">Chi tiết</th>
+              <th className="py-4 px-6">Mã KH</th><th className="py-4 px-6">Họ tên</th><th className="py-4 px-6">SĐT</th><th className="py-4 px-6">Hạng</th><th className="py-4 px-6">Điểm</th><th className="py-4 px-6">Trạng thái</th><th className="py-4 px-6">Chi tiết</th>
             </tr>
           </thead>
           <tbody className="font-body-md divide-y divide-slate-800/50">
             {filteredCustomers.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-500">
+                <td colSpan={7} className="py-8 text-center text-slate-500">
                   Không tìm thấy khách hàng nào.
                 </td>
               </tr>
@@ -208,6 +249,11 @@ export default function ClientPage() {
                 </td>
                 <td className="py-4 px-6 text-primary-container">{c.loyaltyPoints.toLocaleString()}</td>
                 <td className="py-4 px-6">
+                  <span className={`px-2.5 py-1 rounded-md font-label-caps ${c.accountStatus !== false ? 'bg-green-900/40 text-green-300 border border-green-700/40' : 'bg-red-900/40 text-red-300 border border-red-700/40'}`}>
+                    {c.accountStatus !== false ? 'Hoạt động' : 'Đã khóa'}
+                  </span>
+                </td>
+                <td className="py-4 px-6">
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedCustomer(c)}
@@ -220,6 +266,12 @@ export default function ClientPage() {
                       className="px-3 py-1.5 bg-surface-secondary border border-border-subtle rounded-lg text-slate-300 hover:border-primary-container hover:text-primary-container transition-colors font-label-caps"
                     >
                       Sửa
+                    </button>
+                    <button
+                      onClick={() => handleToggleLock(c)}
+                      className={`px-3 py-1.5 rounded-lg transition-colors font-label-caps border ${c.accountStatus !== false ? 'bg-amber-900/20 border-amber-700/40 text-amber-300 hover:bg-amber-900/50' : 'bg-green-900/20 border-green-700/40 text-green-300 hover:bg-green-900/50'}`}
+                    >
+                      {c.accountStatus !== false ? 'Khóa TK' : 'Mở khóa'}
                     </button>
                     <button
                       onClick={() => handleDeleteCustomer(c.id)}
@@ -236,7 +288,10 @@ export default function ClientPage() {
       </div>
       {selectedCustomer && (
         <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
-          <h2 className="font-h2 text-white mb-4">Chi tiết khách hàng {selectedCustomer.id}</h2>
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="font-h2 text-white">Chi tiết khách hàng {selectedCustomer.id}</h2>
+            <button onClick={() => setSelectedCustomer(null)} className="text-slate-400 hover:text-white text-sm">Đóng</button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div>
               <p className="font-label-caps text-slate-400 uppercase mb-1">Họ tên</p>
@@ -250,6 +305,20 @@ export default function ClientPage() {
               <p className="font-label-caps text-slate-400 uppercase mb-1">Hạng</p>
               <p className="text-primary-container font-body-md font-semibold">{selectedCustomer.tier} ({selectedCustomer.loyaltyPoints.toLocaleString()} điểm)</p>
             </div>
+            <div>
+              <p className="font-label-caps text-slate-400 uppercase mb-1">Trạng thái</p>
+              <p className={`font-body-md font-semibold ${selectedCustomer.accountStatus !== false ? 'text-green-400' : 'text-red-400'}`}>
+                {selectedCustomer.accountStatus !== false ? 'Hoạt động' : 'Đã khóa'}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={() => handleToggleLock(selectedCustomer)}
+              className={`px-5 py-2.5 rounded-lg font-body-md font-semibold transition-colors ${selectedCustomer.accountStatus !== false ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-green-600 text-white hover:bg-green-500'}`}
+            >
+              {selectedCustomer.accountStatus !== false ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+            </button>
           </div>
         </div>
       )}

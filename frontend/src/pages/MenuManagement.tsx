@@ -6,6 +6,8 @@ interface MenuItem {
   cat: string;
   price: number;
   currentStock: number;
+  safetyStock: number;
+  unit: string;
   image: string;
   active: boolean;
 }
@@ -18,35 +20,46 @@ export default function MenuManagement() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', active: true });
+  const [formData, setFormData] = useState({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', unit: '', active: true });
 
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/products', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setItems(data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            cat: item.category,
-            price: item.price,
-            currentStock: item.currentStock,
-            image: item.image || '/images/snack.png',
-            active: item.active,
-          })));
-        }
-      } catch (e) {
-        console.error('Failed to fetch menu items:', e);
-      } finally {
-        setLoading(false);
+  // searchProduct(keyword): tìm sản phẩm theo tên qua API (khớp tài liệu); rỗng = lấy tất cả
+  const fetchMenu = async (keyword?: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = keyword && keyword.trim()
+        ? `/api/products?keyword=${encodeURIComponent(keyword.trim())}`
+        : '/api/products';
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          cat: item.category,
+          price: item.price,
+          currentStock: item.currentStock,
+          safetyStock: item.safetyStock ?? 5,
+          unit: item.unit || '',
+          image: item.image || '/images/snack.png',
+          active: item.active,
+        })));
       }
-    };
-    fetchMenu();
-  }, []);
+    } catch (e) {
+      console.error('Failed to fetch menu items:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchMenu(); }, []);
+
+  // Gọi lại API với keyword khi gõ ô tìm kiếm (debounce nhẹ)
+  useEffect(() => {
+    const t = setTimeout(() => { fetchMenu(search); }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const filteredItems = items.filter(item =>
     (filterCat === 'Tất cả' || item.cat === filterCat) &&
@@ -56,10 +69,10 @@ export default function MenuManagement() {
   const handleOpenModal = (item?: any) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), currentStock: item.currentStock.toString(), safetyStock: (item.safetyStock || 5).toString(), active: item.active });
+      setFormData({ name: item.name, cat: item.cat, price: item.price.toString(), currentStock: item.currentStock.toString(), safetyStock: (item.safetyStock || 5).toString(), unit: item.unit || '', active: item.active });
     } else {
       setEditingItem(null);
-      setFormData({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', active: true });
+      setFormData({ name: '', cat: 'Đồ uống', price: '', currentStock: '', safetyStock: '5', unit: '', active: true });
     }
     setIsModalOpen(true);
   };
@@ -76,6 +89,7 @@ export default function MenuManagement() {
       price: parseInt(formData.price.replace(/,/g, '').replace('đ', '')) || 0,
       currentStock: parseInt(formData.currentStock) || 0,
       safetyStock: parseInt(formData.safetyStock) || 5,
+      unit: formData.unit || undefined,
       image: '/images/snack.png',
       active: formData.active,
     };
@@ -94,7 +108,7 @@ export default function MenuManagement() {
         });
         if (res.ok) {
           const updated = await res.json();
-          setItems(items.map(i => i.id === editingItem.id ? { ...i, ...body, cat: updated.category } : i));
+          setItems(items.map(i => i.id === editingItem.id ? { ...i, ...body, cat: updated.category, unit: updated.unit || formData.unit || '' } : i));
           alert('Cập nhật món thành công!');
         }
       } else {
@@ -105,7 +119,7 @@ export default function MenuManagement() {
         });
         if (res.ok) {
           const created = await res.json();
-          setItems([...items, { id: created.id, name: created.name, cat: created.category, price: created.price, currentStock: created.currentStock, image: created.image || '/images/snack.png', active: created.active }]);
+          setItems([...items, { id: created.id, name: created.name, cat: created.category, price: created.price, currentStock: created.currentStock, safetyStock: created.safetyStock ?? 5, unit: created.unit || '', image: created.image || '/images/snack.png', active: created.active }]);
           alert('Thêm món mới thành công!');
         }
       }
@@ -238,6 +252,10 @@ export default function MenuManagement() {
                 <div>
                   <label className="block font-label-caps text-slate-400 uppercase mb-2">Định mức an toàn (safetyStock)</label>
                   <input type="number" value={formData.safetyStock} onChange={e => setFormData({...formData, safetyStock: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="5" />
+                </div>
+                <div>
+                  <label className="block font-label-caps text-slate-400 uppercase mb-2">Đơn vị tính</label>
+                  <input value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-white font-body-md focus:border-primary-container outline-none" placeholder="Lon, Chai, Đĩa..." />
                 </div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer mt-2 bg-surface-secondary p-3 rounded-lg border border-border-subtle hover:border-primary-container/50 transition-colors">

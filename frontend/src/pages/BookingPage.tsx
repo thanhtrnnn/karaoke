@@ -11,6 +11,18 @@ interface Room {
   canBook: boolean;
 }
 
+function mapRoom(r: any): Room {
+  return {
+    id: r.id,
+    type: r.roomType?.nameType || r.type || 'N/A',
+    cap: `${r.capacity} người`,
+    price: `${Number(r.price).toLocaleString()}đ`,
+    status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
+    color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
+    canBook: r.status === 'AVAILABLE',
+  };
+}
+
 export default function BookingPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,25 +37,28 @@ export default function BookingPage() {
   const [booking, setBooking] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingCustomer, setPendingCustomer] = useState<any>(null);
+  // UC05 — Tìm phòng trống theo giờ (SearchFreeRoomForm)
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const [branchId, setBranchId] = useState('');
+  const [searchingFree, setSearchingFree] = useState(false);
+  const [freeSearchDone, setFreeSearchDone] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
     const fetchRooms = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/rooms', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setRooms(data.map((r: any) => ({
-            id: r.id,
-            type: r.roomType?.nameType || r.type || 'N/A',
-            cap: `${r.capacity} người`,
-            price: `${Number(r.price).toLocaleString()}đ`,
-            status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
-            color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
-            canBook: r.status === 'AVAILABLE',
-          })));
+        const [roomsRes, branchesRes] = await Promise.all([
+          fetch('/api/rooms', { headers }),
+          fetch('/api/branches', { headers }),
+        ]);
+        if (roomsRes.ok) {
+          const data = await roomsRes.json();
+          setRooms(data.map(mapRoom));
+        }
+        if (branchesRes.ok) {
+          const bdata = await branchesRes.json();
+          setBranches(bdata.map((b: any) => ({ id: b.id, name: b.name })));
         }
       } catch (e) {
         console.error('Failed to fetch rooms:', e);
@@ -53,6 +68,34 @@ export default function BookingPage() {
     };
     fetchRooms();
   }, []);
+
+  // UC05 — SearchFreeRoomForm.btnSearchClick(): GET /api/bookings/search-free
+  const handleSearchFree = async () => {
+    setSearchingFree(true);
+    setSelectedRoom(null);
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams();
+      if (branchId) params.set('branchId', branchId);
+      if (bookingDate && startTime) params.set('startTime', `${bookingDate}T${startTime}:00`);
+      if (bookingDate && endTime) params.set('endTime', `${bookingDate}T${endTime}:00`);
+      const res = await fetch(`/api/bookings/search-free?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRooms(data.map(mapRoom));
+        setFreeSearchDone(true);
+      } else {
+        alert('Không thể tìm phòng trống. Vui lòng thử lại.');
+      }
+    } catch (e) {
+      console.error('Failed to search free rooms:', e);
+      alert('Lỗi kết nối server.');
+    } finally {
+      setSearchingFree(false);
+    }
+  };
 
   const filteredRooms = rooms.filter(r => {
     const matchType = activeFilter === 'Tất cả' || r.type === activeFilter;
@@ -112,13 +155,8 @@ export default function BookingPage() {
         const roomsRes = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
         if (roomsRes.ok) {
           const data = await roomsRes.json();
-          setRooms(data.map((r: any) => ({
-            id: r.id, type: r.roomType?.nameType || r.type || 'N/A',
-            cap: `${r.capacity} người`, price: `${Number(r.price).toLocaleString()}đ`,
-            status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : 'Bảo trì',
-            color: r.status === 'AVAILABLE' ? 'status-available' : r.status === 'OCCUPIED' ? 'status-occupied' : 'status-cleaning',
-            canBook: r.status === 'AVAILABLE',
-          })));
+          setRooms(data.map(mapRoom));
+          setFreeSearchDone(false);
         }
       } else { alert('Đặt phòng thất bại! Kiểm tra thông tin và thử lại.'); }
     } catch (e) { console.error(e); alert('Lỗi kết nối server.'); } finally { setBooking(false); }
@@ -127,9 +165,42 @@ export default function BookingPage() {
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-6">
       <h1 className="font-h1 text-white">Đặt phòng</h1>
+      {/* SearchFreeRoomForm (UC05) — Tìm phòng trống theo giờ */}
+      <div className="flex flex-wrap items-end gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
+        <div>
+          <label className="font-label-caps text-slate-400 uppercase block mb-2">Ngày</label>
+          <input type="date" className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={bookingDate} onChange={e => setBookingDate(e.target.value)} />
+        </div>
+        <div>
+          <label className="font-label-caps text-slate-400 uppercase block mb-2">Từ giờ</label>
+          <select value={startTime} onChange={e => setStartTime(e.target.value)} className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container">
+            {['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'].map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="font-label-caps text-slate-400 uppercase block mb-2">Đến giờ</label>
+          <select value={endTime} onChange={e => setEndTime(e.target.value)} className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container">
+            {['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00','23:00'].map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="font-label-caps text-slate-400 uppercase block mb-2">Chi nhánh</label>
+          <select value={branchId} onChange={e => setBranchId(e.target.value)} className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container min-w-[160px]">
+            <option value="">Tất cả</option>
+            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </div>
+        <button
+          onClick={handleSearchFree}
+          disabled={searchingFree}
+          className="px-5 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors disabled:opacity-50 flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">search</span>
+          {searchingFree ? 'Đang tìm...' : 'Tìm phòng trống'}
+        </button>
+      </div>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-4 border border-slate-700/50">
-        <input type="date" className="bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={bookingDate} onChange={e => setBookingDate(e.target.value)} />
         <div className="flex gap-2">
           {['Tất cả', 'VIP', 'Thường'].map((f) => (
             <button
@@ -149,6 +220,9 @@ export default function BookingPage() {
           onChange={(e) => setCapacityFilter(e.target.value)}
           min="1"
         />
+        {freeSearchDone && (
+          <span className="font-body-md text-status-available ml-auto">Kết quả: {filteredRooms.length} phòng trống</span>
+        )}
       </div>
       {/* Room Table */}
       <div className="bg-surface-container rounded-xl border border-slate-700/50 overflow-hidden">
@@ -160,7 +234,7 @@ export default function BookingPage() {
             {filteredRooms.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-8 text-center text-slate-500">
-                  Không có phòng nào phù hợp với bộ lọc.
+                  {freeSearchDone ? 'Không có phòng trống trong khung giờ này.' : 'Không có phòng nào phù hợp với bộ lọc.'}
                 </td>
               </tr>
             )}

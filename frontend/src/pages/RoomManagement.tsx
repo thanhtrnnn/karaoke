@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Room {
   id: string;
@@ -7,6 +7,7 @@ interface Room {
   capacity: string;
   price: string;
   status: string;
+  statusRaw: string;
   color: string;
   canBook: boolean;
 }
@@ -16,7 +17,7 @@ export default function RoomManagement() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
   const [isEditing, setIsEditing] = useState(false);
-  const formRef = useRef<HTMLDivElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -30,7 +31,7 @@ export default function RoomManagement() {
           setRoomList(data.map((r: any) => ({
             id: r.id,
             name: r.name,
-            type: r.type,
+            type: r.roomType?.nameType || r.type || '',
             capacity: `${r.capacity} người`,
             price: `${Number(r.price).toLocaleString()}đ`,
             status: r.status === 'AVAILABLE' ? 'Trống' : r.status === 'OCCUPIED' ? 'Đang dùng' : r.status === 'RESERVED' ? 'Đặt trước' : r.status === 'CLEANING' ? 'Đang dọn' : 'Bảo trì',
@@ -51,10 +52,10 @@ export default function RoomManagement() {
   const handleAddNew = () => {
     setIsEditing(false);
     setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setIsModalOpen(true);
   };
 
-  const handleEdit = (room: any) => {
+  const handleEdit = (room: Room) => {
     setIsEditing(true);
     setFormData({
       id: room.id,
@@ -64,7 +65,7 @@ export default function RoomManagement() {
       price: room.price,
       status: room.statusRaw || 'AVAILABLE',
     });
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -111,10 +112,11 @@ export default function RoomManagement() {
           setRoomList(roomList.map(r => r.id === formData.id ? {
             ...r,
             name: updated.name,
-            type: updated.type,
+            type: updated.roomType?.nameType || updated.type || formData.type,
             capacity: `${updated.capacity} người`,
             price: `${Number(updated.price).toLocaleString()}đ`,
           } : r));
+          setIsModalOpen(false);
           alert('Cập nhật phòng thành công!');
         }
       } else {
@@ -128,13 +130,15 @@ export default function RoomManagement() {
           setRoomList([...roomList, {
             id: created.id,
             name: created.name,
-            type: created.type,
+            type: created.roomType?.nameType || created.type || formData.type,
             capacity: `${created.capacity} người`,
             price: `${Number(created.price).toLocaleString()}đ`,
             status: 'Trống',
+            statusRaw: 'AVAILABLE',
             color: 'status-available',
             canBook: true,
           }]);
+          setIsModalOpen(false);
           alert('Thêm phòng mới thành công!');
         }
       }
@@ -195,81 +199,85 @@ export default function RoomManagement() {
           </tbody>
         </table>
       </div>
-      <div ref={formRef} className={`bg-surface-container rounded-xl border p-6 transition-colors duration-300 ${isEditing ? 'border-[#D4AF37]' : 'border-slate-700/50'}`}>
-        <h2 className="font-h2 text-white mb-4">{isEditing ? `Sửa thông tin phòng ${formData.id}` : 'Thêm phòng mới'}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="font-label-caps text-slate-400 uppercase block mb-2">Tên phòng</label>
-            <input
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-              placeholder="Ví dụ: VIP 03"
-            />
-          </div>
-          <div>
-            <label className="font-label-caps text-slate-400 uppercase block mb-2">Loại</label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-            >
-              <option value="VIP">VIP</option>
-              <option value="Thường">Thường</option>
-              <option value="Deluxe">Deluxe</option>
-            </select>
-          </div>
-          <div>
-            <label className="font-label-caps text-slate-400 uppercase block mb-2">Sức chứa (Người)</label>
-            <input
-              type="number"
-              value={formData.capacity}
-              onChange={(e) => setFormData({...formData, capacity: e.target.value})}
-              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-              placeholder="15"
-            />
-          </div>
-          <div>
-            <label className="font-label-caps text-slate-400 uppercase block mb-2">Giá/giờ</label>
-            <input
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: e.target.value})}
-              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-              placeholder="150,000đ"
-            />
-          </div>
-          <div>
-            <label className="font-label-caps text-slate-400 uppercase block mb-2">Trạng thái</label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value})}
-              className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
-            >
-              <option value="AVAILABLE">Trống</option>
-              <option value="OCCUPIED">Đang dùng</option>
-              <option value="RESERVED">Đặt trước</option>
-              <option value="MAINTENANCE">Bảo trì</option>
-            </select>
-          </div>
-          <div className="flex items-end gap-3">
-            <button
-              onClick={handleSave}
-              className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
-            >
-              Lưu
-            </button>
-            <button
-              onClick={() => {
-                setFormData({ id: '', name: '', type: 'VIP', capacity: '', price: '', status: 'AVAILABLE' });
-                setIsEditing(false);
-              }}
-              className="flex-1 py-3 bg-transparent border border-slate-700/50 text-slate-400 rounded-lg font-body-md hover:border-status-occupied hover:text-status-occupied transition-colors"
-            >
-              Hủy
-            </button>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className={`bg-surface-container rounded-2xl border w-full max-w-2xl p-6 shadow-2xl ${isEditing ? 'border-[#D4AF37]' : 'border-slate-700/50'}`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-h2 text-white">{isEditing ? `Sửa thông tin phòng ${formData.id}` : 'Thêm phòng mới'}</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white"><span className="material-symbols-outlined">close</span></button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-label-caps text-slate-400 uppercase block mb-2">Tên phòng</label>
+                <input
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+                  placeholder="Ví dụ: VIP 03"
+                />
+              </div>
+              <div>
+                <label className="font-label-caps text-slate-400 uppercase block mb-2">Loại</label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+                >
+                  <option value="VIP">VIP</option>
+                  <option value="Thường">Thường</option>
+                  <option value="Deluxe">Deluxe</option>
+                </select>
+              </div>
+              <div>
+                <label className="font-label-caps text-slate-400 uppercase block mb-2">Sức chứa (Người)</label>
+                <input
+                  type="number"
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+                  placeholder="15"
+                />
+              </div>
+              <div>
+                <label className="font-label-caps text-slate-400 uppercase block mb-2">Giá/giờ</label>
+                <input
+                  value={formData.price}
+                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+                  placeholder="150,000đ"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="font-label-caps text-slate-400 uppercase block mb-2">Trạng thái</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container"
+                >
+                  <option value="AVAILABLE">Trống</option>
+                  <option value="OCCUPIED">Đang dùng</option>
+                  <option value="RESERVED">Đặt trước</option>
+                  <option value="MAINTENANCE">Bảo trì</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-6 py-2.5 bg-transparent border border-slate-700/50 text-slate-300 rounded-lg font-body-md hover:bg-surface-secondary transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-6 py-2.5 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors"
+              >
+                Lưu
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

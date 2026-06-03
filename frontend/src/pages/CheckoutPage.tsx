@@ -278,6 +278,14 @@ export default function CheckoutPage() {
             <span className="material-symbols-outlined">receipt_long</span>
             {isPaid ? 'ĐÃ THANH TOÁN' : paying ? 'ĐANG XỬ LÝ...' : 'HOÀN TẤT THANH TOÁN'}
           </button>
+          {/* UC08 — In hóa đơn (Màn hình 5: CheckOutPage) */}
+          <button
+            onClick={() => window.print()}
+            className="w-full mt-3 py-3 rounded-xl font-label-caps uppercase tracking-wide flex items-center justify-center gap-2 border border-slate-700/50 bg-surface-container-high text-slate-300 hover:border-primary-container hover:text-primary-container transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">print</span>
+            In hóa đơn
+          </button>
         </div>
       </section>
     </div>

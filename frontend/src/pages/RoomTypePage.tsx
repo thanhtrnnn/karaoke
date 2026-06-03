@@ -14,49 +14,100 @@ export default function RoomTypePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RoomType | null>(null);
   const [formData, setFormData] = useState({ id: '', nameType: '', capacity: 10, price: 100000, status: true });
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   useEffect(() => {
     fetch('/api/room-types', { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
-      .then(setRoomTypes)
-      .catch(console.error)
+      .then(async r => {
+        if (!r.ok) throw new Error(`Không tải được danh sách loại phòng (HTTP ${r.status})`);
+        return r.json();
+      })
+      .then(data => setRoomTypes(Array.isArray(data) ? data : []))
+      .catch(err => {
+        console.error(err);
+        setError(err?.message || 'Không tải được danh sách loại phòng');
+        setRoomTypes([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const openCreate = () => {
+    setError(null);
     setEditingItem(null);
     setFormData({ id: '', nameType: '', capacity: 10, price: 100000, status: true });
     setIsModalOpen(true);
   };
 
   const openEdit = (rt: RoomType) => {
+    setError(null);
     setEditingItem(rt);
     setFormData({ id: rt.id, nameType: rt.nameType, capacity: rt.capacity, price: rt.price, status: rt.status });
     setIsModalOpen(true);
   };
 
   const save = async () => {
+    setError(null);
+    const nameType = formData.nameType.trim();
+    if (!nameType) {
+      setError('Vui lòng nhập tên loại phòng');
+      return;
+    }
+    // POST yêu cầu id do client đặt; nếu bỏ trống thì tự sinh.
+    const id = editingItem ? editingItem.id : (formData.id.trim() || `LR${Date.now()}`);
+    const payload = {
+      id,
+      nameType,
+      capacity: Number(formData.capacity) || 0,
+      price: Number(formData.price) || 0,
+      status: Boolean(formData.status),
+    };
     const url = editingItem ? `/api/room-types/${editingItem.id}` : '/api/room-types';
     const method = editingItem ? 'PUT' : 'POST';
-    const res = await fetch(url, { method, headers, body: JSON.stringify(formData) });
-    if (res.ok) {
-      const saved = await res.json();
+    setSaving(true);
+    try {
+      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        const msg = res.status === 403
+          ? 'Bạn không có quyền (chỉ ADMIN được thêm/sửa loại phòng)'
+          : `Lưu thất bại (HTTP ${res.status})`;
+        setError(msg);
+        return;
+      }
+      const saved: RoomType = await res.json();
       if (editingItem) {
         setRoomTypes(prev => prev.map(r => r.id === saved.id ? saved : r));
       } else {
         setRoomTypes(prev => [...prev, saved]);
       }
       setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError('Không kết nối được máy chủ. Vui lòng thử lại.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const remove = async (id: string) => {
     if (!confirm('Xóa loại phòng này?')) return;
-    const res = await fetch(`/api/room-types/${id}`, { method: 'DELETE', headers });
-    if (res.ok) setRoomTypes(prev => prev.filter(r => r.id !== id));
+    setError(null);
+    try {
+      const res = await fetch(`/api/room-types/${id}`, { method: 'DELETE', headers });
+      if (res.ok) {
+        setRoomTypes(prev => prev.filter(r => r.id !== id));
+      } else {
+        setError(res.status === 403
+          ? 'Bạn không có quyền xóa (chỉ ADMIN)'
+          : `Xóa thất bại (HTTP ${res.status})`);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Không kết nối được máy chủ. Vui lòng thử lại.');
+    }
   };
 
   if (loading) return <div className="p-6 text-slate-400">Đang tải...</div>;
@@ -70,6 +121,12 @@ export default function RoomTypePage() {
           Thêm loại phòng
         </button>
       </div>
+
+      {error && !isModalOpen && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-red-900/40 border border-red-700 text-red-200 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="bg-slate-800 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
@@ -144,7 +201,7 @@ export default function RoomTypePage() {
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700">Hủy</button>
-              <button onClick={save} className="flex-1 py-2 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-yellow-400">Lưu</button>
+              <button onClick={save} disabled={saving} className="flex-1 py-2 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-yellow-400 disabled:opacity-50">{saving ? 'Đang lưu...' : 'Lưu'}</button>
             </div>
           </div>
         </div>

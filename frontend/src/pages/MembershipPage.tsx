@@ -34,7 +34,7 @@ export default function MembershipPage() {
       fetch('/api/membership/stats', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
     ])
       .then(([tiersData, statsData]) => {
-        setTiers(tiersData);
+        setTiers((tiersData as any[]).map((t: any) => ({ ...t, discount: t.discountRate ?? t.discount ?? '' })));
         setStats(statsData);
       })
       .catch(console.error)
@@ -51,11 +51,11 @@ export default function MembershipPage() {
     fetch(`/api/membership/tiers/${encodeURIComponent(tierName)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ tierName, ...editForm }),
+      body: JSON.stringify({ tierName, minPoints: editForm.minPoints, discountRate: editForm.discount }),
     })
       .then(r => r.json())
       .then(updated => {
-        setTiers(tiers.map(t => t.tierName === tierName ? updated : t));
+        setTiers(tiers.map(t => t.tierName === tierName ? { ...updated, discount: updated.discountRate ?? editForm.discount } : t));
         setEditingTier(null);
       })
       .catch(console.error);

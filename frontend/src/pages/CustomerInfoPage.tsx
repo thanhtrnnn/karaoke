@@ -7,6 +7,7 @@ interface Customer {
   tier: string;
   loyaltyPoints: number;
   joinedAt: string;
+  accountStatus?: boolean;
 }
 
 interface Invoice {
@@ -53,6 +54,26 @@ export default function CustomerInfoPage() {
     finally { setInvoiceLoading(false); }
   };
 
+  // UC17: Khóa / mở khóa tài khoản khách hàng (toggle)
+  const toggleLock = async (customer: Customer) => {
+    const locking = customer.accountStatus !== false;
+    const action = locking ? 'khóa' : 'mở khóa';
+    if (!confirm(`Bạn có chắc muốn ${action} tài khoản ${customer.fullName} (${customer.id})?`)) return;
+    try {
+      const res = await fetch(`/api/clients/${customer.id}/lock`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCustomers(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c));
+        setSelectedCustomer(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
+      } else {
+        alert(`Không thể ${action} tài khoản. Vui lòng thử lại.`);
+      }
+    } catch (e) { console.error(e); alert('Lỗi kết nối khi cập nhật trạng thái tài khoản.'); }
+  };
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
@@ -84,6 +105,7 @@ export default function CustomerInfoPage() {
                 <th className="px-4 py-3 text-left">SĐT</th>
                 <th className="px-4 py-3 text-left">Hạng</th>
                 <th className="px-4 py-3 text-right">Điểm</th>
+                <th className="px-4 py-3 text-center">Trạng thái</th>
                 <th className="px-4 py-3 text-center">Thao tác</th>
               </tr>
             </thead>
@@ -98,10 +120,21 @@ export default function CustomerInfoPage() {
                   </td>
                   <td className="px-4 py-3 text-right text-[#D4AF37]">{c.loyaltyPoints}</td>
                   <td className="px-4 py-3 text-center">
-                    <button onClick={() => viewHistory(c)}
-                      className="px-3 py-1 bg-slate-700 text-slate-300 rounded-lg text-xs hover:bg-slate-600">
-                      Xem lịch sử
-                    </button>
+                    <span className={`px-2 py-1 rounded-full text-xs ${c.accountStatus !== false ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                      {c.accountStatus !== false ? 'Hoạt động' : 'Đã khóa'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex justify-center gap-2">
+                      <button onClick={() => viewHistory(c)}
+                        className="px-3 py-1 bg-slate-700 text-slate-300 rounded-lg text-xs hover:bg-slate-600">
+                        Xem lịch sử
+                      </button>
+                      <button onClick={() => toggleLock(c)}
+                        className={`px-3 py-1 rounded-lg text-xs ${c.accountStatus !== false ? 'bg-red-900/40 text-red-300 hover:bg-red-900/70' : 'bg-green-900/40 text-green-300 hover:bg-green-900/70'}`}>
+                        {c.accountStatus !== false ? 'Khóa TK' : 'Mở khóa'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -122,11 +155,12 @@ export default function CustomerInfoPage() {
             <button onClick={() => { setSelectedCustomer(null); setInvoices([]); }}
               className="text-slate-400 hover:text-white text-sm">Đóng</button>
           </div>
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm">
             <span className="text-slate-400">Mã KH: <span className="text-white">{selectedCustomer.id}</span></span>
             <span className="text-slate-400">SĐT: <span className="text-white">{selectedCustomer.phone}</span></span>
             <span className="text-slate-400">Hạng: <span className="text-[#D4AF37]">{selectedCustomer.tier}</span></span>
             <span className="text-slate-400">Điểm: <span className="text-[#D4AF37]">{selectedCustomer.loyaltyPoints}</span></span>
+            <span className="text-slate-400">Trạng thái: <span className={selectedCustomer.accountStatus !== false ? 'text-green-400' : 'text-red-400'}>{selectedCustomer.accountStatus !== false ? 'Hoạt động' : 'Đã khóa'}</span></span>
           </div>
 
           {invoiceLoading ? (
@@ -163,6 +197,17 @@ export default function CustomerInfoPage() {
           ) : (
             <div className="py-4 text-slate-500">Khách hàng chưa có hóa đơn nào.</div>
           )}
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-slate-700">
+            <button onClick={() => { setSelectedCustomer(null); setInvoices([]); }}
+              className="px-5 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm hover:bg-slate-700">
+              Đóng
+            </button>
+            <button onClick={() => toggleLock(selectedCustomer)}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold ${selectedCustomer.accountStatus !== false ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-green-600 text-white hover:bg-green-500'}`}>
+              {selectedCustomer.accountStatus !== false ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+            </button>
+          </div>
         </div>
       )}
     </div>

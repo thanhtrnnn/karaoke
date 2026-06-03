@@ -17,6 +17,8 @@ export default function InventoryPage() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('Tất cả');
   const [filterStock, setFilterStock] = useState('Tất cả');
+  // Cảnh báo tồn kho thấp từ hệ thống (GET /api/reports/notifications, lọc type=error)
+  const [lowStockAlerts, setLowStockAlerts] = useState<{ id: string; title: string }[]>([]);
 
   const [importRows, setImportRows] = useState([{ id: 1, productId: '', qty: '', price: '' }]);
   const formRef = useRef<HTMLDivElement>(null);
@@ -34,7 +36,7 @@ export default function InventoryPage() {
             id: p.id,
             name: p.name,
             cat: p.category,
-            stock: p.currentStock,
+            currentStock: p.currentStock ?? 0,
             safetyStock: p.safetyStock ?? 15,
             unit: p.unit || (p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa'),
             price: p.price,
@@ -48,6 +50,27 @@ export default function InventoryPage() {
       }
     };
     fetchMenu();
+  }, []);
+
+  // Lấy cảnh báo tồn kho thấp do hệ thống tự sinh (chỉ Quản lý chi nhánh/Admin)
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/reports/notifications', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLowStockAlerts(
+            (Array.isArray(data) ? data : [])
+              .filter((n: any) => n.type === 'error' && String(n.id).startsWith('stock-'))
+              .map((n: any) => ({ id: n.id, title: n.title }))
+          );
+        }
+      } catch (e) { /* không có quyền hoặc lỗi mạng → bỏ qua, vẫn còn cảnh báo theo dòng */ }
+    };
+    fetchAlerts();
   }, []);
 
   const filteredProducts = products.filter(p => {
@@ -95,7 +118,9 @@ export default function InventoryPage() {
             name: product.name,
             category: product.cat,
             price: product.price,
-            stock: newStock,
+            currentStock: newStock,
+            safetyStock: product.safetyStock,
+            unit: product.unit,
             active: product.active,
           }),
         });
@@ -114,8 +139,9 @@ export default function InventoryPage() {
           id: p.id,
           name: p.name,
           cat: p.category,
-          stock: p.currentStock,
-          unit: p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa',
+          currentStock: p.currentStock ?? 0,
+          safetyStock: p.safetyStock ?? 15,
+          unit: p.unit || (p.category === 'Đồ uống' ? 'Lon/Chai' : 'Đĩa'),
           price: p.price,
           active: p.active,
         })));
@@ -142,6 +168,22 @@ export default function InventoryPage() {
           <span className="material-symbols-outlined text-[20px]">add</span>Nhập kho
         </button>
       </div>
+      {lowStockAlerts.length > 0 && (
+        <div className="bg-status-cleaning/10 border border-status-cleaning/30 rounded-xl p-5">
+          <div className="flex items-center gap-2 text-status-cleaning font-body-md font-semibold mb-2">
+            <span className="material-symbols-outlined text-[20px]">warning</span>
+            Cảnh báo tồn kho thấp ({lowStockAlerts.length})
+          </div>
+          <ul className="space-y-1 text-sm text-slate-300">
+            {lowStockAlerts.map((a) => (
+              <li key={a.id} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-cleaning shrink-0"></span>
+                {a.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-4 bg-surface-container rounded-xl p-5 border border-slate-700/50">
         <div className="relative flex-1 min-w-[250px]">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
@@ -172,7 +214,7 @@ export default function InventoryPage() {
             className="w-full appearance-none bg-none bg-surface-secondary border border-slate-700/50 rounded-lg py-2.5 pl-4 pr-10 text-white font-body-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] hover:border-slate-500 transition-all cursor-pointer"
           >
             <option value="Tất cả">Tất cả trạng thái tồn</option>
-            <option value="Sắp hết">Sắp hết (≤ 15)</option>
+            <option value="Sắp hết">Sắp hết (≤ định mức)</option>
           </select>
           <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
         </div>
@@ -196,9 +238,9 @@ export default function InventoryPage() {
                 <td className="py-4 px-6">{p.currentStock}</td>
                 <td className="py-4 px-6">{p.unit}</td>
                 <td className="py-4 px-6">
-                  {p.currentStock <= 15 && (
+                  {p.currentStock <= p.safetyStock && (
                     <span className="text-status-cleaning flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">warning</span>Sắp hết
+                      <span className="material-symbols-outlined text-[16px]">warning</span>Sắp hết (định mức {p.safetyStock})
                     </span>
                   )}
                 </td>

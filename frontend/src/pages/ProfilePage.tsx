@@ -17,7 +17,14 @@ export default function ProfilePage() {
   const username = storedUser.username || '';
   const role = storedUser.role || '';
 
-  // Hồ sơ có thể chỉnh sửa (UC: cập nhật hồ sơ — PUT /api/auth/profile)
+  // Các trường chỉ đọc theo wireframe hồ sơ (SĐT, Hạng hội viên, Điểm tích lũy).
+  // Backend hiện chưa trả các trường này nên đọc từ localStorage nếu có, không thì hiển thị "—".
+  const phoneNumber = storedUser.phoneNumber || storedUser.phone || '';
+  const membershipTier = storedUser.membershipTier || storedUser.tier || '';
+  const loyaltyPoints = (storedUser.loyaltyPoints ?? storedUser.points);
+
+  // Hồ sơ có thể chỉnh sửa (UC04: cập nhật hồ sơ — PUT /api/auth/profile)
+  const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState(storedUser.fullName || '');
   const [email, setEmail] = useState(storedUser.email || '');
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -40,9 +47,10 @@ export default function ProfilePage() {
         throw new Error(data?.message || 'Cập nhật hồ sơ thất bại.');
       }
       // Đồng bộ lại thông tin user trong localStorage
-      const updated = { ...storedUser, email };
+      const updated = { ...storedUser, fullName, email };
       localStorage.setItem('user', JSON.stringify(updated));
-      setProfileSuccess('Cập nhật hồ sơ thành công!');
+      setProfileSuccess('Cập nhật thành công!');
+      setEditMode(false); // UC04: quay về chế độ xem sau khi lưu
     } catch (err: any) {
       setProfileError(err.message);
     } finally {
@@ -127,14 +135,30 @@ export default function ProfilePage() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Tên đăng nhập</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={username} readOnly /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Họ và tên</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Họ và tên" /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Vai trò</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={roleLabel[role] || role} readOnly /></div>
-          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Mã người dùng</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none" value={storedUser.id || ''} readOnly /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Họ và tên</label><input className={`w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container ${!editMode ? 'opacity-70' : ''}`} value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Họ và tên" readOnly={!editMode} /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Số điện thoại</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none opacity-70" value={phoneNumber || '—'} readOnly title="SĐT không thể chỉnh sửa" /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Email</label><input className={`w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none focus:border-primary-container ${!editMode ? 'opacity-70' : ''}`} value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" readOnly={!editMode} /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Hạng hội viên</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none opacity-70" value={membershipTier || '—'} readOnly /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Điểm tích lũy</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none opacity-70" value={(loyaltyPoints ?? '') === '' ? '—' : String(loyaltyPoints)} readOnly /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Vai trò</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none opacity-70" value={roleLabel[role] || role} readOnly /></div>
+          <div><label className="font-label-caps text-slate-400 uppercase block mb-2">Mã người dùng</label><input className="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-3 text-on-surface font-body-md focus:outline-none opacity-70" value={storedUser.id || ''} readOnly /></div>
         </div>
-        <button onClick={handleSaveProfile} disabled={profileLoading} className="mt-6 px-6 py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors disabled:opacity-50">
-          {profileLoading ? 'ĐANG LƯU...' : 'Lưu hồ sơ'}
-        </button>
+        <div className="mt-6 flex gap-3">
+          {!editMode ? (
+            <button onClick={() => { setProfileError(null); setProfileSuccess(null); setEditMode(true); }} className="px-6 py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors">
+              Chỉnh sửa
+            </button>
+          ) : (
+            <>
+              <button onClick={handleSaveProfile} disabled={profileLoading} className="px-6 py-3 bg-primary-container text-on-primary-container rounded-lg font-body-md font-semibold hover:bg-primary transition-colors disabled:opacity-50">
+                {profileLoading ? 'ĐANG LƯU...' : 'Lưu thay đổi'}
+              </button>
+              <button onClick={() => { setEditMode(false); setFullName(storedUser.fullName || ''); setEmail(storedUser.email || ''); setProfileError(null); }} disabled={profileLoading} className="px-6 py-3 bg-surface-secondary border border-border-subtle text-slate-300 rounded-lg font-body-md hover:text-white transition-colors disabled:opacity-50">
+                Hủy
+              </button>
+            </>
+          )}
+        </div>
       </div>
       {/* Change Password */}
       <div className="bg-surface-container rounded-xl border border-slate-700/50 p-6">
