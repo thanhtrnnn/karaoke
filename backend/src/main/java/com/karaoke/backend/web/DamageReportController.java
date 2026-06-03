@@ -19,11 +19,13 @@ class DamageReportController {
     private final DamageReportRepository repository;
     private final FacilityRepository facilityRepository;
     private final RoomReceiptRepository receiptRepository;
+    private final EmployeeRepository employeeRepository;
 
-    DamageReportController(DamageReportRepository repository, FacilityRepository facilityRepository, RoomReceiptRepository receiptRepository) {
+    DamageReportController(DamageReportRepository repository, FacilityRepository facilityRepository, RoomReceiptRepository receiptRepository, EmployeeRepository employeeRepository) {
         this.repository = repository;
         this.facilityRepository = facilityRepository;
         this.receiptRepository = receiptRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     @GetMapping @Operation(summary = "Danh sách báo cáo hư hỏng")
@@ -47,6 +49,12 @@ class DamageReportController {
     @Transactional
     DamageReport create(@RequestBody DamageReport report) {
         if (report.getReportTime() == null) report.setReportTime(LocalDateTime.now());
+        if (report.getTrangThai() == null || report.getTrangThai().isBlank()) report.setTrangThai("Chờ xử lý");
+
+        // Resolve employee: prefer username lookup (User.id ≠ Employee.id)
+        if (report.getEmployeeUsername() != null && !report.getEmployeeUsername().isBlank()) {
+            employeeRepository.findByUsername(report.getEmployeeUsername()).ifPresent(report::setEmployee);
+        }
 
         BigDecimal totalFine = BigDecimal.ZERO;
         if (report.getDetails() != null) {

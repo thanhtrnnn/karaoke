@@ -23,6 +23,7 @@ export default function DamageReportPage() {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  // Employee lookup: backend uses username to find Employee (User.id ≠ Employee.id)
 
   /* ── Fetch reports list ── */
   useEffect(() => {
@@ -33,10 +34,11 @@ export default function DamageReportPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* ── Step 1: Load occupied rooms ── */
+  /* ── Step 1: Load rooms waiting for cleaning (Chờ dọn) ── */
+  /* Documented flow (exports/services §1.2): "Hệ thống hiển thị các phòng ở trạng thái Chờ dọn" */
   const loadRooms = async () => {
     try {
-      const res = await fetch('/api/rooms?status=OCCUPIED', { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch('/api/rooms?status=CLEANING', { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) setRooms(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -90,7 +92,8 @@ export default function DamageReportPage() {
       const body: any = {
         id: 'DR-' + crypto.randomUUID().slice(0, 8).toUpperCase(),
         maBaoCao: `BC-${selectedRoom?.id || ''}-${new Date().toISOString().slice(0, 10)}`,
-        employee: user.id ? { id: user.id } : undefined,
+        // Send username so backend can look up Employee by username
+        employeeUsername: user.username || undefined,
         details: damageCart.map(d => ({ facility: { id: d.facility.id }, quantity: d.quantity })),
       };
       if (roomReceiptId) body.roomReceipt = { id: roomReceiptId };
@@ -158,27 +161,27 @@ export default function DamageReportPage() {
       {step === 'rooms' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-slate-400">
-            <span className="material-symbols-outlined text-[20px]">meeting_room</span>
-            <p className="font-body-md">Chọn phòng đang hoạt động để tạo báo cáo hư hỏng</p>
+            <span className="material-symbols-outlined text-[20px]">cleaning_services</span>
+            <p className="font-body-md">Chọn phòng đang chờ dọn để kiểm tra và tạo báo cáo hư hỏng</p>
           </div>
           {rooms.length === 0 ? (
             <div className="bg-surface-container rounded-xl border border-slate-700/50 p-12 text-center">
-              <span className="material-symbols-outlined text-[48px] text-slate-600 mb-3">meeting_room</span>
-              <p className="text-slate-500">Không có phòng nào đang hoạt động</p>
+              <span className="material-symbols-outlined text-[48px] text-slate-600 mb-3">cleaning_services</span>
+              <p className="text-slate-500">Không có phòng nào đang chờ dọn</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {rooms.map(room => (
                 <button key={room.id} onClick={() => selectRoom(room)}
-                  className="bg-surface-container rounded-xl border border-slate-700/50 p-5 text-left hover:border-status-occupied/50 transition-colors group">
+                  className="bg-surface-container rounded-xl border border-slate-700/50 p-5 text-left hover:border-status-cleaning/50 transition-colors group">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-h2 text-white">{room.name}</h3>
-                    <span className="px-2 py-0.5 rounded text-xs bg-status-occupied/10 text-status-occupied border border-status-occupied/20">Đang hát</span>
+                    <span className="px-2 py-0.5 rounded text-xs bg-status-cleaning/10 text-status-cleaning border border-status-cleaning/20">Chờ dọn</span>
                   </div>
                   <p className="text-slate-400 text-sm">Phòng: <span className="text-slate-300">{room.id}</span></p>
                   {room.branch && <p className="text-slate-400 text-sm">Chi nhánh: <span className="text-slate-300">{room.branch.name}</span></p>}
                   <p className="text-slate-400 text-sm">Sức chứa: <span className="text-slate-300">{room.capacity} người</span></p>
-                  <div className="mt-3 flex items-center gap-1 text-status-occupied text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex items-center gap-1 text-status-cleaning text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>Chọn phòng
                   </div>
                 </button>
@@ -235,7 +238,7 @@ export default function DamageReportPage() {
       {step === 'facilities' && selectedRoom && (
         <div className="space-y-4">
           <div className="bg-surface-container rounded-xl border border-slate-700/50 p-4 flex items-center gap-4">
-            <span className="material-symbols-outlined text-status-occupied text-[24px]">meeting_room</span>
+            <span className="material-symbols-outlined text-status-cleaning text-[24px]">cleaning_services</span>
             <div>
               <p className="text-white font-medium">{selectedRoom.name} <span className="text-slate-400">({selectedRoom.id})</span></p>
               {selectedRoom.branch && <p className="text-slate-400 text-sm">{selectedRoom.branch.name}</p>}

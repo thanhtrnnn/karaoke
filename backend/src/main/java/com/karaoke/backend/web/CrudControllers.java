@@ -242,11 +242,14 @@ class RoomController {
                 .toList();
     }
 
-    @GetMapping("/pending-search") @Operation(summary = "Tìm phòng đang chờ xử lý — trạng thái RESERVED (chờ nhận) hoặc CLEANING (chờ dọn) khớp keyword (UC06/UC10)")
-    List<Room> searchPendingRoom(@RequestParam String keyword) {
+    @GetMapping("/pending-search") @Operation(summary = "Tìm phòng đang chờ xử lý — RESERVED hoặc CLEANING, lọc theo branchId/keyword (UC06/UC10)")
+    List<Room> searchPendingRoom(
+            @RequestParam(required = false) String branchId,
+            @RequestParam(required = false) String keyword) {
         String kw = keyword == null ? "" : keyword.toLowerCase();
         return repository.findAll().stream()
                 .filter(r -> r.getStatus() == RoomStatus.RESERVED || r.getStatus() == RoomStatus.CLEANING)
+                .filter(r -> branchId == null || branchId.isBlank() || (r.getBranch() != null && branchId.equals(r.getBranch().getId())))
                 .filter(r -> kw.isEmpty() || (r.getName() != null && r.getName().toLowerCase().contains(kw)))
                 .toList();
     }

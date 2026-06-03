@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
     List<Employee> findByBranchId(String branchId);
     boolean existsByBranchId(String branchId);
+    java.util.Optional<Employee> findByUsername(String username);
 }

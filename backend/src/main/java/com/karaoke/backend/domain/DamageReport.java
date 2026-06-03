@@ -36,6 +36,10 @@ public class DamageReport {
     @ManyToOne
     private RoomReceipt roomReceipt;
 
+    // Transient field: frontend sends username, backend resolves to Employee
+    @jakarta.persistence.Transient
+    private String employeeUsername;
+
     @OneToMany(mappedBy = "damageReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<DamageDetail> details = new ArrayList<>();
 }
