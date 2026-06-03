@@ -30,7 +30,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -202,6 +205,21 @@ class HrmBaoCaoController {
         long congSuat = total > 0 ? occupied * 100 / total : 0;
         return new BaoCao(period, maCN == null ? "chi-nhanh" : maCN, doanhThu, congSuat, clients.count(), fnb);
     }
+
+    @GetMapping("/export") @Operation(summary = "exportFile(period, maCN, format) : byte[] (CSV)")
+    ResponseEntity<byte[]> exportFile(@RequestParam(defaultValue = "Tháng") String period,
+                                      @RequestParam(required = false) String maCN,
+                                      @RequestParam(defaultValue = "csv") String format) {
+        BaoCao bc = createReport(period, maCN);
+        String csv = "Kỳ,Phạm vi,Tổng doanh thu,Công suất,Lượt khách,Doanh số F&B\n"
+                + bc.ky() + "," + bc.phamVi() + "," + bc.tongDoanhThu() + ","
+                + bc.congSuatPhong() + "," + bc.luotKhach() + "," + bc.doanhSoFnB() + "\n";
+        byte[] body = ("﻿" + csv).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao-cao-chi-nhanh.csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+        return ResponseEntity.ok().headers(headers).body(body);
+    }
 }
 
 // ─── UC14: KhachHangController ────────────────────────────────────────────────
@@ -272,6 +290,19 @@ class BaoCaoChuoiController {
         long congSuat = total > 0 ? occupied * 100 / total : 0;
         String period = req == null || req.period() == null ? "Quý" : req.period();
         return new BaoCao(period, "toan-chuoi", doanhThu, congSuat, clients.count(), fnb);
+    }
+
+    @PostMapping("/export") @Operation(summary = "exportFile(period, branches) : byte[] (CSV tổng hợp toàn chuỗi)")
+    ResponseEntity<byte[]> exportFile(@RequestBody(required = false) AggregateRequest req) {
+        BaoCao bc = aggregateChain(req);
+        String csv = "Kỳ,Phạm vi,Tổng doanh thu,Công suất,Lượt khách,Doanh số F&B\n"
+                + bc.ky() + "," + bc.phamVi() + "," + bc.tongDoanhThu() + ","
+                + bc.congSuatPhong() + "," + bc.luotKhach() + "," + bc.doanhSoFnB() + "\n";
+        byte[] body = ("﻿" + csv).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bao-cao-chuoi.csv\"");
+        headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
+        return ResponseEntity.ok().headers(headers).body(body);
     }
 
     record AggregateRequest(String period, List<String> branches) {}

@@ -1,7 +1,9 @@
 package com.karaoke.backend.web;
 
+import com.karaoke.backend.domain.LoginSession;
 import com.karaoke.backend.domain.User;
 import com.karaoke.backend.domain.UserRole;
+import com.karaoke.backend.repository.LoginSessionRepository;
 import com.karaoke.backend.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +14,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,10 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Authentication", description = "Đăng nhập, đăng ký và đổi mật khẩu")
 public class AuthController {
     private final UserRepository users;
+    private final LoginSessionRepository loginSessions;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserRepository users, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository users, LoginSessionRepository loginSessions,
+                          PasswordEncoder passwordEncoder) {
         this.users = users;
+        this.loginSessions = loginSessions;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -106,9 +113,23 @@ public class AuthController {
         User user = users.findByUsername(request.usernameOrEmail())
                 .or(() -> users.findByEmail(request.usernameOrEmail()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid username or password");
         }
+
+        // Ghi 1 phiên đăng nhập (Account diagram: LoginSession)
+        String token = "dev-token-" + user.getId();
+        LocalDateTime now = LocalDateTime.now();
+        LoginSession session = new LoginSession();
+        session.setSessionToken(token);
+        session.setLoginTime(now);
+        session.setExpiresAt(now.plusHours(12));
+        session.setDevice("web");
+        session.setTrangThai("Hoạt động");
+        session.setUser(user);
+        loginSessions.save(session);
+
         return AuthResponse.from(user);
     }
 
@@ -140,6 +161,14 @@ public class AuthController {
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         users.save(user);
+
+        // Account TC07: đổi mật khẩu thành công -> thu hồi tất cả phiên cũ của user
+        List<LoginSession> sessions = loginSessions.findByUser(user);
+        for (LoginSession session : sessions) {
+            session.setTrangThai("Đã thu hồi");
+        }
+        loginSessions.saveAll(sessions);
+
         return Map.of("success", true);
     }
 
@@ -174,6 +203,10 @@ public class AuthController {
             user.setFullName(request.fullName());
         }
         if (request.email() != null) {
+            // Account UC03 (cập nhật hồ sơ): không cho trùng email với tài khoản khác
+            if (!request.email().equals(user.getEmail()) && users.existsByEmail(request.email())) {
+                throw new IllegalArgumentException("Email đã được sử dụng");
+            }
             user.setEmail(request.email());
         }
         users.save(user);

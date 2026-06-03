@@ -95,12 +95,20 @@ export default function EmployeeManagement() {
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
+  // Branch-scoping: BRANCH_MANAGER chỉ xem nhân viên chi nhánh mình.
+  // branchId đọc từ user đăng nhập trong localStorage (nếu backend cung cấp).
+  // ADMIN (hoặc khi không có branchId) giữ nguyên xem tất cả.
+  const storedUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+  const userBranchId: string = storedUser.branchId || '';
+  const isBranchManager = storedUser.role === 'BRANCH_MANAGER';
+  const empBranchQuery = isBranchManager && userBranchId ? `?branchId=${userBranchId}` : '';
+
   // Load employees + branches
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [empRes, branchRes] = await Promise.all([
-          fetch('/api/employees', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`/api/employees${empBranchQuery}`, { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/branches', { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
         if (empRes.ok) {

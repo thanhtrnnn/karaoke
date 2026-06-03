@@ -29,6 +29,11 @@ export default function BranchReportPage() {
   const token = localStorage.getItem('token');
   const headers = { 'Authorization': `Bearer ${token}` };
 
+  // Branch-scoping: BRANCH_MANAGER chỉ xem số liệu chi nhánh mình.
+  // branchId đọc từ user đăng nhập (nếu backend cung cấp); ADMIN giữ nguyên xem tất cả.
+  const storedUser = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; } })();
+  const branchId: string = storedUser.role === 'BRANCH_MANAGER' ? (storedUser.branchId || '') : '';
+
   const fetchReport = () => {
     if (fromDate && toDate && toDate < fromDate) {
       setDateError('Khoảng thời gian không hợp lệ: ngày kết thúc phải >= ngày bắt đầu');
@@ -41,6 +46,7 @@ export default function BranchReportPage() {
     const dateParams = [
       fromDate ? `from=${fromDate}` : '',
       toDate ? `to=${toDate}` : '',
+      branchId ? `branchId=${branchId}` : '',
     ].filter(Boolean).join('&');
     const sep = dateParams ? '&' : '';
 

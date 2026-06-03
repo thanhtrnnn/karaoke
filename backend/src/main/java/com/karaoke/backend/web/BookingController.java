@@ -217,6 +217,72 @@ public class BookingController {
                 .toList();
     }
 
+    // ====================================================================
+    // Các method ĐÚNG TÊN thiết kế (Sequence/Class diagram) — wrapper gọi
+    // lại logic/repo có sẵn. CHỈ THÊM, không sửa các method ở trên.
+    // ====================================================================
+
+    // searchClient(keyword) — tìm khách hàng theo tên/SĐT (tái dùng repo).
+    @GetMapping("/search-client")
+    @Operation(summary = "Tìm khách hàng (searchClient) — theo tên hoặc SĐT")
+    List<Client> searchClient(@RequestParam(required = false) String keyword) {
+        return clients.searchByKeyword(keyword);
+    }
+
+    // createBooking(...) — alias đúng tên thiết kế của create(); cùng logic,
+    // tái dùng record CreateBookingRequest.
+    @PostMapping("/create-booking")
+    @Operation(summary = "Tạo đặt phòng (createBooking) — alias của POST /api/bookings")
+    @Transactional
+    Booking createBooking(@Valid @RequestBody CreateBookingRequest request) {
+        return create(request);
+    }
+
+    // checkIn(bookingId) — UC07: CONFIRMED → CHECKED_IN (room OCCUPIED + tạo
+    // RoomReceipt). Tái dùng logic trong updateStatus.
+    @PutMapping("/{id}/check-in")
+    @Operation(summary = "Check-in đặt phòng (checkIn) — UC07")
+    @Transactional
+    Booking checkIn(@PathVariable String id) {
+        return updateStatus(id, new UpdateStatusRequest(BookingStatus.CHECKED_IN));
+    }
+
+    // searchBooking(keyword) — tìm booking theo tên khách / SĐT / mã booking.
+    @GetMapping("/search-booking")
+    @Operation(summary = "Tìm đặt phòng (searchBooking) — theo tên khách, SĐT hoặc mã")
+    List<Booking> searchBooking(@RequestParam(required = false) String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return bookings.findAll();
+        }
+        String kw = keyword.toLowerCase();
+        return bookings.findAll().stream()
+                .filter(b ->
+                        (b.getId() != null && b.getId().toLowerCase().contains(kw))
+                        || (b.getCustomer() != null && b.getCustomer().getFullName() != null
+                                && b.getCustomer().getFullName().toLowerCase().contains(kw))
+                        || (b.getCustomer() != null && b.getCustomer().getPhone() != null
+                                && b.getCustomer().getPhone().toLowerCase().contains(kw)))
+                .toList();
+    }
+
+    // confirmPayment / calculateInvoice: KHÔNG thêm ở đây — logic hóa đơn
+    // RoomReceipt được xử lý ở module Order/Receipt. Ánh xạ thiết kế:
+    //   calculateInvoice -> OrderController (POST /api/orders) cộng dồn
+    //                       serviceFee/totalAmount vào RoomReceipt đang DRAFT.
+    //   confirmPayment   -> BookingController#updateStatus với COMPLETED
+    //                       (PUT /api/bookings/{id}/status) chốt phiên + trả phòng.
+
+    // updateRoomStatus(roomId, status) — đổi trạng thái phòng trực tiếp.
+    @PutMapping("/room/{roomId}/status")
+    @Operation(summary = "Đổi trạng thái phòng (updateRoomStatus)")
+    @Transactional
+    Room updateRoomStatus(@PathVariable String roomId, @RequestParam RoomStatus status) {
+        Room room = rooms.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("Room not found: " + roomId));
+        room.setStatus(status);
+        return rooms.save(room);
+    }
+
     record CreateBookingRequest(
             @NotBlank String clientId,
             @NotBlank String roomId,

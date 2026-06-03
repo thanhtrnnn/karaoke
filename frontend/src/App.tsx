@@ -32,6 +32,11 @@ import BranchPage from './pages/BranchPage';
 import ChainReportPage from './pages/ChainReportPage';
 import BranchReportPage from './pages/BranchReportPage';
 import CustomerInfoPage from './pages/CustomerInfoPage';
+import ReceptionistHomePage from './pages/booking/ReceptionistHomePage';
+import SearchFreeRoomForm from './pages/booking/SearchFreeRoomForm';
+import SearchClientForm from './pages/booking/SearchClientForm';
+import CheckInPage from './pages/booking/CheckInPage';
+import CancelBookingPage from './pages/booking/CancelBookingPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -77,6 +82,13 @@ function App() {
           {/* Booking */}
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/booking-management" element={<BookingManagement />} />
+
+          {/* Booking — màn hình đúng tên thiết kế (UC05–UC08) */}
+          <Route path="/reception-home" element={<ReceptionistHomePage />} />
+          <Route path="/search-free-room" element={<SearchFreeRoomForm />} />
+          <Route path="/search-client" element={<SearchClientForm />} />
+          <Route path="/check-in" element={<CheckInPage />} />
+          <Route path="/cancel-booking" element={<CancelBookingPage />} />
 
           {/* Room */}
           <Route path="/room-session/:roomId" element={<RoomSession />} />

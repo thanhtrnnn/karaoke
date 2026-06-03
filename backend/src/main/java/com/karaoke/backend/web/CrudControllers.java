@@ -228,6 +228,29 @@ class RoomController {
         return all;
     }
 
+    @GetMapping("/active") @Operation(summary = "Danh sách phòng đang sử dụng — trạng thái OCCUPIED (UC06/UC10)")
+    List<Room> getActiveRooms() {
+        return repository.findByStatus(RoomStatus.OCCUPIED);
+    }
+
+    @GetMapping("/search") @Operation(summary = "Tìm phòng theo tên — lọc tên chứa keyword (UC06/UC10)")
+    List<Room> searchRoomByName(@RequestParam String keyword) {
+        if (keyword == null || keyword.isBlank()) return repository.findAll();
+        String kw = keyword.toLowerCase();
+        return repository.findAll().stream()
+                .filter(r -> r.getName() != null && r.getName().toLowerCase().contains(kw))
+                .toList();
+    }
+
+    @GetMapping("/pending-search") @Operation(summary = "Tìm phòng đang chờ xử lý — trạng thái RESERVED (chờ nhận) hoặc CLEANING (chờ dọn) khớp keyword (UC06/UC10)")
+    List<Room> searchPendingRoom(@RequestParam String keyword) {
+        String kw = keyword == null ? "" : keyword.toLowerCase();
+        return repository.findAll().stream()
+                .filter(r -> r.getStatus() == RoomStatus.RESERVED || r.getStatus() == RoomStatus.CLEANING)
+                .filter(r -> kw.isEmpty() || (r.getName() != null && r.getName().toLowerCase().contains(kw)))
+                .toList();
+    }
+
     @GetMapping("/{id}") @Operation(summary = "Chi tiết phòng")
     Room get(@PathVariable String id) {
         return repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Room not found: " + id));

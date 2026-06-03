@@ -38,6 +38,10 @@ export default function CustomerInfoPage() {
     setSelectedCustomer(null);
     setInvoices([]);
     try {
+      // Branch-scoping: backend /api/clients hiện chỉ nhận tham số `keyword`
+      // (CrudControllers.list(keyword) — Client không gắn chi nhánh), nên giữ
+      // nguyên tìm kiếm. Khi backend bổ sung filter theo chi nhánh, thêm
+      // &branchId=<storedUser.branchId> cho BRANCH_MANAGER ở đây.
       const res = await fetch(`/api/clients?keyword=${encodeURIComponent(searchKeyword)}`, { headers });
       if (res.ok) setCustomers(await res.json());
     } catch (e) { console.error(e); }

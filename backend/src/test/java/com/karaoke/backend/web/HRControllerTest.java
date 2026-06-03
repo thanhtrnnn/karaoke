@@ -90,7 +90,7 @@ class HRControllerTest {
                 .andExpect(jsonPath("$.loaiCa").value("Sang"));
 
         // Verify ChamCong auto-created
-        mockMvc.perform(get("/api/timekeeping")
+        mockMvc.perform(get("/api/timekeeping?employeeId=NV-HR01")
                         .header("Authorization", ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].caLamViec.employee.id").value("NV-HR01"));
