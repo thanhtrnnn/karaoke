@@ -4,8 +4,13 @@
 
 ### Chạy theo module (scripts tại root project)
 
+**Yêu cầu:** Docker services phải đang chạy:
+```bash
+docker compose up -d postgres redis
+```
+
 ```powershell
-# Windows PowerShell — chạy qua Docker
+# Windows PowerShell
 .\test-account.ps1      # Module 1: Tai khoan (UC01-04, UC20)
 .\test-booking.ps1      # Module 2: Dat phong (UC05, UC07, UC08)
 .\test-services.ps1     # Module 3: Dich vu (UC06, UC10, UC12, UC15)
@@ -13,7 +18,8 @@
 ```
 
 ```bash
-# macOS/Linux — chạy qua Docker
+# macOS/Linux
+chmod +x test-hr.sh
 ./test-hr.sh            # Module 5: Nhan su & Bao cao (UC11, UC13, UC14, UC21)
 ```
 
