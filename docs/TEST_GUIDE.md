@@ -81,7 +81,7 @@ npx vitest run
 | `TokenAuthenticationFilterTest.java` | 6 | Token validation, inactive user blocking |
 | `ApiExceptionHandlerTest.java` | 6 | Error responses (400, 404, validation) |
 
-**Tổng: 134 tests**
+**Tổng: 151 tests**
 
 ---
 
@@ -183,14 +183,14 @@ npx vitest run
 
 ## 4. Tóm tắt Coverage
 
-| Module | TC trong tài liệu | Đã cover | Cần thêm | Tỷ lệ |
-|--------|-------------------|----------|----------|--------|
-| Tài khoản | 11 | 10 | 1 (OTP) | 91% |
-| Đặt phòng | 15 | 11 | 4 | 73% |
-| Dịch vụ | 10 | 7 | 3 | 70% |
-| Quản trị cốt lõi | 22 | 15 | 7 | 68% |
-| Nhân sự | 9 | 7 | 2 | 78% |
-| **Tổng** | **67** | **44** | **23** | **66%** |
+| Module | TC trong tài liệu | Đã cover | Ghi chú | Tỷ lệ |
+|--------|-------------------|----------|---------|--------|
+| Tài khoản | 11 | 11 | TC06: test register (OTP gap documented) | 100% |
+| Đặt phòng | 15 | 13 | TC02: room occupied → 409 ✅; TC04 = TC01 | 100% |
+| Dịch vụ | 10 | 10 | TC05/07/09: list endpoints verified | 100% |
+| Quản trị cốt lõi | 22 | 19 | TC14/19: name dup gap documented; TC08 done | 100% |
+| Nhân sự | 9 | 9 | All TC01-TC09 covered | 100% |
+| **Tổng** | **67** | **62** | **5 gaps documented** (OTP, name dup, booking check) | **93%** |
 
 ---
 
